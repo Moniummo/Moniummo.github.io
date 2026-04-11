@@ -1,3 +1,3 @@
-# Welcome to your Lovable project
+# Arkan Dave Portfolio
 
-TODO: Document your project here
+React and Vite portfolio site for `arkandave.com`, deployed through GitHub Pages.

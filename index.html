@@ -3,20 +3,38 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <!-- TODO: Set the document title to the name of your application -->
-    <title>Lovable App</title>
-    <meta name="description" content="Lovable Generated Project" />
-    <meta name="author" content="Lovable" />
+    <title>Arkan Dave | Portfolio</title>
+    <meta
+      name="description"
+      content="Biomedical engineering portfolio featuring projects, research, resume, and background for Arkan Dave."
+    />
+    <meta name="author" content="Arkan Dave" />
+    <meta name="theme-color" content="#090b0f" />
 
-    <!-- TODO: Update og:title to match your application name -->
-    <meta property="og:title" content="Lovable App" />
-    <meta property="og:description" content="Lovable Generated Project" />
+    <meta property="og:title" content="Arkan Dave | Portfolio" />
+    <meta
+      property="og:description"
+      content="Biomedical engineering portfolio featuring projects, research, resume, and background for Arkan Dave."
+    />
     <meta property="og:type" content="website" />
-    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
 
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:site" content="@Lovable" />
-    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+    <meta name="twitter:card" content="summary" />
+
+    <script>
+      (function (location) {
+        if (location.search[1] === "/") {
+          const decoded = location.search
+            .slice(1)
+            .split("&")
+            .map(function (segment) {
+              return segment.replace(/~and~/g, "&");
+            })
+            .join("?");
+
+          window.history.replaceState(null, "", location.pathname.slice(0, -1) + decoded + location.hash);
+        }
+      })(window.location);
+    </script>
   </head>
 
   <body>
