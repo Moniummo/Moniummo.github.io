@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Redirecting...</title>
+    <script>
+      (function () {
+        var path = window.location.pathname;
+        var appPath = path === "/dist" ? "/" : path.replace(/^\/dist/, "");
+        var search = window.location.search ? "&" + window.location.search.slice(1).replace(/&/g, "~and~") : "";
+        var hash = window.location.hash || "";
+
+        window.location.replace(
+          window.location.origin +
+            "/dist/?/" +
+            appPath.replace(/^\//, "").replace(/&/g, "~and~") +
+            search +
+            hash,
+        );
+      })();
+    </script>
+  </head>
+  <body></body>
+</html>
