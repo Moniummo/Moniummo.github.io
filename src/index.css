@@ -1,0 +1,67 @@
+@import url('https://fonts.googleapis.com/css2?family=Pinyon+Script&family=Space+Mono:wght@400;700&family=Inter:wght@300;400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 220 20% 4%;
+    --foreground: 40 20% 95%;
+
+    --card: 220 15% 8%;
+    --card-foreground: 40 20% 95%;
+
+    --popover: 220 15% 8%;
+    --popover-foreground: 40 20% 95%;
+
+    --primary: 42 90% 55%;
+    --primary-foreground: 220 20% 4%;
+
+    --secondary: 220 12% 14%;
+    --secondary-foreground: 40 20% 90%;
+
+    --muted: 220 12% 12%;
+    --muted-foreground: 220 10% 50%;
+
+    --accent: 42 90% 55%;
+    --accent-foreground: 220 20% 4%;
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+
+    --border: 220 12% 16%;
+    --input: 220 12% 16%;
+    --ring: 42 90% 55%;
+
+    --radius: 0.25rem;
+
+    --font-display: 'Space Mono', monospace;
+    --font-body: 'Inter', sans-serif;
+    --font-script: 'Pinyon Script', cursive;
+
+    --sidebar-background: 220 15% 6%;
+    --sidebar-foreground: 40 20% 95%;
+    --sidebar-primary: 42 90% 55%;
+    --sidebar-primary-foreground: 220 20% 4%;
+    --sidebar-accent: 220 12% 12%;
+    --sidebar-accent-foreground: 40 20% 90%;
+    --sidebar-border: 220 12% 16%;
+    --sidebar-ring: 42 90% 55%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: var(--font-body);
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-display);
+  }
+}
