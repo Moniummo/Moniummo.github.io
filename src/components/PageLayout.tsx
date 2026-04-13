@@ -4,17 +4,19 @@ import { AnimatePresence, motion } from "framer-motion";
 import RouteTransitionOverlay from "@/components/RouteTransitionOverlay";
 import SubpageBackdrop from "@/components/SubpageBackdrop";
 import ThemeToggle from "@/components/ThemeToggle";
+import { cn } from "@/lib/utils";
 
 interface PageLayoutProps {
   title: string;
   children: React.ReactNode;
+  mainClassName?: string;
 }
 
 interface HomeTransitionState {
   clipPath: string;
 }
 
-const PageLayout = ({ title, children }: PageLayoutProps) => {
+const PageLayout = ({ title, children, mainClassName }: PageLayoutProps) => {
   const navigate = useNavigate();
   const timeoutRef = useRef<number | null>(null);
   const homeButtonRef = useRef<HTMLButtonElement | null>(null);
@@ -94,7 +96,7 @@ const PageLayout = ({ title, children }: PageLayoutProps) => {
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.6, ease: "easeOut" }}
-        className="relative mx-auto max-w-4xl px-6 pb-20 pt-28 sm:px-8"
+        className={cn("relative mx-auto max-w-4xl px-6 pb-20 pt-28 sm:px-8", mainClassName)}
       >
         {children}
       </motion.main>
