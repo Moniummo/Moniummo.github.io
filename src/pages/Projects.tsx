@@ -1,5 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
-import { useEffect, useRef, useState } from "react";
+import { type FocusEvent, useEffect, useRef, useState } from "react";
 import PageLayout from "@/components/PageLayout";
 
 const motionEase = [0.22, 1, 0.36, 1] as const;
@@ -201,6 +201,19 @@ const Projects = () => {
     setIsHovered(nextPinned);
   };
 
+  const handleOrbitRegionBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (isPinned) {
+      return;
+    }
+
+    const nextFocused = event.relatedTarget as Node | null;
+    if (nextFocused && event.currentTarget.contains(nextFocused)) {
+      return;
+    }
+
+    queueCloseOrbit();
+  };
+
   const openFloatingOrbit = () => {
     setIsFloatingHovered(true);
   };
@@ -219,6 +232,19 @@ const Projects = () => {
     setIsFloatingHovered(nextPinned);
   };
 
+  const handleFloatingRegionBlur = (event: FocusEvent<HTMLDivElement>) => {
+    if (isFloatingPinned) {
+      return;
+    }
+
+    const nextFocused = event.relatedTarget as Node | null;
+    if (nextFocused && event.currentTarget.contains(nextFocused)) {
+      return;
+    }
+
+    queueCloseFloatingOrbit();
+  };
+
   const floatingMetrics = {
     buttonSize: 68,
     cardHeight: 54,
@@ -226,6 +252,13 @@ const Projects = () => {
     stackGap: 12,
     stackOffset: 10,
   };
+  const floatingBoundsWidth = Math.max(floatingMetrics.cardWidth, floatingMetrics.buttonSize);
+  const floatingBoundsHeight =
+    projects.length * (floatingMetrics.cardHeight + floatingMetrics.stackGap) +
+    floatingMetrics.buttonSize;
+  const floatingInteractiveHeight = isFloatingExpanded
+    ? floatingBoundsHeight
+    : floatingMetrics.buttonSize;
 
   return (
     <PageLayout title="Projects" mainClassName="max-w-none px-0 sm:px-0">
@@ -266,7 +299,10 @@ const Projects = () => {
                   }
                 >
                   <div
-                    className="pointer-events-none relative"
+                    className="pointer-events-auto relative"
+                    onMouseLeave={queueCloseOrbit}
+                    onFocusCapture={openOrbit}
+                    onBlurCapture={handleOrbitRegionBlur}
                     style={{
                       height: metrics.stageSize,
                       width: metrics.stageSize,
@@ -311,10 +347,7 @@ const Projects = () => {
                               height: metrics.cardHeight,
                               width: metrics.cardWidth,
                             }}
-                            onMouseEnter={openOrbit}
-                            onMouseLeave={queueCloseOrbit}
                             onFocus={openOrbit}
-                            onBlur={queueCloseOrbit}
                             onClick={() => {
                               clearCloseTimer();
                               setSelectedIndex(index);
@@ -344,9 +377,7 @@ const Projects = () => {
                         type="button"
                         aria-label="Project selector"
                         onMouseEnter={openOrbit}
-                        onMouseLeave={queueCloseOrbit}
                         onFocus={openOrbit}
-                        onBlur={queueCloseOrbit}
                         onClick={toggleOrbit}
                         animate={
                           isExpanded
@@ -467,95 +498,99 @@ const Projects = () => {
                 transition={{ duration: 0.35, ease: motionEase }}
                 className="pointer-events-none fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6"
                 style={{
-                  height:
-                    projects.length * (floatingMetrics.cardHeight + floatingMetrics.stackGap) +
-                    floatingMetrics.buttonSize,
-                  width: Math.max(floatingMetrics.cardWidth, floatingMetrics.buttonSize),
+                  height: floatingBoundsHeight,
+                  width: floatingBoundsWidth,
                 }}
               >
-                <div className="pointer-events-none absolute bottom-0 right-0">
-                  {projects.map((project, index) => {
-                    const yOffset =
-                      (index + 1) * (floatingMetrics.cardHeight + floatingMetrics.stackGap) +
-                      floatingMetrics.stackOffset;
-
-                    return (
-                      <div
-                        key={`floating-${project.title}`}
-                        className="absolute bottom-0 right-0"
-                      >
-                        <motion.button
-                          type="button"
-                          initial={false}
-                          animate={
-                            isFloatingExpanded
-                              ? {
-                                  opacity: 1,
-                                  scale: 1,
-                                  x: 0,
-                                  y: -yOffset,
-                                  filter: "blur(0px)",
-                                }
-                              : {
-                                  opacity: 0,
-                                  scale: 0.7,
-                                  x: 0,
-                                  y: 0,
-                                  filter: "blur(10px)",
-                                }
-                          }
-                          transition={{
-                            duration: 0.45,
-                            delay: isFloatingExpanded ? index * 0.02 : 0,
-                            ease: motionEase,
-                          }}
-                          style={{
-                            height: floatingMetrics.cardHeight,
-                            width: floatingMetrics.cardWidth,
-                          }}
-                          onMouseEnter={openFloatingOrbit}
-                          onMouseLeave={queueCloseFloatingOrbit}
-                          onFocus={openFloatingOrbit}
-                          onBlur={queueCloseFloatingOrbit}
-                          onClick={() => {
-                            setSelectedIndex(index);
-                            setIsFloatingPinned(true);
-                            setIsFloatingHovered(true);
-                          }}
-                          className="pointer-events-auto relative overflow-hidden rounded-[1.4rem] border border-white/26 bg-white/32 p-2 text-left shadow-[0_18px_40px_rgba(173,133,37,0.18)] backdrop-blur-2xl dark:border-white/12 dark:bg-white/[0.08]"
-                        >
-                          <span className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-90" />
-                          <div className="h-6 rounded-[1rem] border border-white/20 bg-white/30 dark:border-white/10 dark:bg-white/[0.05]" />
-                        </motion.button>
-                      </div>
-                    );
-                  })}
-                </div>
-
-                <motion.button
-                  type="button"
-                  aria-label="Open project selector"
-                  onMouseEnter={openFloatingOrbit}
-                  onMouseLeave={queueCloseFloatingOrbit}
-                  onFocus={openFloatingOrbit}
-                  onBlur={queueCloseFloatingOrbit}
-                  onClick={toggleFloatingOrbit}
-                  animate={
-                    isFloatingExpanded
-                      ? { scale: 1, boxShadow: "0px 18px 70px rgba(173,133,37,0.3)" }
-                      : { scale: 0.92, boxShadow: "0px 12px 46px rgba(173,133,37,0.2)" }
-                  }
-                  transition={{ duration: 0.35, ease: motionEase }}
+                <div
+                  className="pointer-events-auto absolute bottom-0 right-0"
                   style={{
-                    height: floatingMetrics.buttonSize,
-                    width: floatingMetrics.buttonSize,
+                    height: floatingInteractiveHeight,
+                    width: floatingBoundsWidth,
                   }}
-                  className="pointer-events-auto absolute bottom-0 right-0 overflow-hidden rounded-full border border-white/32 bg-white/30 backdrop-blur-3xl dark:border-white/12 dark:bg-white/[0.08]"
+                  onMouseLeave={queueCloseFloatingOrbit}
+                  onFocusCapture={openFloatingOrbit}
+                  onBlurCapture={handleFloatingRegionBlur}
                 >
-                  <span className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_24%,rgba(255,255,255,0.8),transparent_42%)]" />
-                  <span className="pointer-events-none absolute inset-[14%] rounded-full border border-white/24 bg-white/10" />
-                  <span className="pointer-events-none absolute inset-[34%] rounded-full bg-primary/70 shadow-[0_0_18px_rgba(173,133,37,0.4)] dark:bg-primary/85 dark:shadow-[0_0_18px_rgba(155,120,255,0.32)]" />
-                </motion.button>
+                  <div className="pointer-events-none absolute bottom-0 right-0">
+                    {projects.map((project, index) => {
+                      const yOffset =
+                        (index + 1) * (floatingMetrics.cardHeight + floatingMetrics.stackGap) +
+                        floatingMetrics.stackOffset;
+
+                      return (
+                        <div
+                          key={`floating-${project.title}`}
+                          className="absolute bottom-0 right-0"
+                        >
+                          <motion.button
+                            type="button"
+                            initial={false}
+                            animate={
+                              isFloatingExpanded
+                                ? {
+                                    opacity: 1,
+                                    scale: 1,
+                                    x: 0,
+                                    y: -yOffset,
+                                    filter: "blur(0px)",
+                                  }
+                                : {
+                                    opacity: 0,
+                                    scale: 0.7,
+                                    x: 0,
+                                    y: 0,
+                                    filter: "blur(10px)",
+                                  }
+                            }
+                            transition={{
+                              duration: 0.45,
+                              delay: isFloatingExpanded ? index * 0.02 : 0,
+                              ease: motionEase,
+                            }}
+                            style={{
+                              height: floatingMetrics.cardHeight,
+                              width: floatingMetrics.cardWidth,
+                            }}
+                            onFocus={openFloatingOrbit}
+                            onClick={() => {
+                              setSelectedIndex(index);
+                              setIsFloatingPinned(true);
+                              setIsFloatingHovered(true);
+                            }}
+                            className="pointer-events-auto relative overflow-hidden rounded-[1.4rem] border border-white/26 bg-white/32 p-2 text-left shadow-[0_18px_40px_rgba(173,133,37,0.18)] backdrop-blur-2xl dark:border-white/12 dark:bg-white/[0.08]"
+                          >
+                            <span className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-90" />
+                            <div className="h-6 rounded-[1rem] border border-white/20 bg-white/30 dark:border-white/10 dark:bg-white/[0.05]" />
+                          </motion.button>
+                        </div>
+                      );
+                    })}
+                  </div>
+
+                  <motion.button
+                    type="button"
+                    aria-label="Open project selector"
+                    onMouseEnter={openFloatingOrbit}
+                    onFocus={openFloatingOrbit}
+                    onClick={toggleFloatingOrbit}
+                    animate={
+                      isFloatingExpanded
+                        ? { scale: 1, boxShadow: "0px 18px 70px rgba(173,133,37,0.3)" }
+                        : { scale: 0.92, boxShadow: "0px 12px 46px rgba(173,133,37,0.2)" }
+                    }
+                    transition={{ duration: 0.35, ease: motionEase }}
+                    style={{
+                      height: floatingMetrics.buttonSize,
+                      width: floatingMetrics.buttonSize,
+                    }}
+                    className="pointer-events-auto absolute bottom-0 right-0 overflow-hidden rounded-full border border-white/32 bg-white/30 backdrop-blur-3xl dark:border-white/12 dark:bg-white/[0.08]"
+                  >
+                    <span className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_24%,rgba(255,255,255,0.8),transparent_42%)]" />
+                    <span className="pointer-events-none absolute inset-[14%] rounded-full border border-white/24 bg-white/10" />
+                    <span className="pointer-events-none absolute inset-[34%] rounded-full bg-primary/70 shadow-[0_0_18px_rgba(173,133,37,0.4)] dark:bg-primary/85 dark:shadow-[0_0_18px_rgba(155,120,255,0.32)]" />
+                  </motion.button>
+                </div>
               </motion.div>
             ) : null}
           </AnimatePresence>
