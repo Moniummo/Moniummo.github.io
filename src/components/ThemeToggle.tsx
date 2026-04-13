@@ -50,6 +50,10 @@ const ThemeToggle = ({ className }: ThemeToggleProps) => {
     document.documentElement.style.setProperty("--theme-transition-x", `${centerX}px`);
     document.documentElement.style.setProperty("--theme-transition-y", `${centerY}px`);
     document.documentElement.style.setProperty("--theme-transition-radius", `${maxRadius}px`);
+    document.documentElement.style.setProperty(
+      "--theme-transition-glow",
+      nextTheme === "dark" ? "rgba(176, 136, 255, 0.84)" : "rgba(228, 185, 84, 0.82)",
+    );
     document.documentElement.classList.add("theme-transition-active");
 
     const transition = themedDocument.startViewTransition(() => {
@@ -76,14 +80,15 @@ const ThemeToggle = ({ className }: ThemeToggleProps) => {
       }}
       aria-label={`Switch to ${isDark ? "light" : "dark"} mode`}
       className={cn(
-        "inline-flex items-center gap-3 rounded-full border border-primary/20 bg-background/70 px-4 py-2.5 font-display text-[10px] tracking-[0.3em] uppercase text-muted-foreground shadow-[0_16px_38px_rgba(173,133,37,0.10)] backdrop-blur-md transition-all duration-300 hover:-translate-y-0.5 hover:text-primary dark:shadow-[0_16px_38px_rgba(8,5,18,0.55)]",
+        "relative inline-flex items-center gap-3 overflow-hidden rounded-full border border-white/18 bg-white/10 px-4 py-2.5 font-display text-[10px] tracking-[0.3em] uppercase text-muted-foreground shadow-[0_18px_42px_rgba(173,133,37,0.10)] backdrop-blur-2xl transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/16 hover:text-primary dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_18px_46px_rgba(8,5,18,0.55)] dark:hover:bg-white/[0.08]",
         className,
       )}
     >
+      <span className="pointer-events-none absolute inset-x-5 top-0 h-px bg-gradient-to-r from-transparent via-white/75 to-transparent opacity-90" />
       <span
         className={cn(
-          "flex h-8 w-8 items-center justify-center rounded-full border border-primary/20 bg-primary/10 text-primary transition-colors duration-300",
-          isDark ? "bg-primary/20" : "bg-white/70",
+          "flex h-8 w-8 items-center justify-center rounded-full border border-white/18 bg-primary/12 text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.28)] transition-colors duration-300 dark:border-white/10",
+          isDark ? "bg-primary/18" : "bg-white/46",
         )}
       >
         {isDark ? <MoonStar className="h-4 w-4" /> : <SunMedium className="h-4 w-4" />}

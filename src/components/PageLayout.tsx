@@ -1,6 +1,8 @@
-import { Link } from "react-router-dom";
-import { ArrowLeft } from "lucide-react";
-import { motion } from "framer-motion";
+import { useEffect, useRef, useState } from "react";
+import { useNavigate } from "react-router-dom";
+import { AnimatePresence, motion } from "framer-motion";
+import RouteTransitionOverlay from "@/components/RouteTransitionOverlay";
+import SubpageBackdrop from "@/components/SubpageBackdrop";
 import ThemeToggle from "@/components/ThemeToggle";
 
 interface PageLayoutProps {
@@ -8,18 +10,78 @@ interface PageLayoutProps {
   children: React.ReactNode;
 }
 
+interface HomeTransitionState {
+  clipPath: string;
+}
+
 const PageLayout = ({ title, children }: PageLayoutProps) => {
+  const navigate = useNavigate();
+  const timeoutRef = useRef<number | null>(null);
+  const homeButtonRef = useRef<HTMLButtonElement | null>(null);
+  const [homeTransition, setHomeTransition] = useState<HomeTransitionState | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timeoutRef.current) {
+        window.clearTimeout(timeoutRef.current);
+      }
+    };
+  }, []);
+
+  const handleHomeNavigation = () => {
+    if (homeTransition) {
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion) {
+      navigate("/");
+      return;
+    }
+
+    const rect = homeButtonRef.current?.getBoundingClientRect();
+
+    if (!rect) {
+      navigate("/");
+      return;
+    }
+
+    const computedRadius = window.getComputedStyle(homeButtonRef.current).borderRadius || "9999px";
+    const clipPath = `inset(${rect.top}px ${window.innerWidth - rect.right}px ${window.innerHeight - rect.bottom}px ${rect.left}px round ${computedRadius})`;
+
+    setHomeTransition({ clipPath });
+
+    timeoutRef.current = window.setTimeout(() => {
+      navigate("/");
+    }, 680);
+  };
+
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-500">
-      <div className="pointer-events-none fixed inset-0 bg-[radial-gradient(circle_at_top_left,rgba(225,187,96,0.14),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(172,130,34,0.08),transparent_22%)] dark:bg-[radial-gradient(circle_at_top_left,rgba(148,111,255,0.18),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(91,54,173,0.16),transparent_26%)]" />
-      <nav className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between border-b border-primary/20 bg-background/80 px-6 py-5 shadow-[0_18px_60px_rgba(176,140,48,0.08)] backdrop-blur-md transition-colors duration-500 dark:shadow-[0_24px_80px_rgba(8,5,18,0.55)] sm:px-8">
-        <Link
-          to="/"
-          className="flex items-center gap-2 font-display text-xs tracking-[0.3em] uppercase text-muted-foreground transition-colors hover:text-primary"
+    <div className="relative min-h-screen overflow-hidden bg-background text-foreground transition-colors duration-500">
+      <AnimatePresence>
+        {homeTransition ? (
+          <RouteTransitionOverlay
+            backdrop="home"
+            initialClipPath={homeTransition.clipPath}
+            animateToClipPath="inset(0px 0px 0px 0px round 0rem)"
+          />
+        ) : null}
+      </AnimatePresence>
+
+      <SubpageBackdrop className="fixed inset-0" />
+
+      <nav className="fixed left-0 right-0 top-0 z-50 flex items-center justify-between px-6 py-5 sm:px-8">
+        <button
+          ref={homeButtonRef}
+          type="button"
+          onClick={handleHomeNavigation}
+          className="group relative inline-flex items-center overflow-hidden rounded-full border border-white/26 bg-white/28 px-5 py-3 shadow-[0_18px_48px_rgba(173,133,37,0.12)] backdrop-blur-2xl transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/38 dark:border-white/10 dark:bg-white/[0.06] dark:shadow-[0_22px_56px_rgba(8,5,18,0.52)] dark:hover:bg-white/[0.09]"
         >
-          <ArrowLeft className="w-4 h-4" />
-          Home
-        </Link>
+          <span className="pointer-events-none absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent opacity-90" />
+          <span className="font-script text-3xl leading-none text-foreground">Arkan Dave</span>
+        </button>
+
         <div className="flex items-center gap-3">
           <span className="hidden font-display text-xs tracking-[0.3em] uppercase text-muted-foreground sm:inline">
             {title}
@@ -27,6 +89,7 @@ const PageLayout = ({ title, children }: PageLayoutProps) => {
           <ThemeToggle />
         </div>
       </nav>
+
       <motion.main
         initial={{ opacity: 0, y: 30 }}
         animate={{ opacity: 1, y: 0 }}

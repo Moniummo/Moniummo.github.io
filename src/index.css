@@ -146,7 +146,9 @@
 }
 
 html.theme-transition-active::view-transition-new(root) {
-  animation: theme-reveal 850ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  animation:
+    theme-reveal 850ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    theme-glow 850ms cubic-bezier(0.22, 1, 0.36, 1) both;
   clip-path: circle(0px at var(--theme-transition-x) var(--theme-transition-y));
   z-index: 2;
 }
@@ -158,5 +160,35 @@ html.theme-transition-active::view-transition-new(root) {
 
   to {
     clip-path: circle(var(--theme-transition-radius) at var(--theme-transition-x) var(--theme-transition-y));
+  }
+}
+
+@keyframes theme-glow {
+  0% {
+    filter:
+      brightness(1.06)
+      drop-shadow(0 0 0px var(--theme-transition-glow))
+      drop-shadow(0 0 0px var(--theme-transition-glow));
+  }
+
+  22% {
+    filter:
+      brightness(1.12)
+      drop-shadow(0 0 22px var(--theme-transition-glow))
+      drop-shadow(0 0 54px var(--theme-transition-glow));
+  }
+
+  65% {
+    filter:
+      brightness(1.05)
+      drop-shadow(0 0 16px var(--theme-transition-glow))
+      drop-shadow(0 0 36px var(--theme-transition-glow));
+  }
+
+  100% {
+    filter:
+      brightness(1)
+      drop-shadow(0 0 0px transparent)
+      drop-shadow(0 0 0px transparent);
   }
 }
