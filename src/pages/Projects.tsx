@@ -4,21 +4,21 @@ import { motion } from "framer-motion";
 const projects = [
   {
     title: "Project One",
-    description: "A brief description of your first engineering project. Replace with your actual project details.",
+    description: "something something im not an engineer.",
     tags: ["CAD", "Prototyping", "Testing"],
     year: "2024",
   },
   {
     title: "Project Two",
-    description: "A brief description of your second engineering project. Replace with your actual project details.",
+    description: "make up some more bs to continue my engineering cosplay.",
     tags: ["MATLAB", "Signal Processing"],
     year: "2023",
   },
   {
     title: "Project Three",
-    description: "A brief description of your third engineering project. Replace with your actual project details.",
+    description: "blah blah",
     tags: ["Biomaterials", "Lab Work"],
-    year: "2023",
+    year: "3120",
   },
 ];
 

@@ -4,50 +4,93 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Shared color tokens for the lighter ivory-and-gold direction. */
 @layer base {
   :root {
-    --background: 220 20% 4%;
-    --foreground: 40 20% 95%;
+    /* Core page surfaces and readable text. */
+    --background: 42 45% 96%;
+    --foreground: 26 30% 18%;
 
-    --card: 220 15% 8%;
-    --card-foreground: 40 20% 95%;
+    --card: 44 60% 98%;
+    --card-foreground: 26 30% 18%;
 
-    --popover: 220 15% 8%;
-    --popover-foreground: 40 20% 95%;
+    --popover: 44 60% 98%;
+    --popover-foreground: 26 30% 18%;
 
-    --primary: 42 90% 55%;
-    --primary-foreground: 220 20% 4%;
+    /* Gold values used for links, hover states, and decorative accents. */
+    --primary: 39 64% 42%;
+    --primary-foreground: 42 55% 98%;
 
-    --secondary: 220 12% 14%;
-    --secondary-foreground: 40 20% 90%;
+    --secondary: 38 42% 90%;
+    --secondary-foreground: 27 28% 24%;
 
-    --muted: 220 12% 12%;
-    --muted-foreground: 220 10% 50%;
+    --muted: 38 30% 92%;
+    --muted-foreground: 29 18% 40%;
 
-    --accent: 42 90% 55%;
-    --accent-foreground: 220 20% 4%;
+    --accent: 40 78% 56%;
+    --accent-foreground: 27 30% 18%;
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 220 12% 16%;
-    --input: 220 12% 16%;
-    --ring: 42 90% 55%;
+    --border: 39 34% 79%;
+    --input: 39 35% 86%;
+    --ring: 39 64% 42%;
 
-    --radius: 0.25rem;
+    --radius: 0.9rem;
 
     --font-display: 'Space Mono', monospace;
     --font-body: 'Inter', sans-serif;
     --font-script: 'Pinyon Script', cursive;
 
-    --sidebar-background: 220 15% 6%;
-    --sidebar-foreground: 40 20% 95%;
-    --sidebar-primary: 42 90% 55%;
-    --sidebar-primary-foreground: 220 20% 4%;
-    --sidebar-accent: 220 12% 12%;
-    --sidebar-accent-foreground: 40 20% 90%;
-    --sidebar-border: 220 12% 16%;
-    --sidebar-ring: 42 90% 55%;
+    --sidebar-background: 44 58% 98%;
+    --sidebar-foreground: 26 30% 18%;
+    --sidebar-primary: 39 64% 42%;
+    --sidebar-primary-foreground: 42 55% 98%;
+    --sidebar-accent: 38 42% 90%;
+    --sidebar-accent-foreground: 27 28% 24%;
+    --sidebar-border: 39 35% 80%;
+    --sidebar-ring: 39 64% 42%;
+  }
+
+  /* Dark mode gets its own palette so it feels designed, not auto-inverted. */
+  .dark {
+    --background: 245 34% 7%;
+    --foreground: 40 33% 96%;
+
+    --card: 246 28% 10%;
+    --card-foreground: 40 33% 96%;
+
+    --popover: 246 28% 10%;
+    --popover-foreground: 40 33% 96%;
+
+    --primary: 270 78% 72%;
+    --primary-foreground: 252 30% 10%;
+
+    --secondary: 247 22% 16%;
+    --secondary-foreground: 40 33% 96%;
+
+    --muted: 247 18% 14%;
+    --muted-foreground: 246 10% 70%;
+
+    --accent: 287 72% 61%;
+    --accent-foreground: 252 30% 10%;
+
+    --destructive: 0 72% 54%;
+    --destructive-foreground: 40 33% 96%;
+
+    --border: 248 19% 20%;
+    --input: 248 19% 18%;
+    --ring: 270 78% 72%;
+
+    --sidebar-background: 246 28% 10%;
+    --sidebar-foreground: 40 33% 96%;
+    --sidebar-primary: 270 78% 72%;
+    --sidebar-primary-foreground: 252 30% 10%;
+    --sidebar-accent: 247 22% 16%;
+    --sidebar-accent-foreground: 40 33% 96%;
+    --sidebar-border: 248 19% 20%;
+    --sidebar-ring: 270 78% 72%;
   }
 }
 
@@ -59,9 +102,61 @@
   body {
     @apply bg-background text-foreground;
     font-family: var(--font-body);
+    /* These gradients keep the page warm and metallic instead of flat white. */
+    background-image:
+      radial-gradient(circle at top left, hsla(41, 76%, 67%, 0.24), transparent 32%),
+      radial-gradient(circle at bottom right, hsla(39, 64%, 42%, 0.14), transparent 28%),
+      linear-gradient(180deg, hsl(42 45% 98%), hsl(var(--background)));
+    background-attachment: fixed;
+    transition:
+      background-color 300ms ease,
+      color 300ms ease,
+      border-color 300ms ease;
+  }
+
+  html.dark body {
+    background-image:
+      radial-gradient(circle at top left, hsla(271, 82%, 71%, 0.18), transparent 30%),
+      radial-gradient(circle at bottom right, hsla(286, 72%, 61%, 0.14), transparent 26%),
+      linear-gradient(180deg, hsl(246 33% 10%), hsl(var(--background)));
   }
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+  }
+
+  ::selection {
+    background: hsl(var(--primary) / 0.22);
+  }
+}
+
+/* The theme snapshots use a radial wipe centered on the toggle button. */
+::view-transition-group(root) {
+  animation-duration: 850ms;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  mix-blend-mode: normal;
+}
+
+::view-transition-old(root) {
+  animation: none;
+  z-index: 1;
+}
+
+html.theme-transition-active::view-transition-new(root) {
+  animation: theme-reveal 850ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  clip-path: circle(0px at var(--theme-transition-x) var(--theme-transition-y));
+  z-index: 2;
+}
+
+@keyframes theme-reveal {
+  from {
+    clip-path: circle(0px at var(--theme-transition-x) var(--theme-transition-y));
+  }
+
+  to {
+    clip-path: circle(var(--theme-transition-radius) at var(--theme-transition-x) var(--theme-transition-y));
   }
 }
