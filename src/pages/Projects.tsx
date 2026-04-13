@@ -107,11 +107,17 @@ const getOrbitMetrics = (): OrbitMetrics => {
 const Projects = () => {
   const [isHovered, setIsHovered] = useState(false);
   const [isPinned, setIsPinned] = useState(false);
+  const [isFloatingHovered, setIsFloatingHovered] = useState(false);
+  const [isFloatingPinned, setIsFloatingPinned] = useState(false);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [metrics, setMetrics] = useState<OrbitMetrics>(getOrbitMetrics);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const selectedSectionRef = useRef<HTMLDivElement | null>(null);
+  const selectorAnchorRef = useRef<HTMLDivElement | null>(null);
+  const [showFloatingSelector, setShowFloatingSelector] = useState(false);
 
   const isExpanded = isHovered || isPinned;
+  const isFloatingExpanded = showFloatingSelector && (isFloatingHovered || isFloatingPinned);
   const selectedProject = selectedIndex === null ? null : projects[selectedIndex];
 
   useEffect(() => {
@@ -133,6 +139,35 @@ const Projects = () => {
         clearTimeout(closeTimerRef.current);
       }
     };
+  }, []);
+
+  useEffect(() => {
+    if (!selectedProject || !selectedSectionRef.current) {
+      return;
+    }
+
+    const raf = window.requestAnimationFrame(() => {
+      selectedSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+    });
+
+    return () => window.cancelAnimationFrame(raf);
+  }, [selectedProject]);
+
+  useEffect(() => {
+    if (!selectorAnchorRef.current) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        setShowFloatingSelector(!entry.isIntersecting);
+      },
+      { threshold: 0.2 }
+    );
+
+    observer.observe(selectorAnchorRef.current);
+
+    return () => observer.disconnect();
   }, []);
 
   const clearCloseTimer = () => {
@@ -166,13 +201,39 @@ const Projects = () => {
     setIsHovered(nextPinned);
   };
 
+  const openFloatingOrbit = () => {
+    setIsFloatingHovered(true);
+  };
+
+  const queueCloseFloatingOrbit = () => {
+    if (isFloatingPinned) {
+      return;
+    }
+
+    setIsFloatingHovered(false);
+  };
+
+  const toggleFloatingOrbit = () => {
+    const nextPinned = !isFloatingPinned;
+    setIsFloatingPinned(nextPinned);
+    setIsFloatingHovered(nextPinned);
+  };
+
+  const floatingMetrics = {
+    buttonSize: 68,
+    cardHeight: 54,
+    cardWidth: 72,
+    stackGap: 12,
+    stackOffset: 10,
+  };
+
   return (
     <PageLayout title="Projects" mainClassName="max-w-none px-0 sm:px-0">
       <div className="px-4 sm:px-6 lg:px-10">
         <div className="mx-auto max-w-[120rem]">
           {/* Enforce a strict 1/3 + 2/3 split on wider viewports so intro and selector stay inline. */}
           <section className="pb-8 pt-2">
-            <div className="rounded-[3.8rem] border border-white/20 bg-white/16 p-4 shadow-[0_28px_92px_rgba(173,133,37,0.12)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_34px_110px_rgba(8,5,18,0.5)] sm:rounded-[4.6rem] sm:p-6 lg:p-8">
+            <div className="rounded-[3.8rem] border border-white/32 bg-white/32 p-4 shadow-[0_28px_92px_rgba(173,133,37,0.12)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_34px_110px_rgba(8,5,18,0.5)] sm:rounded-[4.6rem] sm:p-6 lg:p-8">
               <div
                 className="grid min-h-[calc(100vh-11rem)] gap-6 lg:gap-8 xl:gap-10"
                 style={
@@ -181,8 +242,8 @@ const Projects = () => {
                     : undefined
                 }
               >
-                <div className="flex flex-col justify-center">
-                  <div className="rounded-[3.2rem] border border-white/18 bg-white/18 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.26)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.05] sm:rounded-[3.8rem] sm:p-8">
+                <div ref={selectorAnchorRef} className="flex flex-col justify-center">
+                  <div className="rounded-[3.2rem] border border-white/30 bg-white/30 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.26)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.05] sm:rounded-[3.8rem] sm:p-8">
                     <p className="font-display text-[10px] uppercase tracking-[0.34em] text-primary/80">
                       Project Page
                     </p>
@@ -197,7 +258,7 @@ const Projects = () => {
                 </div>
 
                 <div
-                  className="flex min-w-0 items-center justify-center rounded-[3.2rem] border border-white/18 bg-white/14 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.03] sm:rounded-[3.8rem] sm:p-4 lg:min-h-[42rem] xl:min-h-[46rem]"
+                  className="flex min-w-0 items-center justify-center rounded-[3.2rem] border border-white/28 bg-white/22 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.03] sm:rounded-[3.8rem] sm:p-4 lg:min-h-[42rem] xl:min-h-[46rem]"
                   style={
                     metrics.stageSize > 380
                       ? { minHeight: `${metrics.stageSize + 64}px` }
@@ -396,6 +457,109 @@ const Projects = () => {
             </div>
           </section>
 
+          <AnimatePresence>
+            {showFloatingSelector ? (
+              <motion.div
+                key="floating-selector"
+                initial={{ opacity: 0, y: 12, scale: 0.92 }}
+                animate={{ opacity: 1, y: 0, scale: 1 }}
+                exit={{ opacity: 0, y: 12, scale: 0.92 }}
+                transition={{ duration: 0.35, ease: motionEase }}
+                className="pointer-events-none fixed bottom-4 right-4 z-50 sm:bottom-6 sm:right-6"
+                style={{
+                  height:
+                    projects.length * (floatingMetrics.cardHeight + floatingMetrics.stackGap) +
+                    floatingMetrics.buttonSize,
+                  width: Math.max(floatingMetrics.cardWidth, floatingMetrics.buttonSize),
+                }}
+              >
+                <div className="pointer-events-none absolute bottom-0 right-0">
+                  {projects.map((project, index) => {
+                    const yOffset =
+                      (index + 1) * (floatingMetrics.cardHeight + floatingMetrics.stackGap) +
+                      floatingMetrics.stackOffset;
+
+                    return (
+                      <div
+                        key={`floating-${project.title}`}
+                        className="absolute bottom-0 right-0"
+                      >
+                        <motion.button
+                          type="button"
+                          initial={false}
+                          animate={
+                            isFloatingExpanded
+                              ? {
+                                  opacity: 1,
+                                  scale: 1,
+                                  x: 0,
+                                  y: -yOffset,
+                                  filter: "blur(0px)",
+                                }
+                              : {
+                                  opacity: 0,
+                                  scale: 0.7,
+                                  x: 0,
+                                  y: 0,
+                                  filter: "blur(10px)",
+                                }
+                          }
+                          transition={{
+                            duration: 0.45,
+                            delay: isFloatingExpanded ? index * 0.02 : 0,
+                            ease: motionEase,
+                          }}
+                          style={{
+                            height: floatingMetrics.cardHeight,
+                            width: floatingMetrics.cardWidth,
+                          }}
+                          onMouseEnter={openFloatingOrbit}
+                          onMouseLeave={queueCloseFloatingOrbit}
+                          onFocus={openFloatingOrbit}
+                          onBlur={queueCloseFloatingOrbit}
+                          onClick={() => {
+                            setSelectedIndex(index);
+                            setIsFloatingPinned(true);
+                            setIsFloatingHovered(true);
+                          }}
+                          className="pointer-events-auto relative overflow-hidden rounded-[1.4rem] border border-white/26 bg-white/32 p-2 text-left shadow-[0_18px_40px_rgba(173,133,37,0.18)] backdrop-blur-2xl dark:border-white/12 dark:bg-white/[0.08]"
+                        >
+                          <span className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-90" />
+                          <div className="h-6 rounded-[1rem] border border-white/20 bg-white/30 dark:border-white/10 dark:bg-white/[0.05]" />
+                        </motion.button>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <motion.button
+                  type="button"
+                  aria-label="Open project selector"
+                  onMouseEnter={openFloatingOrbit}
+                  onMouseLeave={queueCloseFloatingOrbit}
+                  onFocus={openFloatingOrbit}
+                  onBlur={queueCloseFloatingOrbit}
+                  onClick={toggleFloatingOrbit}
+                  animate={
+                    isFloatingExpanded
+                      ? { scale: 1, boxShadow: "0px 18px 70px rgba(173,133,37,0.3)" }
+                      : { scale: 0.92, boxShadow: "0px 12px 46px rgba(173,133,37,0.2)" }
+                  }
+                  transition={{ duration: 0.35, ease: motionEase }}
+                  style={{
+                    height: floatingMetrics.buttonSize,
+                    width: floatingMetrics.buttonSize,
+                  }}
+                  className="pointer-events-auto absolute bottom-0 right-0 overflow-hidden rounded-full border border-white/32 bg-white/30 backdrop-blur-3xl dark:border-white/12 dark:bg-white/[0.08]"
+                >
+                  <span className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_30%_24%,rgba(255,255,255,0.8),transparent_42%)]" />
+                  <span className="pointer-events-none absolute inset-[14%] rounded-full border border-white/24 bg-white/10" />
+                  <span className="pointer-events-none absolute inset-[34%] rounded-full bg-primary/70 shadow-[0_0_18px_rgba(173,133,37,0.4)] dark:bg-primary/85 dark:shadow-[0_0_18px_rgba(155,120,255,0.32)]" />
+                </motion.button>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
+
           <AnimatePresence mode="wait">
             {selectedProject ? (
               <motion.section
@@ -406,8 +570,11 @@ const Projects = () => {
                 transition={{ duration: 0.48, ease: motionEase }}
                 className="pointer-events-auto pb-14"
               >
-                <div className="mx-auto w-full max-w-[120rem] overflow-hidden rounded-[4.25rem] border border-white/22 bg-white/28 p-4 shadow-[0_36px_120px_rgba(173,133,37,0.14)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_36px_122px_rgba(8,5,18,0.52)] sm:rounded-[5rem] sm:p-6">
-                  <div className="rounded-[3.5rem] border border-white/16 bg-white/16 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] dark:border-white/10 dark:bg-white/[0.04] sm:rounded-[4.2rem] sm:p-8 lg:p-10">
+                <div
+                  ref={selectedSectionRef}
+                  className="mx-auto w-full max-w-[120rem] scroll-mt-28 overflow-hidden rounded-[4.25rem] border border-white/30 bg-white/32 p-4 shadow-[0_36px_120px_rgba(173,133,37,0.14)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_36px_122px_rgba(8,5,18,0.52)] sm:rounded-[5rem] sm:p-6"
+                >
+                  <div className="rounded-[3.5rem] border border-white/24 bg-white/22 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] dark:border-white/10 dark:bg-white/[0.04] sm:rounded-[4.2rem] sm:p-8 lg:p-10">
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="font-display text-[10px] uppercase tracking-[0.34em] text-primary/80">
@@ -423,7 +590,7 @@ const Projects = () => {
                     </div>
 
                     <div className="mt-8 grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
-                      <div className="rounded-[3.1rem] border border-white/18 bg-gradient-to-br from-white/60 via-white/18 to-white/4 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] dark:border-white/10 dark:from-white/[0.11] dark:via-white/[0.04] dark:to-transparent sm:rounded-[3.6rem] sm:p-7">
+                      <div className="rounded-[3.1rem] border border-white/28 bg-gradient-to-br from-white/70 via-white/26 to-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] dark:border-white/10 dark:from-white/[0.11] dark:via-white/[0.04] dark:to-transparent sm:rounded-[3.6rem] sm:p-7">
                         <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
                           {selectedProject.note}
                         </p>
@@ -439,13 +606,13 @@ const Projects = () => {
                         </p>
                       </div>
 
-                      <div className="flex flex-col gap-4 rounded-[3.1rem] border border-white/16 bg-white/14 p-5 dark:border-white/10 dark:bg-white/[0.03] sm:rounded-[3.6rem] sm:p-6">
+                      <div className="flex flex-col gap-4 rounded-[3.1rem] border border-white/26 bg-white/20 p-5 dark:border-white/10 dark:bg-white/[0.03] sm:rounded-[3.6rem] sm:p-6">
                         {["Project 1", "Project 2", "Project 3"].map((label) => (
                           <div
                             key={label}
-                            className="rounded-[2.2rem] border border-white/16 bg-white/16 p-4 dark:border-white/10 dark:bg-white/[0.03]"
+                            className="rounded-[2.2rem] border border-white/24 bg-white/22 p-4 dark:border-white/10 dark:bg-white/[0.03]"
                           >
-                            <div className="h-24 rounded-[1.7rem] border border-white/14 bg-gradient-to-br from-white/46 via-white/12 to-transparent dark:border-white/10 dark:from-white/[0.06] dark:via-white/[0.02] dark:to-transparent" />
+                            <div className="h-24 rounded-[1.7rem] border border-white/20 bg-gradient-to-br from-white/56 via-white/22 to-transparent dark:border-white/10 dark:from-white/[0.06] dark:via-white/[0.02] dark:to-transparent" />
                             <p className="mt-3 text-center font-display text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
                               {label}
                             </p>
