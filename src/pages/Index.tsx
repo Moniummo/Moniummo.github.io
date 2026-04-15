@@ -110,12 +110,12 @@ const Index = () => {
               className="max-w-max font-script text-[clamp(4.5rem,12vw,12rem)] leading-[0.8] tracking-[-0.035em] text-foreground"
             >
               <span className="relative inline-block pr-[0.08em]">
-                <span className="pointer-events-none absolute left-[0.1em] top-[-2.7em] rotate-[35deg]">
+                <span className="pointer-events-none absolute left-[0.02em] top-[-2.15em] rotate-[35deg] sm:left-[0.06em] sm:top-[-2.4em] lg:left-[0.1em] lg:top-[-2.7em]">
                   <motion.span
                     initial={{ opacity: 0, scaleY: 0.7 }}
                     animate={{ opacity: 1, scaleY: 1 }}
                     transition={{ duration: 0.9, ease: "easeOut", delay: 0.15 }}
-                    className="block h-[9.2em] w-[0.06em] origin-top rounded-full bg-foreground/100 shadow-[0_0_40px_rgba(255,255,255,0.2)]"
+                    className="block h-[6.6em] w-[0.06em] origin-top rounded-full bg-foreground/100 shadow-[0_0_40px_rgba(255,255,255,0.2)] sm:h-[7.8em] lg:h-[9.2em]"
                   />
                 </span>
                 Arkan

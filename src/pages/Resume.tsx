@@ -325,15 +325,19 @@ const Resume = () => {
   }, [lastSectionId]);
 
   useEffect(() => {
+    const scrollContainer = mobileAnchorScrollRef.current;
     const activeButton = mobileAnchorButtonRefs.current[activeSectionId];
-    if (!activeButton) {
+    if (!scrollContainer || !activeButton) {
       return;
     }
 
-    activeButton.scrollIntoView({
-      behavior: "smooth",
-      block: "nearest",
-      inline: "center",
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const targetLeft =
+      activeButton.offsetLeft - scrollContainer.clientWidth / 2 + activeButton.offsetWidth / 2;
+
+    scrollContainer.scrollTo({
+      left: Math.max(0, targetLeft),
+      behavior: prefersReducedMotion ? "auto" : "smooth",
     });
   }, [activeSectionId]);
 
