@@ -3,6 +3,18 @@ import { type FocusEvent, useEffect, useRef, useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import esonicBoxChart from "@/assets/ESONIC_Box_Chart.png";
 import esonicVisualizer from "@/assets/ESONIC_visualizer.png";
+import bicyclePicture from "@/assets/Bicycle_picture.png";
+import gearMate from "@/assets/gear_mate.png";
+import matlab2dGraph from "@/assets/matlab_2d_graph.png";
+import matlabHeatGraph from "@/assets/matlab_heat_graph.png";
+import matlabSurfPlotAnalysis from "@/assets/matlab_surf_plot_analysis.png";
+import matlabSurfPlotModification from "@/assets/matlab_surf_plot_modification.png";
+import matlabVesselIdentification from "@/assets/matlab_vesel_identification.png";
+import aiProjectGpuUtilization from "@/assets/ai_project_gpu_utilization.png";
+import discordJson from "@/assets/Discord JSON.png";
+import coinSorterAssembly from "@/assets/coin_sorter_assembly.png";
+import coinSorterExploded from "@/assets/coin_sorter_exploded.png";
+import coinSorterIrl from "@/assets/coin_sorter_irl.png";
 
 const motionEase = [0.22, 1, 0.36, 1] as const;
 const closeDelayMs = 220;
@@ -143,6 +155,491 @@ const esonicDetails: ProjectDetails = {
   ],
 };
 
+const bikeDetails: ProjectDetails = {
+  headerLabel: "Mechanical Systems",
+  status: "Simulation Validated",
+  tagline: "SolidWorks | Gear Systems | Motion Simulation | Tolerance Modeling",
+  summary:
+    "This project focused on designing and simulating an articulated bicycle drivetrain to study how rotational input propagates through coupled gear elements under realistic mechanical constraints. The system was built in SolidWorks with explicit mate logic for torque transfer, articulation limits, and rotational coupling. The engineering objective was to capture accurate kinematic behavior while exploring torque-speed tradeoffs across gear ratio configurations.",
+  designProblem: [
+    "Transmit crankset rotational input through the drivetrain to rear wheel output.",
+    "Model how gear ratio selection shifts torque amplification versus rotational speed.",
+    "Define articulation and rotational limits that preserve realistic motion behavior.",
+    "Validate drivetrain dynamics in simulation without over-constraining assembly freedom.",
+    "Refine alignment and tolerance references to avoid non-physical simulation artifacts.",
+  ],
+  architectureDecisions: [
+    {
+      title: "Gear Mate Implementation",
+      detail:
+        "Used gear mates to enforce proportional rotational coupling and realistic torque transfer between drivetrain components.",
+    },
+    {
+      title: "Gear Ratio Evaluation",
+      detail:
+        "Tested multiple ratio configurations to quantify expected torque-speed behavior under consistent input conditions.",
+    },
+    {
+      title: "Constraint Definition",
+      detail:
+        "Applied rotational limits and articulation constraints to preserve realistic motion without locking the system.",
+    },
+    {
+      title: "Tolerance Refinement",
+      detail:
+        "Iteratively adjusted mate references and alignment to stabilize simulation and eliminate non-physical movement.",
+    },
+  ],
+  challengesTradeoffs: [
+    {
+      title: "Torque vs Speed Tradeoff",
+      detail:
+        "Lower ratios increased torque amplification while reducing output speed; higher ratios produced the opposite behavior.",
+    },
+    {
+      title: "Over-Constrained Assemblies",
+      detail:
+        "Early mate stacks created instability, requiring iterative removal and redefinition of redundant constraints.",
+    },
+    {
+      title: "Alignment Sensitivity",
+      detail:
+        "Small misalignments introduced unrealistic motion, demanding tight rotational reference control.",
+    },
+    {
+      title: "Stability vs Complexity",
+      detail:
+        "Balanced assembly detail against simulation performance by simplifying non-critical geometry while preserving drivetrain function.",
+    },
+  ],
+  performanceValidation: [
+    {
+      title: "Kinematic Proportionality",
+      lines: [
+        "Verified angular displacement from crank input to rear wheel output matched defined gear constraints.",
+        "Maintained expected rotational coupling across sustained motion tests.",
+      ],
+    },
+    {
+      title: "Ratio Behavior Validation",
+      lines: [
+        "Observed expected torque-speed tradeoffs across multiple tested drivetrain ratios.",
+        "Compared configurations under identical input profiles for consistent relative behavior.",
+      ],
+    },
+    {
+      title: "Simulation Robustness",
+      lines: [
+        "Resolved redundant mates to preserve valid degrees of freedom and stable solver behavior.",
+        "Eliminated constraint conflicts and non-physical motion through iterative tolerance alignment refinement.",
+      ],
+    },
+  ],
+  visuals: [
+    {
+      src: bicyclePicture,
+      alt: "Articulated bicycle drivetrain assembly model",
+      caption: "Full drivetrain assembly used for articulation, mate, and motion-validation studies.",
+    },
+    {
+      src: gearMate,
+      alt: "Gear mate and rotational coupling view for drivetrain simulation",
+      caption: "Gear mate configuration showing rotational coupling and ratio-driven motion behavior.",
+    },
+  ],
+};
+
+const matlabDetails: ProjectDetails = {
+  headerLabel: "Computational Modeling",
+  status: "Model Complete",
+  tagline: "Energy Balance | Experimental Modeling | System Efficiency Analysis",
+  summary:
+    "This MATLAB project developed a quantitative thermal modeling framework to estimate incident energy, heat retention behavior, and annual energy cost required to maintain indoor comfort under different insulation and material configurations. The model links experimental probe data with scaled environmental inputs, then applies transient energy-balance logic to evaluate heating and cooling demand. The core goal was to understand how thermal properties and system assumptions shape long-term energy efficiency decisions.",
+  designProblem: [
+    "Estimate steady-state and transient heating requirements from measured temperature behavior.",
+    "Evaluate how thermal mass changes short-term stability and long-term energy demand.",
+    "Compare multiple system configurations under matched environmental conditions.",
+    "Predict long-duration and annual energy requirements from limited experimental windows.",
+    "Translate modeled thermal demand into interpretable annual operating cost.",
+  ],
+  architectureDecisions: [
+    {
+      title: "Incident Energy Pipeline",
+      detail:
+        "Converted measured illumination values to W/m^2, computed absorbed power, and integrated over time to estimate total incident energy.",
+    },
+    {
+      title: "Annual Extrapolation Logic",
+      detail:
+        "Scaled experimental measurements using NOAA solar-radiation trends and resampled climate data to align with probe resolution.",
+    },
+    {
+      title: "Transient Thermal Balance",
+      detail:
+        "Applied lumped-capacitance style energy-balance equations using specific heat and temperature gradients to estimate load.",
+    },
+    {
+      title: "HVAC Cost Mapping",
+      detail:
+        "Mapped modeled thermal demand through a COP=3 efficiency assumption and $0.15/kWh pricing to estimate annual cost.",
+    },
+  ],
+  challengesTradeoffs: [
+    {
+      title: "Multi-Resolution Data Fusion",
+      detail:
+        "Handled asynchronous data streams with interpolation and smoothing to preserve meaningful trends across different sample rates.",
+    },
+    {
+      title: "Transient vs Steady Behavior",
+      detail:
+        "Separated short-term fluctuation effects from longer equilibrium behavior to avoid biased long-run demand estimates.",
+    },
+    {
+      title: "Thermal Mass Tradeoff",
+      detail:
+        "Observed that added water mass stabilized temperature trajectories but increased sustained energy input due to retention effects.",
+    },
+    {
+      title: "Long-Term Projection Uncertainty",
+      detail:
+        "Annual extrapolation required explicit assumptions about seasonal consistency and boundary-condition repeatability.",
+    },
+  ],
+  performanceValidation: [
+    {
+      title: "Efficiency Ranking Insight",
+      lines: [
+        "Identified insulation quality as the dominant driver in lowering projected annual energy cost.",
+        "Quantified how surface transparency shifts incident-energy absorption behavior.",
+      ],
+    },
+    {
+      title: "Dynamic Thermal Behavior",
+      lines: [
+        "Demonstrated improved thermal stability with higher mass, alongside increased energy demand over time.",
+        "Estimated annual maintenance cost near $36.50/year for the baseline modeled configuration.",
+      ],
+    },
+    {
+      title: "Measurement Consistency",
+      lines: [
+        "Compared probe-derived trends against manually recorded surface temperatures for sanity checks.",
+        "Confirmed model outputs tracked expected relative behavior across tested configurations.",
+      ],
+    },
+  ],
+  visuals: [
+    {
+      src: matlabHeatGraph,
+      alt: "MATLAB thermal distribution heatmap output",
+      caption: "Heat-distribution visualization used to compare thermal behavior across configurations.",
+    },
+    {
+      src: matlab2dGraph,
+      alt: "MATLAB 2D energy and temperature trend analysis plot",
+      caption: "Time-domain model outputs used for incident energy and thermal-demand analysis.",
+    },
+  ],
+};
+
+const frostigImagingDetails: ProjectDetails = {
+  headerLabel: "Frostig Lab Work",
+  status: "Pipeline Validated",
+  tagline: "MATLAB | Image Segmentation | Signal Processing | Interactive Data Analysis",
+  summary:
+    "This project developed a quantitative neurovascular imaging pipeline in MATLAB to transform high-noise cortical imaging data into stable vessel dilation metrics over time. The workflow combined vessel segmentation, user-guided segment selection, state-aligned temporal analysis, and surface artifact correction to preserve analytical integrity while improving interpretability. The primary engineering objective was to balance structural fidelity, noise suppression, and computational practicality in a reproducible imaging pipeline.",
+  designProblem: [
+    "Robustly segment vessel structures from non-uniform grayscale intensity fields.",
+    "Extract centerline-based radius metrics from irregular vascular geometries.",
+    "Align multi-frame sequences to pre-stimulus, stimulus, and post-stimulus states.",
+    "Preserve quantitative signal while correcting non-physical surf-plot artifacts.",
+    "Support user-guided vessel interrogation without sacrificing reproducibility.",
+  ],
+  architectureDecisions: [
+    {
+      title: "Vessel Segmentation and Identification",
+      detail:
+        "Used thresholding with morphological filtering and ROI constraints to isolate vascular masks while limiting false detections.",
+    },
+    {
+      title: "Interactive Vessel Selection",
+      detail:
+        "Implemented user-guided vessel targeting and segment-specific extraction for controlled yet repeatable analysis.",
+    },
+    {
+      title: "Quantitative Dilation Analysis",
+      detail:
+        "Computed state-wise terminal-frame radius values and percent dilation relative to baseline across grouped conditions.",
+    },
+    {
+      title: "Selective Surface Smoothing",
+      detail:
+        "Applied threshold-based surf-plot corrections to visualization layers only, preserving raw analytical measurements.",
+    },
+  ],
+  challengesTradeoffs: [
+    {
+      title: "Noise vs Structural Accuracy",
+      detail:
+        "Aggressive smoothing removed artifacts but risked distorting vessel boundary geometry and radius accuracy.",
+    },
+    {
+      title: "Mask Sensitivity",
+      detail:
+        "Segmentation continuity depended strongly on threshold settings across heterogeneous intensity regions.",
+    },
+    {
+      title: "User Interaction vs Automation",
+      detail:
+        "Balanced manual flexibility for vessel targeting with standardized downstream computation flow.",
+    },
+    {
+      title: "Artifact Propagation in 3D Surf Plots",
+      detail:
+        "Needed to suppress non-physical rendering patterns without modifying underlying quantitative vessel data.",
+    },
+  ],
+  performanceValidation: [
+    {
+      title: "Segmentation Stability",
+      lines: [
+        "Maintained stable vessel segmentation across multiple sessions and experimental contexts.",
+        "Enabled repeatable segment-specific dilation analysis across independent datasets.",
+      ],
+    },
+    {
+      title: "Temporal and Physiological Consistency",
+      lines: [
+        "Confirmed extracted dilation profiles aligned with stimulus onset and recovery phases.",
+        "Preserved expected vessel-response trends across grouped experimental conditions.",
+      ],
+    },
+    {
+      title: "Signal Integrity Under Correction",
+      lines: [
+        "Reduced surf-plot artifacts without changing underlying quantitative measurements.",
+        "Validated that percent-dilation metrics remained invariant under smoothing adjustments.",
+      ],
+    },
+  ],
+  visuals: [
+    {
+      src: matlabVesselIdentification,
+      alt: "Cortical vessel identification and segmentation mask output",
+      caption: "Vessel identification stage used to isolate analyzable vascular structures.",
+    },
+    {
+      src: matlabSurfPlotAnalysis,
+      alt: "Neurovascular surface analysis visualization",
+      caption: "Surface-based analysis view of neurovascular signal structure before correction.",
+    },
+    {
+      src: matlabSurfPlotModification,
+      alt: "Corrected neurovascular surface plot after selective smoothing",
+      caption: "Post-correction surf view showing reduced visualization artifacts with preserved signal integrity.",
+    },
+  ],
+};
+
+const nickAiDetails: ProjectDetails = {
+  headerLabel: "Applied AI Systems",
+  status: "Locally Deployed",
+  tagline: "HuggingFace | QLoRA | LLaMA 8B | PEFT | WSL Ubuntu | Discord API | Web Deployment",
+  summary:
+    "NickAI is a full training-to-deployment conversational LLM pipeline built around parameter-efficient fine-tuning and local inference. The system takes structured dialogue logs, converts them into supervised conversational pairs, fine-tunes a LLaMA 8B base model with QLoRA, and serves responses through both a private web client and a Discord bot integration. The primary engineering objective was to maintain high stylistic coherence while staying within consumer-GPU memory limits and preserving deployment flexibility.",
+  designProblem: [
+    "Learn consistent conversational style from raw exported dialogue logs.",
+    "Support low-latency local inference on consumer RTX-class hardware.",
+    "Avoid cloud moderation and hosting constraints that limit experimental control.",
+    "Maintain a modular stack across data, training, serving, and interface layers.",
+    "Deploy one model backend that supports both web and messaging endpoints.",
+  ],
+  architectureDecisions: [
+    {
+      title: "Data Engineering Pipeline",
+      detail:
+        "Parsed exported Discord JSON logs into prompt/completion pairs, filtered noise and metadata, and generated train/validation splits in HuggingFace-ready format.",
+    },
+    {
+      title: "QLoRA Fine-Tuning Strategy",
+      detail:
+        "Used 8-bit loading with bitsandbytes and LoRA adapters on attention projection layers to reduce memory footprint while preserving adaptation quality.",
+    },
+    {
+      title: "Local Hosting Migration",
+      detail:
+        "Moved from cloud attempts to local deployment for full preprocessing control, adapter experimentation, and private inference behavior.",
+    },
+    {
+      title: "Service Integration Layer",
+      detail:
+        "Deployed FastAPI inference endpoints with runtime adapter loading and asynchronous Discord bot routing for real-time external interaction.",
+    },
+  ],
+  challengesTradeoffs: [
+    {
+      title: "Memory vs Performance",
+      detail:
+        "Consumer-GPU limits required careful quantization, adapter rank, and context-length choices to keep inference stable.",
+    },
+    {
+      title: "Cloud vs Local Constraints",
+      detail:
+        "Cloud hosting reduced operational control and introduced moderation bottlenecks; local hosting improved flexibility at the cost of self-managed infrastructure.",
+    },
+    {
+      title: "Dataset Structure Quality",
+      detail:
+        "Unstructured logs needed robust cleanup and formatting to produce consistent supervised dialogue pairs for fine-tuning.",
+    },
+    {
+      title: "Context Management",
+      detail:
+        "Implemented token-length filtering and chunking to avoid context overflow and unstable training behavior.",
+    },
+    {
+      title: "System Modularity",
+      detail:
+        "Kept training, inference, and client integrations decoupled to support future upgrades without full-stack rewrites.",
+    },
+  ],
+  performanceValidation: [
+    {
+      title: "Inference Stability",
+      lines: [
+        "Maintained stable local 8-bit inference on RTX 4080-class hardware.",
+        "Observed VRAM use in approximately the 6-8 GB range during active model operation.",
+      ],
+    },
+    {
+      title: "Behavior and Integration",
+      lines: [
+        "Validated stylistic adaptation while avoiding obvious overfitting artifacts in live prompts.",
+        "Confirmed consistent response flow through both the private web UI and Discord bot endpoints.",
+      ],
+    },
+    {
+      title: "Scalability Roadmap",
+      lines: [
+        "Prepared migration path toward 4-bit QLoRA and dynamic context management for lower memory overhead.",
+        "Planned containerized deployment and formal response-quality metrics for broader portability and evaluation.",
+      ],
+    },
+  ],
+  visuals: [
+    {
+      src: aiProjectGpuUtilization,
+      alt: "NickAI local LLaMA inference GPU utilization view",
+      caption: "Local inference performance profile during NickAI operation on consumer GPU hardware.",
+    },
+    {
+      src: discordJson,
+      alt: "NickAI Discord JSON preprocessing and structured dataset workflow view",
+      caption: "Discord log preprocessing stage used to build structured prompt/completion training data.",
+    },
+  ],
+};
+
+const coinSorterDetails: ProjectDetails = {
+  headerLabel: "Mechanical Product Design",
+  status: "Fabricated and Tested",
+  tagline: "CAD | Tolerance Design | Iterative Prototyping | 3D Printing | Mechanical Flow Control",
+  summary:
+    "This project designed and fabricated an autonomous gravity-driven coin sorting system that separates mixed U.S. coins by diameter without electronics. The design translated subtle dimensional differences into reliable mechanical filtering by combining slot geometry, tolerance-aware CAD, and iterative 3D-printed prototyping. The core engineering objective was stable, repeatable one-at-a-time flow while minimizing jams, overlap, and misclassification under real-world manufacturing variation.",
+  designProblem: [
+    "Sort mixed coins by diameter using purely mechanical geometry.",
+    "Prevent jams, overlap stacking, and premature slot drops.",
+    "Maintain consistent gravity-fed flow with minimal user intervention.",
+    "Account for real print variability, shrinkage, and tolerance stack-up.",
+    "Keep the assembly compact, modular, and manufacturable via FDM printing.",
+  ],
+  architectureDecisions: [
+    {
+      title: "Geometric Sorting Strategy",
+      detail:
+        "Guided individual coins across progressively sized drop slots calibrated against nominal U.S. coin diameters with engineered clearance margins.",
+    },
+    {
+      title: "Tolerance Calibration Workflow",
+      detail:
+        "Measured real coin diameters, added controlled offsets in CAD, and iterated slot widths across print revisions to balance fit and flow.",
+    },
+    {
+      title: "Modular Plate Design",
+      detail:
+        "Separated denomination channels into adjustable sliding plates for rapid tuning, maintenance, and future redesign.",
+    },
+    {
+      title: "Parametric CAD and Print Iteration",
+      detail:
+        "Built the assembly with dimension-driven constraints to quickly modify geometry between prototypes and validate under physical testing.",
+    },
+  ],
+  challengesTradeoffs: [
+    {
+      title: "Print Accuracy vs Fit",
+      detail:
+        "Narrower slots improved discrimination but increased jamming sensitivity under FDM dimensional variance.",
+    },
+    {
+      title: "Surface Friction Effects",
+      detail:
+        "Layer lines and print texture altered coin slip behavior and required edge and channel refinement.",
+    },
+    {
+      title: "Manufacturability Constraints",
+      detail:
+        "Geometry was tuned around practical overhang, bridging, and tolerance limits of desktop FDM printing.",
+    },
+    {
+      title: "Scalability Choice",
+      detail:
+        "Optimized for controlled single-coin feed rather than bulk handling to prioritize robust geometric sorting performance.",
+    },
+  ],
+  performanceValidation: [
+    {
+      title: "Sorting Accuracy",
+      lines: [
+        "Successfully routed coins into correct denomination bins under repeated manual-feed trials.",
+        "Validated slot dimensions against physical measurements and functional sorting outcomes.",
+      ],
+    },
+    {
+      title: "Flow Reliability",
+      lines: [
+        "Achieved repeatable one-at-a-time gravity flow with reduced sticking after iterative geometry updates.",
+        "Improved entrance and alignment features to reduce misclassification between adjacent slot sizes.",
+      ],
+    },
+    {
+      title: "Prototype Convergence",
+      lines: [
+        "Multiple fabrication revisions reduced jamming and improved consistency across denominations.",
+        "Final mechanical behavior remained stable under sustained test sequences.",
+      ],
+    },
+  ],
+  visuals: [
+    {
+      src: coinSorterAssembly,
+      alt: "Coin sorter CAD assembly view",
+      caption: "Primary CAD assembly showing channel geometry, slot progression, and plate structure.",
+    },
+    {
+      src: coinSorterExploded,
+      alt: "Coin sorter exploded view and component breakdown",
+      caption: "Exploded view used to evaluate modular part relationships and manufacturability details.",
+    },
+    {
+      src: coinSorterIrl,
+      alt: "Physical 3D-printed coin sorter prototype",
+      caption: "Fabricated prototype used for real-world jam testing and denomination sorting validation.",
+    },
+  ],
+};
+
 const projects: ProjectCard[] = [
   {
     title: "ESONIC",
@@ -151,24 +648,34 @@ const projects: ProjectCard[] = [
     details: esonicDetails,
   },
   {
-    title: "Project Two",
-    note: "Placeholder layout for the second project page.",
+    title: "Bike Drivetrain",
+    note: "Articulated drivetrain simulation with gear-ratio and constraint tradeoff analysis.",
+    previewImage: bicyclePicture,
+    details: bikeDetails,
   },
   {
-    title: "Project Three",
-    note: "Placeholder layout for the third project page.",
+    title: "Thermal Energy Modeling",
+    note: "MATLAB thermal-energy framework for efficiency analysis, extrapolation, and cost prediction.",
+    previewImage: matlabHeatGraph,
+    details: matlabDetails,
   },
   {
-    title: "Project Four",
-    note: "Placeholder layout for the fourth project page.",
+    title: "Neurovascular Imaging Pipeline",
+    note: "MATLAB vessel-segmentation and dilation-analysis pipeline with artifact-aware visualization correction.",
+    previewImage: matlabVesselIdentification,
+    details: frostigImagingDetails,
   },
   {
-    title: "Project Five",
-    note: "Placeholder layout for the fifth project page.",
+    title: "NickAI Conversational LLM",
+    note: "QLoRA fine-tuned LLaMA pipeline with local FastAPI serving, private web UI, and Discord integration.",
+    previewImage: aiProjectGpuUtilization,
+    details: nickAiDetails,
   },
   {
-    title: "Project Six",
-    note: "Placeholder layout for the sixth project page.",
+    title: "Autonomous Coin Sorter",
+    note: "Gravity-driven mechanical sorter with tolerance-calibrated geometry and iterative 3D-printed validation.",
+    previewImage: coinSorterIrl,
+    details: coinSorterDetails,
   },
   {
     title: "Project Seven",
@@ -257,6 +764,7 @@ const Projects = () => {
   const selectedSectionRef = useRef<HTMLDivElement | null>(null);
   const selectorAnchorRef = useRef<HTMLDivElement | null>(null);
   const [showFloatingSelector, setShowFloatingSelector] = useState(false);
+  const [activeVisual, setActiveVisual] = useState<ProjectVisual | null>(null);
 
   const isExpanded = isHovered || isPinned;
   const isFloatingExpanded = showFloatingSelector && (isFloatingHovered || isFloatingPinned);
@@ -295,6 +803,28 @@ const Projects = () => {
 
     return () => window.cancelAnimationFrame(raf);
   }, [selectedProject]);
+
+  useEffect(() => {
+    setActiveVisual(null);
+  }, [selectedIndex]);
+
+  useEffect(() => {
+    if (!activeVisual) {
+      return;
+    }
+
+    const handleEscape = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        setActiveVisual(null);
+      }
+    };
+
+    window.addEventListener("keydown", handleEscape);
+
+    return () => {
+      window.removeEventListener("keydown", handleEscape);
+    };
+  }, [activeVisual]);
 
   useEffect(() => {
     if (!selectorAnchorRef.current) {
@@ -393,8 +923,8 @@ const Projects = () => {
 
   const floatingMetrics = {
     buttonSize: 68,
-    cardHeight: 54,
-    cardWidth: 72,
+    cardHeight: 62,
+    cardWidth: 86,
     stackGap: 12,
     stackOffset: 10,
   };
@@ -475,16 +1005,16 @@ const Projects = () => {
 
                       if (hoveredOrbitPosition) {
                         if (hoveredOrbitIndex === index) {
-                          popupScale = 1.15;
+                          popupScale = 1.24;
                         } else {
                           const dx = x - hoveredOrbitPosition.x;
                           const dy = y - hoveredOrbitPosition.y;
                           const distance = Math.hypot(dx, dy) || 1;
                           const influence = Math.max(0, 1 - distance / (metrics.radius * 1.45));
-                          const pushDistance = influence * 24;
+                          const pushDistance = influence * 34;
                           pushedX += (dx / distance) * pushDistance;
                           pushedY += (dy / distance) * pushDistance;
-                          popupScale = 1 - influence * 0.05;
+                          popupScale = 1 - influence * 0.08;
                         }
                       }
 
@@ -553,8 +1083,8 @@ const Projects = () => {
                                 />
                               ) : null}
                             </div>
-                            <div className="mt-3 flex h-[calc(100%-3rem)] items-end sm:mt-3.5">
-                              <p className="font-medium leading-tight text-foreground">
+                            <div className="mt-2.5 flex items-end justify-center sm:mt-3">
+                              <p className="rounded-full border border-white/22 bg-white/35 px-2.5 py-1 text-center font-display text-[10px] uppercase tracking-[0.18em] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.08]">
                                 {project.title}
                               </p>
                             </div>
@@ -714,13 +1244,13 @@ const Projects = () => {
 
                       if (hoveredFloatingIndex !== null) {
                         if (hoveredFloatingIndex === index) {
-                          popupScale = 1.14;
+                          popupScale = 1.22;
                         } else {
                           const relativeDistance = Math.abs(index - hoveredFloatingIndex);
                           const influence = Math.max(0, 1 - relativeDistance / 3);
                           const direction = index < hoveredFloatingIndex ? 1 : -1;
                           yShift = direction * influence * 12;
-                          popupScale = 1 - influence * 0.045;
+                          popupScale = 1 - influence * 0.06;
                         }
                       }
 
@@ -773,10 +1303,10 @@ const Projects = () => {
                               setIsFloatingPinned(true);
                               setIsFloatingHovered(true);
                             }}
-                            className="pointer-events-auto relative overflow-hidden rounded-[1.4rem] border border-white/26 bg-white/32 p-2 text-left shadow-[0_18px_40px_rgba(173,133,37,0.18)] backdrop-blur-2xl dark:border-white/12 dark:bg-white/[0.08]"
+                            className="pointer-events-auto relative overflow-hidden rounded-[1.5rem] border border-white/26 bg-white/32 p-1 text-left shadow-[0_18px_40px_rgba(173,133,37,0.18)] backdrop-blur-2xl dark:border-white/12 dark:bg-white/[0.08]"
                           >
-                            <span className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-90" />
-                            <div className="h-6 overflow-hidden rounded-[1rem] border border-white/20 bg-white/30 dark:border-white/10 dark:bg-white/[0.05]">
+                            <span className="pointer-events-none absolute inset-x-2 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-90" />
+                            <div className="h-full overflow-hidden rounded-[1.1rem] border border-white/20 bg-white/30 dark:border-white/10 dark:bg-white/[0.05]">
                               {project.previewImage ? (
                                 <img
                                   src={project.previewImage}
@@ -853,148 +1383,195 @@ const Projects = () => {
                     </div>
 
                     {selectedDetails ? (
-                      <div className="mt-8 grid gap-6 xl:grid-cols-[1.24fr_0.76fr]">
-                        <div className="space-y-5">
-                          <section className="rounded-[3rem] border border-white/28 bg-gradient-to-br from-white/72 via-white/28 to-white/12 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.26)] dark:border-white/10 dark:from-white/[0.11] dark:via-white/[0.04] dark:to-transparent sm:p-7">
-                            <p className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/80">
-                              Project Summary
-                            </p>
-                            <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                              {selectedDetails.summary}
-                            </p>
-                          </section>
+                      <div className="mt-8 columns-1 gap-5 lg:columns-2 xl:gap-6">
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/28 bg-gradient-to-br from-white/72 via-white/28 to-white/12 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.26)] dark:border-white/10 dark:from-white/[0.11] dark:via-white/[0.04] dark:to-transparent sm:p-7">
+                          <p className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/80">
+                            Project Summary
+                          </p>
+                          <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                            {selectedDetails.summary}
+                          </p>
+                        </section>
 
-                          <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
-                            <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
-                              Design Problem
-                            </h3>
-                            <div className="mt-4 space-y-3">
-                              {selectedDetails.designProblem.map((item, itemIndex) => (
-                                <div
-                                  key={item}
-                                  className="flex items-start gap-3 rounded-[1.4rem] border border-white/22 bg-white/24 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
-                                >
-                                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/24 bg-white/34 font-display text-[10px] text-foreground/90 dark:border-white/10 dark:bg-white/[0.06]">
-                                    {itemIndex + 1}
-                                  </span>
-                                  <p className="text-sm leading-relaxed text-muted-foreground">
-                                    {item}
-                                  </p>
-                                </div>
-                              ))}
-                            </div>
-                          </section>
-
-                          <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
-                            <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
-                              Key Architecture Decisions
-                            </h3>
-                            <div className="mt-4 space-y-3">
-                              {selectedDetails.architectureDecisions.map((decision) => (
-                                <article
-                                  key={decision.title}
-                                  className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
-                                >
-                                  <p className="text-sm leading-relaxed text-muted-foreground">
-                                    <span className="font-semibold text-foreground/90">
-                                      {decision.title}
-                                    </span>{" "}
-                                    {decision.detail}
-                                  </p>
-                                </article>
-                              ))}
-                            </div>
-                          </section>
-
-                          <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
-                            <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
-                              Engineering Challenges & Tradeoffs
-                            </h3>
-                            <div className="mt-4 space-y-3">
-                              {selectedDetails.challengesTradeoffs.map((challenge) => (
-                                <article
-                                  key={challenge.title}
-                                  className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
-                                >
-                                  <p className="text-sm leading-relaxed text-muted-foreground">
-                                    <span className="font-semibold text-foreground/90">
-                                      {challenge.title}
-                                    </span>{" "}
-                                    {challenge.detail}
-                                  </p>
-                                </article>
-                              ))}
-                            </div>
-                          </section>
-
-                          <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
-                            <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
-                              Performance & Validation
-                            </h3>
-                            <div className="mt-4 space-y-3">
-                              {selectedDetails.performanceValidation.map((block) => (
-                                <article
-                                  key={block.title}
-                                  className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
-                                >
-                                  <h4 className="font-display text-[11px] uppercase tracking-[0.2em] text-foreground/90">
-                                    {block.title}
-                                  </h4>
-                                  <div className="mt-2 space-y-1.5">
-                                    {block.lines.map((line) => (
-                                      <p
-                                        key={line}
-                                        className="text-sm leading-relaxed text-muted-foreground"
-                                      >
-                                        {line}
-                                      </p>
-                                    ))}
-                                  </div>
-                                </article>
-                              ))}
-                            </div>
-                          </section>
-                        </div>
-
-                        <div className="space-y-5">
-                          <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
-                            <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
-                              Build Stack
-                            </h3>
-                            <div className="mt-4 flex flex-wrap gap-2.5">
-                              {selectedDetails.tagline
-                                .split("|")
-                                .map((item) => item.trim())
-                                .filter(Boolean)
-                                .map((item) => (
-                                  <span
-                                    key={item}
-                                    className="rounded-full border border-white/22 bg-white/28 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]"
-                                  >
-                                    {item}
-                                  </span>
-                                ))}
-                            </div>
-                          </section>
-
-                          {selectedDetails.visuals.map((visual) => (
-                            <figure
-                              key={visual.alt}
-                              className="rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]"
+                        {selectedDetails.visuals[0] ? (
+                          <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
+                            <button
+                              type="button"
+                              onClick={() => setActiveVisual(selectedDetails.visuals[0])}
+                              className="w-full text-left"
                             >
                               <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-white/22 dark:border-white/10 dark:bg-white/[0.04]">
                                 <img
-                                  src={visual.src}
-                                  alt={visual.alt}
-                                  className="h-60 w-full object-cover sm:h-64"
+                                  src={selectedDetails.visuals[0].src}
+                                  alt={selectedDetails.visuals[0].alt}
+                                  className="h-72 w-full object-cover sm:h-80"
                                 />
                               </div>
-                              <figcaption className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
-                                {visual.caption}
-                              </figcaption>
-                            </figure>
-                          ))}
-                        </div>
+                            </button>
+                            <figcaption className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
+                              {selectedDetails.visuals[0].caption}
+                            </figcaption>
+                            <p className="mt-1 px-1 font-display text-[10px] uppercase tracking-[0.2em] text-primary/75">
+                              Click to zoom
+                            </p>
+                          </figure>
+                        ) : null}
+
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                          <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                            Design Problem
+                          </h3>
+                          <div className="mt-4 space-y-3">
+                            {selectedDetails.designProblem.map((item, itemIndex) => (
+                              <div
+                                key={item}
+                                className="flex items-start gap-3 rounded-[1.4rem] border border-white/22 bg-white/24 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                              >
+                                <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/24 bg-white/34 font-display text-[10px] text-foreground/90 dark:border-white/10 dark:bg-white/[0.06]">
+                                  {itemIndex + 1}
+                                </span>
+                                <p className="text-sm leading-relaxed text-muted-foreground">
+                                  {item}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                          <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                            Build Stack
+                          </h3>
+                          <div className="mt-4 flex flex-wrap gap-2.5">
+                            {selectedDetails.tagline
+                              .split("|")
+                              .map((item) => item.trim())
+                              .filter(Boolean)
+                              .map((item) => (
+                                <span
+                                  key={item}
+                                  className="rounded-full border border-white/22 bg-white/28 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]"
+                                >
+                                  {item}
+                                </span>
+                              ))}
+                          </div>
+                        </section>
+
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                          <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                            Key Architecture Decisions
+                          </h3>
+                          <div className="mt-4 space-y-3">
+                            {selectedDetails.architectureDecisions.map((decision) => (
+                              <article
+                                key={decision.title}
+                                className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                              >
+                                <p className="text-sm leading-relaxed text-muted-foreground">
+                                  <span className="font-semibold text-foreground/90">
+                                    {decision.title}
+                                  </span>{" "}
+                                  {decision.detail}
+                                </p>
+                              </article>
+                            ))}
+                          </div>
+                        </section>
+
+                        {selectedDetails.visuals[1] ? (
+                          <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
+                            <button
+                              type="button"
+                              onClick={() => setActiveVisual(selectedDetails.visuals[1])}
+                              className="w-full text-left"
+                            >
+                              <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-white/22 dark:border-white/10 dark:bg-white/[0.04]">
+                                <img
+                                  src={selectedDetails.visuals[1].src}
+                                  alt={selectedDetails.visuals[1].alt}
+                                  className="h-80 w-full object-cover sm:h-[26rem]"
+                                />
+                              </div>
+                            </button>
+                            <figcaption className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
+                              {selectedDetails.visuals[1].caption}
+                            </figcaption>
+                            <p className="mt-1 px-1 font-display text-[10px] uppercase tracking-[0.2em] text-primary/75">
+                              Click to zoom
+                            </p>
+                          </figure>
+                        ) : null}
+
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                          <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                            Engineering Challenges & Tradeoffs
+                          </h3>
+                          <div className="mt-4 space-y-3">
+                            {selectedDetails.challengesTradeoffs.map((challenge) => (
+                              <article
+                                key={challenge.title}
+                                className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                              >
+                                <p className="text-sm leading-relaxed text-muted-foreground">
+                                  <span className="font-semibold text-foreground/90">
+                                    {challenge.title}
+                                  </span>{" "}
+                                  {challenge.detail}
+                                </p>
+                              </article>
+                            ))}
+                          </div>
+                        </section>
+
+                        {selectedDetails.visuals[2] ? (
+                          <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
+                            <button
+                              type="button"
+                              onClick={() => setActiveVisual(selectedDetails.visuals[2])}
+                              className="w-full text-left"
+                            >
+                              <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-white/22 dark:border-white/10 dark:bg-white/[0.04]">
+                                <img
+                                  src={selectedDetails.visuals[2].src}
+                                  alt={selectedDetails.visuals[2].alt}
+                                  className="h-72 w-full object-cover sm:h-80"
+                                />
+                              </div>
+                            </button>
+                            <figcaption className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
+                              {selectedDetails.visuals[2].caption}
+                            </figcaption>
+                            <p className="mt-1 px-1 font-display text-[10px] uppercase tracking-[0.2em] text-primary/75">
+                              Click to zoom
+                            </p>
+                          </figure>
+                        ) : null}
+
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                          <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                            Performance & Validation
+                          </h3>
+                          <div className="mt-4 space-y-3">
+                            {selectedDetails.performanceValidation.map((block) => (
+                              <article
+                                key={block.title}
+                                className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                              >
+                                <h4 className="font-display text-[11px] uppercase tracking-[0.2em] text-foreground/90">
+                                  {block.title}
+                                </h4>
+                                <div className="mt-2 space-y-1.5">
+                                  {block.lines.map((line) => (
+                                    <p key={line} className="text-sm leading-relaxed text-muted-foreground">
+                                      {line}
+                                    </p>
+                                  ))}
+                                </div>
+                              </article>
+                            ))}
+                          </div>
+                        </section>
                       </div>
                     ) : (
                       <div className="mt-8 grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
@@ -1034,6 +1611,48 @@ const Projects = () => {
               </motion.section>
             ) : null}
           </AnimatePresence>
+
+          <AnimatePresence>
+            {activeVisual ? (
+              <motion.div
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ duration: 0.2 }}
+                onClick={() => setActiveVisual(null)}
+                className="fixed inset-0 z-[70] flex items-center justify-center bg-black/65 p-4 backdrop-blur-md sm:p-8"
+              >
+                <motion.div
+                  initial={{ opacity: 0, scale: 0.96, y: 12 }}
+                  animate={{ opacity: 1, scale: 1, y: 0 }}
+                  exit={{ opacity: 0, scale: 0.98, y: 8 }}
+                  transition={{ duration: 0.28, ease: motionEase }}
+                  onClick={(event) => event.stopPropagation()}
+                  className="w-full max-w-5xl rounded-[2.6rem] border border-white/26 bg-white/24 p-4 shadow-[0_38px_120px_rgba(8,5,18,0.7)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.06] sm:p-5"
+                >
+                  <div className="mb-3 flex items-center justify-end">
+                    <button
+                      type="button"
+                      onClick={() => setActiveVisual(null)}
+                      className="rounded-full border border-white/24 bg-white/26 px-4 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-foreground transition-colors hover:bg-white/36 dark:border-white/10 dark:bg-white/[0.07] dark:hover:bg-white/[0.12]"
+                    >
+                      Close
+                    </button>
+                  </div>
+                  <div className="overflow-hidden rounded-[2rem] border border-white/22 bg-white/24 dark:border-white/10 dark:bg-white/[0.04]">
+                    <img
+                      src={activeVisual.src}
+                      alt={activeVisual.alt}
+                      className="max-h-[76vh] w-full object-contain"
+                    />
+                  </div>
+                  <p className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
+                    {activeVisual.caption}
+                  </p>
+                </motion.div>
+              </motion.div>
+            ) : null}
+          </AnimatePresence>
         </div>
       </div>
     </PageLayout>
@@ -1041,3 +1660,4 @@ const Projects = () => {
 };
 
 export default Projects;
+
