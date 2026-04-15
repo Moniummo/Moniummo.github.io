@@ -1068,23 +1068,23 @@ const Projects = () => {
                               setIsPinned(true);
                               setIsHovered(true);
                             }}
-                            className="pointer-events-auto relative overflow-hidden rounded-[2.2rem] border border-white/22 bg-white/34 p-3 text-left shadow-[0_26px_72px_rgba(173,133,37,0.14)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.07] dark:shadow-[0_24px_66px_rgba(8,5,18,0.5)] sm:rounded-[2.5rem] sm:p-3.5"
+                            className="pointer-events-auto relative overflow-hidden rounded-[2.2rem] border border-white/22 bg-white/34 text-left shadow-[0_26px_72px_rgba(173,133,37,0.14)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.07] dark:shadow-[0_24px_66px_rgba(8,5,18,0.5)] sm:rounded-[2.5rem]"
                           >
                             <span className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent opacity-90" />
-                            <div
-                              className="overflow-hidden rounded-[1.6rem] border border-white/18 bg-gradient-to-br from-white/62 via-white/20 to-white/6 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] dark:border-white/10 dark:from-white/[0.14] dark:via-white/[0.05] dark:to-transparent"
-                              style={{ height: metrics.imageHeight }}
-                            >
+                            <div className="absolute inset-0 overflow-hidden">
                               {project.previewImage ? (
                                 <img
                                   src={project.previewImage}
                                   alt={`${project.title} thumbnail`}
                                   className="h-full w-full object-cover"
                                 />
-                              ) : null}
+                              ) : (
+                                <div className="h-full w-full bg-gradient-to-br from-white/62 via-white/20 to-white/6 dark:from-white/[0.14] dark:via-white/[0.05] dark:to-transparent" />
+                              )}
+                              <span className="pointer-events-none absolute inset-0 bg-gradient-to-b from-black/5 via-transparent to-black/45 dark:from-black/8 dark:to-black/58" />
                             </div>
-                            <div className="mt-2.5 flex items-end justify-center sm:mt-3">
-                              <p className="rounded-full border border-white/22 bg-white/35 px-2.5 py-1 text-center font-display text-[10px] uppercase tracking-[0.18em] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.08]">
+                            <div className="pointer-events-none absolute inset-x-2 bottom-2 flex justify-center">
+                              <p className="max-w-full rounded-[1rem] border border-white/24 bg-white/34 px-3 py-1.5 text-center font-display text-[9px] leading-tight uppercase tracking-[0.1em] text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.13] dark:text-white">
                                 {project.title}
                               </p>
                             </div>
