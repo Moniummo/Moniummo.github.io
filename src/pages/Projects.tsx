@@ -1,14 +1,154 @@
 import { AnimatePresence, motion } from "framer-motion";
 import { type FocusEvent, useEffect, useRef, useState } from "react";
 import PageLayout from "@/components/PageLayout";
+import esonicBoxChart from "@/assets/ESONIC_Box_Chart.png";
+import esonicVisualizer from "@/assets/ESONIC_visualizer.png";
 
 const motionEase = [0.22, 1, 0.36, 1] as const;
 const closeDelayMs = 220;
 
-const projects = [
+interface ProjectDecision {
+  title: string;
+  detail: string;
+}
+
+interface ProjectPerformanceBlock {
+  title: string;
+  lines: string[];
+}
+
+interface ProjectVisual {
+  src: string;
+  alt: string;
+  caption: string;
+}
+
+interface ProjectDetails {
+  headerLabel: string;
+  status: string;
+  tagline: string;
+  summary: string;
+  designProblem: string[];
+  architectureDecisions: ProjectDecision[];
+  challengesTradeoffs: ProjectDecision[];
+  performanceValidation: ProjectPerformanceBlock[];
+  visuals: ProjectVisual[];
+}
+
+interface ProjectCard {
+  title: string;
+  note: string;
+  previewImage?: string;
+  details?: ProjectDetails;
+}
+
+const esonicDetails: ProjectDetails = {
+  headerLabel: "Flagship Build",
+  status: "Prototype Complete",
+  tagline: "ESP32 | IMU | UWB | ESP-NOW | Python | VisPy",
+  summary:
+    "ESONIC is a distributed multi-rate motion telemetry and closed-loop feedback platform built to keep sensing, transport, visualization, and actuation in sync at low latency. The system captures 400 Hz accelerometer data, 100 Hz gyroscopic orientation, and 10 Hz UWB positional validation, then relays telemetry through an ESP-NOW gateway for host-side fusion and feedback control. The core engineering objective was deterministic throughput under asynchronous sensor rates while maintaining an end-to-end response near 10 milliseconds.",
+  designProblem: [
+    "Acquire 400 Hz accelerometer and 100 Hz gyroscopic orientation data in real time.",
+    "Integrate 10 Hz UWB positional validation without disrupting higher-rate streams.",
+    "Aggregate distributed telemetry wirelessly with predictable timing behavior.",
+    "Run real-time visualization and audio mapping from centralized host processing.",
+    "Deliver haptic and LED feedback in a closed-loop control pathway.",
+  ],
+  architectureDecisions: [
+    {
+      title: "ESP-NOW over WiFi/BLE",
+      detail:
+        "Reduced communication overhead and improved latency for small, high-frequency packets.",
+    },
+    {
+      title: "Gateway Receiver ESP32",
+      detail:
+        "Separated wireless transport from host computation and enabled bidirectional control relay.",
+    },
+    {
+      title: "Bitmask Packet Structure",
+      detail:
+        "Used compact field flags to minimize payload size and support asynchronous updates.",
+    },
+    {
+      title: "Centralized Fusion in Python",
+      detail:
+        "Moved heavier fusion and rotation calculations to the host for faster iteration and stable embedded timing.",
+    },
+  ],
+  challengesTradeoffs: [
+    {
+      title: "Multi-Rate Synchronization",
+      detail:
+        "Aligned asynchronous 400/100/10 Hz streams with bitmask-driven packet parsing and host-side time matching.",
+    },
+    {
+      title: "Wireless Throughput Constraints",
+      detail:
+        "Controlled congestion by transmitting only active fields so telemetry remained stable.",
+    },
+    {
+      title: "Latency vs Computation",
+      detail:
+        "Kept embedded loops lightweight by offloading quaternion conversion and fusion logic to Python.",
+    },
+    {
+      title: "IMU Drift Accumulation",
+      detail:
+        "Applied low-pass filtering and periodic UWB correction to prevent long-term divergence.",
+    },
+    {
+      title: "Scalability Planning",
+      detail:
+        "Designed packet and gateway logic to support future sensor fields without firmware redesign.",
+    },
+  ],
+  performanceValidation: [
+    {
+      title: "Telemetry Stability",
+      lines: [
+        "Sustained 400 Hz accelerometer sampling without packet flooding.",
+        "Maintained stable 100 Hz orientation updates under continuous motion.",
+        "Integrated 10 Hz UWB validation while preserving high-rate stream continuity.",
+      ],
+    },
+    {
+      title: "Latency Characterization",
+      lines: [
+        "Targeted approximately 10 ms end-to-end closed-loop response.",
+        "Kept relay overhead at the gateway minimal for responsive feedback.",
+        "Optimized host processing for real-time rendering and control output.",
+      ],
+    },
+    {
+      title: "Packet Efficiency and Robustness",
+      lines: [
+        "Bitmask payloads reduced redundant transmission and scaled with active fields.",
+        "Drift correction preserved long-run stability during dynamic movement sessions.",
+      ],
+    },
+  ],
+  visuals: [
+    {
+      src: esonicVisualizer,
+      alt: "ESONIC real-time visualizer interface",
+      caption: "Real-time ESONIC visualizer for telemetry and feedback monitoring.",
+    },
+    {
+      src: esonicBoxChart,
+      alt: "ESONIC architecture and data flow chart",
+      caption: "System-level transport and control flow used in the ESONIC pipeline.",
+    },
+  ],
+};
+
+const projects: ProjectCard[] = [
   {
-    title: "Project One",
-    note: "Placeholder layout for the first project page.",
+    title: "ESONIC",
+    note: "Distributed motion telemetry and closed-loop feedback with multi-rate sensing.",
+    previewImage: esonicVisualizer,
+    details: esonicDetails,
   },
   {
     title: "Project Two",
@@ -121,6 +261,7 @@ const Projects = () => {
   const isExpanded = isHovered || isPinned;
   const isFloatingExpanded = showFloatingSelector && (isFloatingHovered || isFloatingPinned);
   const selectedProject = selectedIndex === null ? null : projects[selectedIndex];
+  const selectedDetails = selectedProject?.details;
 
   useEffect(() => {
     const handleResize = () => {
@@ -401,9 +542,17 @@ const Projects = () => {
                           >
                             <span className="pointer-events-none absolute inset-x-4 top-0 h-px bg-gradient-to-r from-transparent via-white/80 to-transparent opacity-90" />
                             <div
-                              className="rounded-[1.6rem] border border-white/18 bg-gradient-to-br from-white/62 via-white/20 to-white/6 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] dark:border-white/10 dark:from-white/[0.14] dark:via-white/[0.05] dark:to-transparent"
+                              className="overflow-hidden rounded-[1.6rem] border border-white/18 bg-gradient-to-br from-white/62 via-white/20 to-white/6 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] dark:border-white/10 dark:from-white/[0.14] dark:via-white/[0.05] dark:to-transparent"
                               style={{ height: metrics.imageHeight }}
-                            />
+                            >
+                              {project.previewImage ? (
+                                <img
+                                  src={project.previewImage}
+                                  alt={`${project.title} thumbnail`}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : null}
+                            </div>
                             <div className="mt-3 flex h-[calc(100%-3rem)] items-end sm:mt-3.5">
                               <p className="font-medium leading-tight text-foreground">
                                 {project.title}
@@ -627,7 +776,15 @@ const Projects = () => {
                             className="pointer-events-auto relative overflow-hidden rounded-[1.4rem] border border-white/26 bg-white/32 p-2 text-left shadow-[0_18px_40px_rgba(173,133,37,0.18)] backdrop-blur-2xl dark:border-white/12 dark:bg-white/[0.08]"
                           >
                             <span className="pointer-events-none absolute inset-x-3 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-90" />
-                            <div className="h-6 rounded-[1rem] border border-white/20 bg-white/30 dark:border-white/10 dark:bg-white/[0.05]" />
+                            <div className="h-6 overflow-hidden rounded-[1rem] border border-white/20 bg-white/30 dark:border-white/10 dark:bg-white/[0.05]">
+                              {project.previewImage ? (
+                                <img
+                                  src={project.previewImage}
+                                  alt={`${project.title} mini preview`}
+                                  className="h-full w-full object-cover"
+                                />
+                              ) : null}
+                            </div>
                           </motion.button>
                         </div>
                       );
@@ -679,48 +836,199 @@ const Projects = () => {
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="font-display text-[10px] uppercase tracking-[0.34em] text-primary/80">
-                          Project Placeholder
+                          {selectedDetails?.headerLabel ?? "Project Placeholder"}
                         </p>
                         <h2 className="mt-3 text-2xl text-foreground sm:text-4xl">
                           {selectedProject.title}
                         </h2>
+                        {selectedDetails?.tagline ? (
+                          <p className="mt-3 text-xs uppercase tracking-[0.26em] text-muted-foreground">
+                            {selectedDetails.tagline}
+                          </p>
+                        ) : null}
                       </div>
                       <span className="rounded-full border border-white/18 bg-white/26 px-4 py-1.5 font-display text-[10px] uppercase tracking-[0.28em] text-muted-foreground dark:border-white/10 dark:bg-white/[0.05]">
-                        In Progress
+                        {selectedDetails?.status ?? "In Progress"}
                       </span>
                     </div>
 
-                    <div className="mt-8 grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
-                      <div className="rounded-[3.1rem] border border-white/28 bg-gradient-to-br from-white/70 via-white/26 to-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] dark:border-white/10 dark:from-white/[0.11] dark:via-white/[0.04] dark:to-transparent sm:rounded-[3.6rem] sm:p-7">
-                        <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
-                          {selectedProject.note}
-                        </p>
-                        <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                          This is placeholder content for {selectedProject.title}. Lorem ipsum
-                          dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
-                          incididunt ut labore et dolore magna aliqua.
-                        </p>
-                        <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                          Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-                          ut aliquip ex ea commodo consequat. This section will be replaced with
-                          your real project summary later.
-                        </p>
-                      </div>
-
-                      <div className="flex flex-col gap-4 rounded-[3.1rem] border border-white/26 bg-white/20 p-5 dark:border-white/10 dark:bg-white/[0.03] sm:rounded-[3.6rem] sm:p-6">
-                        {["Project 1", "Project 2", "Project 3"].map((label) => (
-                          <div
-                            key={label}
-                            className="rounded-[2.2rem] border border-white/24 bg-white/22 p-4 dark:border-white/10 dark:bg-white/[0.03]"
-                          >
-                            <div className="h-24 rounded-[1.7rem] border border-white/20 bg-gradient-to-br from-white/56 via-white/22 to-transparent dark:border-white/10 dark:from-white/[0.06] dark:via-white/[0.02] dark:to-transparent" />
-                            <p className="mt-3 text-center font-display text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
-                              {label}
+                    {selectedDetails ? (
+                      <div className="mt-8 grid gap-6 xl:grid-cols-[1.24fr_0.76fr]">
+                        <div className="space-y-5">
+                          <section className="rounded-[3rem] border border-white/28 bg-gradient-to-br from-white/72 via-white/28 to-white/12 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.26)] dark:border-white/10 dark:from-white/[0.11] dark:via-white/[0.04] dark:to-transparent sm:p-7">
+                            <p className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/80">
+                              Project Summary
                             </p>
-                          </div>
-                        ))}
+                            <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                              {selectedDetails.summary}
+                            </p>
+                          </section>
+
+                          <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                            <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                              Design Problem
+                            </h3>
+                            <div className="mt-4 space-y-3">
+                              {selectedDetails.designProblem.map((item, itemIndex) => (
+                                <div
+                                  key={item}
+                                  className="flex items-start gap-3 rounded-[1.4rem] border border-white/22 bg-white/24 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                                >
+                                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/24 bg-white/34 font-display text-[10px] text-foreground/90 dark:border-white/10 dark:bg-white/[0.06]">
+                                    {itemIndex + 1}
+                                  </span>
+                                  <p className="text-sm leading-relaxed text-muted-foreground">
+                                    {item}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+
+                          <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                            <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                              Key Architecture Decisions
+                            </h3>
+                            <div className="mt-4 space-y-3">
+                              {selectedDetails.architectureDecisions.map((decision) => (
+                                <article
+                                  key={decision.title}
+                                  className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                                >
+                                  <p className="text-sm leading-relaxed text-muted-foreground">
+                                    <span className="font-semibold text-foreground/90">
+                                      {decision.title}
+                                    </span>{" "}
+                                    {decision.detail}
+                                  </p>
+                                </article>
+                              ))}
+                            </div>
+                          </section>
+
+                          <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                            <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                              Engineering Challenges & Tradeoffs
+                            </h3>
+                            <div className="mt-4 space-y-3">
+                              {selectedDetails.challengesTradeoffs.map((challenge) => (
+                                <article
+                                  key={challenge.title}
+                                  className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                                >
+                                  <p className="text-sm leading-relaxed text-muted-foreground">
+                                    <span className="font-semibold text-foreground/90">
+                                      {challenge.title}
+                                    </span>{" "}
+                                    {challenge.detail}
+                                  </p>
+                                </article>
+                              ))}
+                            </div>
+                          </section>
+
+                          <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                            <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                              Performance & Validation
+                            </h3>
+                            <div className="mt-4 space-y-3">
+                              {selectedDetails.performanceValidation.map((block) => (
+                                <article
+                                  key={block.title}
+                                  className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                                >
+                                  <h4 className="font-display text-[11px] uppercase tracking-[0.2em] text-foreground/90">
+                                    {block.title}
+                                  </h4>
+                                  <div className="mt-2 space-y-1.5">
+                                    {block.lines.map((line) => (
+                                      <p
+                                        key={line}
+                                        className="text-sm leading-relaxed text-muted-foreground"
+                                      >
+                                        {line}
+                                      </p>
+                                    ))}
+                                  </div>
+                                </article>
+                              ))}
+                            </div>
+                          </section>
+                        </div>
+
+                        <div className="space-y-5">
+                          <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                            <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                              Build Stack
+                            </h3>
+                            <div className="mt-4 flex flex-wrap gap-2.5">
+                              {selectedDetails.tagline
+                                .split("|")
+                                .map((item) => item.trim())
+                                .filter(Boolean)
+                                .map((item) => (
+                                  <span
+                                    key={item}
+                                    className="rounded-full border border-white/22 bg-white/28 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]"
+                                  >
+                                    {item}
+                                  </span>
+                                ))}
+                            </div>
+                          </section>
+
+                          {selectedDetails.visuals.map((visual) => (
+                            <figure
+                              key={visual.alt}
+                              className="rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]"
+                            >
+                              <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-white/22 dark:border-white/10 dark:bg-white/[0.04]">
+                                <img
+                                  src={visual.src}
+                                  alt={visual.alt}
+                                  className="h-60 w-full object-cover sm:h-64"
+                                />
+                              </div>
+                              <figcaption className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
+                                {visual.caption}
+                              </figcaption>
+                            </figure>
+                          ))}
+                        </div>
                       </div>
-                    </div>
+                    ) : (
+                      <div className="mt-8 grid gap-6 lg:grid-cols-[1.25fr_0.75fr]">
+                        <div className="rounded-[3.1rem] border border-white/28 bg-gradient-to-br from-white/70 via-white/26 to-white/10 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] dark:border-white/10 dark:from-white/[0.11] dark:via-white/[0.04] dark:to-transparent sm:rounded-[3.6rem] sm:p-7">
+                          <p className="text-sm leading-relaxed text-muted-foreground sm:text-base">
+                            {selectedProject.note}
+                          </p>
+                          <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                            This is placeholder content for {selectedProject.title}. Lorem ipsum
+                            dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+                            incididunt ut labore et dolore magna aliqua.
+                          </p>
+                          <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
+                            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
+                            ut aliquip ex ea commodo consequat. This section will be replaced with
+                            your real project summary later.
+                          </p>
+                        </div>
+
+                        <div className="flex flex-col gap-4 rounded-[3.1rem] border border-white/26 bg-white/20 p-5 dark:border-white/10 dark:bg-white/[0.03] sm:rounded-[3.6rem] sm:p-6">
+                          {["Project 1", "Project 2", "Project 3"].map((label) => (
+                            <div
+                              key={label}
+                              className="rounded-[2.2rem] border border-white/24 bg-white/22 p-4 dark:border-white/10 dark:bg-white/[0.03]"
+                            >
+                              <div className="h-24 rounded-[1.7rem] border border-white/20 bg-gradient-to-br from-white/56 via-white/22 to-transparent dark:border-white/10 dark:from-white/[0.06] dark:via-white/[0.02] dark:to-transparent" />
+                              <p className="mt-3 text-center font-display text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
+                                {label}
+                              </p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </motion.section>
