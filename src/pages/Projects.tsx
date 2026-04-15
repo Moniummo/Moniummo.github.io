@@ -109,6 +109,8 @@ const Projects = () => {
   const [isPinned, setIsPinned] = useState(false);
   const [isFloatingHovered, setIsFloatingHovered] = useState(false);
   const [isFloatingPinned, setIsFloatingPinned] = useState(false);
+  const [hoveredOrbitIndex, setHoveredOrbitIndex] = useState<number | null>(null);
+  const [hoveredFloatingIndex, setHoveredFloatingIndex] = useState<number | null>(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [metrics, setMetrics] = useState<OrbitMetrics>(getOrbitMetrics);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -184,6 +186,7 @@ const Projects = () => {
 
   const queueCloseOrbit = () => {
     clearCloseTimer();
+    setHoveredOrbitIndex(null);
 
     if (isPinned) {
       return;
@@ -219,6 +222,8 @@ const Projects = () => {
   };
 
   const queueCloseFloatingOrbit = () => {
+    setHoveredFloatingIndex(null);
+
     if (isFloatingPinned) {
       return;
     }
@@ -259,6 +264,17 @@ const Projects = () => {
   const floatingInteractiveHeight = isFloatingExpanded
     ? floatingBoundsHeight
     : floatingMetrics.buttonSize;
+  const hoveredOrbitPosition =
+    hoveredOrbitIndex === null
+      ? null
+      : {
+          x:
+            Math.cos((Math.PI * 2 * hoveredOrbitIndex) / projects.length - Math.PI / 2) *
+            metrics.radius,
+          y:
+            Math.sin((Math.PI * 2 * hoveredOrbitIndex) / projects.length - Math.PI / 2) *
+            metrics.radius,
+        };
 
   return (
     <PageLayout title="Projects" mainClassName="max-w-none px-0 sm:px-0">
@@ -312,6 +328,24 @@ const Projects = () => {
                       const angle = (Math.PI * 2 * index) / projects.length - Math.PI / 2;
                       const x = Math.cos(angle) * metrics.radius;
                       const y = Math.sin(angle) * metrics.radius;
+                      let pushedX = x;
+                      let pushedY = y;
+                      let popupScale = 1;
+
+                      if (hoveredOrbitPosition) {
+                        if (hoveredOrbitIndex === index) {
+                          popupScale = 1.15;
+                        } else {
+                          const dx = x - hoveredOrbitPosition.x;
+                          const dy = y - hoveredOrbitPosition.y;
+                          const distance = Math.hypot(dx, dy) || 1;
+                          const influence = Math.max(0, 1 - distance / (metrics.radius * 1.45));
+                          const pushDistance = influence * 24;
+                          pushedX += (dx / distance) * pushDistance;
+                          pushedY += (dy / distance) * pushDistance;
+                          popupScale = 1 - influence * 0.05;
+                        }
+                      }
 
                       return (
                         <div
@@ -325,9 +359,9 @@ const Projects = () => {
                               isExpanded
                                 ? {
                                     opacity: 1,
-                                    scale: 1,
-                                    x,
-                                    y,
+                                    scale: popupScale,
+                                    x: pushedX,
+                                    y: pushedY,
                                     filter: "blur(0px)",
                                   }
                                 : {
@@ -346,6 +380,15 @@ const Projects = () => {
                             style={{
                               height: metrics.cardHeight,
                               width: metrics.cardWidth,
+                            }}
+                            onMouseEnter={() => {
+                              openOrbit();
+                              setHoveredOrbitIndex(index);
+                            }}
+                            onMouseLeave={() => {
+                              setHoveredOrbitIndex((current) =>
+                                current === index ? null : current
+                              );
                             }}
                             onFocus={openOrbit}
                             onClick={() => {
@@ -517,6 +560,20 @@ const Projects = () => {
                       const yOffset =
                         (index + 1) * (floatingMetrics.cardHeight + floatingMetrics.stackGap) +
                         floatingMetrics.stackOffset;
+                      let yShift = 0;
+                      let popupScale = 1;
+
+                      if (hoveredFloatingIndex !== null) {
+                        if (hoveredFloatingIndex === index) {
+                          popupScale = 1.14;
+                        } else {
+                          const relativeDistance = Math.abs(index - hoveredFloatingIndex);
+                          const influence = Math.max(0, 1 - relativeDistance / 3);
+                          const direction = index < hoveredFloatingIndex ? 1 : -1;
+                          yShift = direction * influence * 12;
+                          popupScale = 1 - influence * 0.045;
+                        }
+                      }
 
                       return (
                         <div
@@ -530,9 +587,9 @@ const Projects = () => {
                               isFloatingExpanded
                                 ? {
                                     opacity: 1,
-                                    scale: 1,
+                                    scale: popupScale,
                                     x: 0,
-                                    y: -yOffset,
+                                    y: -yOffset + yShift,
                                     filter: "blur(0px)",
                                   }
                                 : {
@@ -551,6 +608,15 @@ const Projects = () => {
                             style={{
                               height: floatingMetrics.cardHeight,
                               width: floatingMetrics.cardWidth,
+                            }}
+                            onMouseEnter={() => {
+                              openFloatingOrbit();
+                              setHoveredFloatingIndex(index);
+                            }}
+                            onMouseLeave={() => {
+                              setHoveredFloatingIndex((current) =>
+                                current === index ? null : current
+                              );
                             }}
                             onFocus={openFloatingOrbit}
                             onClick={() => {

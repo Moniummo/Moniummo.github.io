@@ -1,42 +1,157 @@
 import PageLayout from "@/components/PageLayout";
 import { motion } from "framer-motion";
 
-const papers = [
+interface ResearchSubsection {
+  title: string;
+  body: string[];
+}
+
+interface LabResearchBlock {
+  label: string;
+  heading: string;
+  sections: ResearchSubsection[];
+}
+
+const brewerSections: ResearchSubsection[] = [
   {
-    title: "Research Paper Title One",
-    journal: "Journal Name, Vol. X, 2024",
-    description: "Brief abstract or summary of your research contribution.",
+    title: "Research Focus",
+    body: [
+      "My work in Dr. Brewer's lab asks a foundational neuroscience question: how does the brain coordinate communication between regions with such precise timing? Much of the field has treated local field potentials (LFPs) as passive readouts of synaptic activity. Our project explores a different possibility, that axons may generate intrinsic oscillations that actively gate when and how signals propagate. We study this question in hippocampal circuits, where timing is central to memory and learning.",
+      "This framing shifts the goal from simply describing neural activity to testing mechanism. If axonal rhythms help control communication, then neural networks are not just connected by anatomy; they are regulated by phase, synchrony, and timing dynamics. That perspective has important implications for how we model cognition and how we approach disorders marked by disrupted oscillatory coordination.",
+    ],
   },
   {
-    title: "Research Paper Title Two",
-    journal: "Conference Proceedings, 2023",
-    description: "Brief abstract or summary of your research contribution.",
+    title: "Experimental System",
+    body: [
+      "To isolate axonal signaling, we use engineered microfluidic devices integrated with microelectrode arrays (MEAs). The devices physically separate neuronal cell bodies while permitting axons to extend through narrow microchannels. This architecture creates a controlled preparation where axon-driven dynamics can be measured with far less ambiguity than in intact tissue.",
+      "Within this platform, I help culture dissociated hippocampal subregions, maintain experimental conditions, and record activity spanning both action potentials and subthreshold rhythms from delta through gamma bands. The engineering challenge is balancing biological viability with measurement precision: culture quality, channel geometry, and acquisition settings all influence what can be interpreted confidently as mechanism rather than artifact.",
+    ],
+  },
+  {
+    title: "Causal Tests of Timing",
+    body: [
+      "A major part of the project tests causality, not just correlation. Using real-time signal analysis, I track ongoing theta-band dynamics (4-10 Hz) and deliver stimulation either in-phase or out-of-phase with the underlying rhythm. We then evaluate how those perturbations reshape spiking behavior, synchrony, and inter-regional coordination.",
+      "This strategy treats oscillations as a control variable. Instead of asking whether rhythms are present, we ask whether changing phase relationships changes information flow. That is an engineering-style experiment: define a hypothesis, perturb one variable in a controlled way, and quantify downstream system behavior.",
+    ],
+  },
+  {
+    title: "Analysis and Mechanisms",
+    body: [
+      "My computational workflow combines MATLAB and Python for signal analysis and model-guided interpretation. I routinely perform spectral analysis, phase extraction with Hilbert transforms, and phase-locking metrics to evaluate how timing relationships evolve under different stimulation and pharmacological conditions. These tools help bridge raw electrophysiology and testable circuit-level explanations.",
+      "In parallel, I investigate candidate ionic mechanisms by modulating calcium, chloride, and TRPM4 channel activity. The goal is to link changes in amplitude, frequency, and phase coupling to underlying biophysical processes. This multi-scale approach connects molecular perturbation to network-level behavior, helping determine whether oscillatory effects originate from intrinsic axonal dynamics or other circuit sources.",
+    ],
+  },
+  {
+    title: "Why This Matters",
+    body: [
+      "Oscillatory disruption is a hallmark of conditions such as Alzheimer's disease, epilepsy, and schizophrenia. If axons are active participants in generating or regulating these rhythms, they may represent a new therapeutic target class for restoring healthy synchronization.",
+      "More broadly, this project has shaped how I approach research problems: start with a mechanistic question, build a system that can isolate the variable of interest, and combine careful experimental design with quantitative analysis to test causality. That blend of imaging-aware electrophysiology, computational signal processing, and practical experimental design is the core of how I work as an engineer in neuroscience.",
+    ],
+  },
+];
+
+const frostigSections: ResearchSubsection[] = [
+  {
+    title: "Neural Engineering and Axonal Dynamics",
+    body: [
+      "My work in the Frostig Lab examines a central neuroscience question: how neural populations coordinate activity across regions to produce coherent behavior, and whether axons are active participants in that process. Classical models place most explanatory weight on synapses and dendrites, with axons treated as transmission lines. This project tests a different view, that axons can express structured electrical dynamics that influence timing, coupling, and communication across networks.",
+      "To isolate these mechanisms, I work with engineered neural systems that combine microfluidic compartmentalization with microelectrode array recording. These devices physically separate neuronal compartments while allowing axons to extend through narrow tunnels, creating a controlled setting for studying axonal signaling with reduced confounds. Within that framework, I design and execute experiments that probe how subthreshold oscillations propagate and how they relate to spike timing and synchronization.",
+      "The analysis challenge is both biological and computational. I use MATLAB-based pipelines to extract temporal structure from noisy electrophysiology, including phase alignment, channel-to-channel coherence, and synchronization metrics. I also implement real-time phase detection workflows to time stimulation relative to ongoing rhythms, treating the network as a dynamic system that can be perturbed and measured. This work has strengthened my thinking around experimental design, signal analysis, and systems-level interpretation in living neural networks.",
+    ],
+  },
+  {
+    title: "Biomedical Imaging and Vascular Analysis",
+    body: [
+      "In parallel, my imaging work focuses on turning complex optical datasets into quantitative insight about vascular function. A core question is how vascular structures change over time under different physiological conditions, and whether those changes are primarily geometric, mechanical, or biologically regulated. The goal is not only to visualize vessels, but to build reliable methods that reveal interpretable behavior.",
+      "I develop MATLAB pipelines for vessel segmentation and temporal analysis using vessel enhancement filtering, morphological skeletonization, and spatial masking. These methods isolate vascular structure and support measurements of geometry and intensity dynamics across baseline and stimulated states. Python complements this workflow for data organization, visualization, and exploratory analysis when handling larger datasets or multistep processing.",
+      "A recurring engineering challenge is preserving biological signal while suppressing artifacts. I design selective filtering and validation steps that reduce local noise without distorting global structure, so downstream metrics reflect physiology rather than preprocessing side effects. This has reinforced a core research principle for me: imaging is not just visualization, it is quantitative measurement, and trustworthy interpretation depends on careful pipeline design, transparent assumptions, and rigorous methodological control.",
+    ],
+  },
+];
+
+const kruggelSections: ResearchSubsection[] = [
+  {
+    title: "Computational Neuroimaging and 3D Reconstruction",
+    body: [
+      "One part of my work in the Kruggel Lab focuses on transforming raw biomedical imaging data into interpretable spatial models. The objective is not only to produce visual outputs, but to build a reproducible path from acquisition to analysis where each processing step is understood and controlled. This perspective treats reconstruction as an engineering problem: each transformation in the pipeline must preserve meaningful structure while remaining scalable across many datasets.",
+      "In a Linux-based high-performance computing environment, I worked with batch-processing pipelines orchestrated through SLURM to automate conversion of raw imaging files into 3D anatomical reconstructions. Instead of handling datasets one by one, the workflow emphasizes repeatability and computational efficiency across distributed jobs. A key challenge was validating that each stage, from file organization to model generation, executed reliably under variable system conditions.",
+      "Debugging and refining these pipelines strengthened my ability to reason about system behavior at scale. I learned to inspect script logic, resolve path and dependency issues, and interpret scheduler and terminal output to identify failure points quickly. More importantly, this experience reinforced how automation, reproducibility, and systems-level design are essential for turning large imaging datasets into trustworthy scientific structure.",
+    ],
+  },
+  {
+    title: "Neuroengineering and Signal Analysis in Neural Systems",
+    body: [
+      "In parallel, my neuroengineering work examines how neural electrical activity encodes and coordinates communication across networks. The central question is how temporal signaling patterns support inter-regional information flow, and how those patterns can be measured and perturbed in controlled experimental systems.",
+      "Using microelectrode arrays integrated with microfluidic platforms, I study neural cultures where cell bodies are compartmentalized while axonal pathways remain connected. This architecture provides a focused window into axon-mediated signaling and subthreshold dynamics that are difficult to isolate in less constrained systems. The main analytical challenge is extracting stable structure from noisy electrophysiological recordings without losing physiologically meaningful variation.",
+      "To address this, I rely on MATLAB and Python for time-series analysis, synchronization metrics, phase relationship mapping, and iterative signal-processing refinement. I treat analysis as an active design loop: adjust filters and detection logic, validate outputs against expected biological behavior, and refine until the model and data align. This work has deepened my foundation in experimental design, computational modeling, and cross-disciplinary reasoning at the interface of engineering and neuroscience.",
+    ],
+  },
+];
+
+const labResearchBlocks: LabResearchBlock[] = [
+  {
+    label: "Brewer Laboratory",
+    heading: "Axonal Oscillations and Timing-Dependent Communication",
+    sections: brewerSections,
+  },
+  {
+    label: "Frostig Laboratory",
+    heading: "Neural Engineering and Biomedical Imaging Systems",
+    sections: frostigSections,
+  },
+  {
+    label: "Kruggel Laboratory",
+    heading: "Computational Neuroimaging and Neuroengineering Analysis",
+    sections: kruggelSections,
   },
 ];
 
 const Research = () => {
   return (
-    <PageLayout title="Research">
-      <h1 className="font-display text-4xl md:text-5xl font-bold text-foreground mb-12">
+    <PageLayout title="Research" mainClassName="max-w-5xl px-5 sm:px-7">
+      <h1 className="font-display mb-8 text-4xl font-bold text-foreground md:text-5xl">
         Research
       </h1>
-      <div className="space-y-10">
-        {papers.map((paper, i) => (
-          <motion.div
-            key={paper.title}
-            initial={{ opacity: 0, y: 20 }}
+
+      <div className="space-y-7">
+        {labResearchBlocks.map((block, blockIndex) => (
+          <motion.section
+            key={block.heading}
+            initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.15, duration: 0.5 }}
-            className="border-b border-border pb-8"
+            transition={{ duration: 0.55, delay: blockIndex * 0.08, ease: [0.22, 1, 0.36, 1] }}
+            className="rounded-[3rem] border border-white/30 bg-white/32 p-5 shadow-[0_26px_90px_rgba(173,133,37,0.14)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_30px_100px_rgba(8,5,18,0.5)] sm:p-7"
           >
-            <h2 className="font-display text-xl font-bold text-foreground mb-1">
-              {paper.title}
-            </h2>
-            <p className="font-display text-sm text-primary mb-3">{paper.journal}</p>
-            <p className="font-body text-muted-foreground leading-relaxed">
-              {paper.description}
-            </p>
-          </motion.div>
+            <div className="rounded-[2.2rem] border border-white/24 bg-white/22 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] dark:border-white/10 dark:bg-white/[0.04] sm:p-6">
+              <p className="font-display text-[10px] uppercase tracking-[0.34em] text-primary/80">
+                {block.label}
+              </p>
+              <h2 className="mt-3 text-2xl text-foreground sm:text-3xl">{block.heading}</h2>
+
+              <div className="mt-6 grid gap-4">
+                {block.sections.map((section, index) => (
+                  <motion.article
+                    key={section.title}
+                    initial={{ opacity: 0, y: 14 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: 0.08 + index * 0.07, duration: 0.42 }}
+                    className="rounded-[1.75rem] border border-white/24 bg-white/24 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03] sm:p-5"
+                  >
+                    <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                      {section.title}
+                    </h3>
+                    <div className="mt-3 space-y-3">
+                      {section.body.map((paragraph) => (
+                        <p key={paragraph} className="font-body leading-relaxed text-muted-foreground">
+                          {paragraph}
+                        </p>
+                      ))}
+                    </div>
+                  </motion.article>
+                ))}
+              </div>
+            </div>
+          </motion.section>
         ))}
       </div>
     </PageLayout>
