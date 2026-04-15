@@ -85,7 +85,7 @@ const Index = () => {
         {transitionState ? (
           <RouteTransitionOverlay
             initialClipPath={transitionState.clipPath}
-            animateToClipPath="inset(0px 0px 0px 0px round 0rem)"
+            animateToClipPath="inset(0px 0px 0px 0px round 2.4rem)"
           />
         ) : null}
       </AnimatePresence>

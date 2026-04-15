@@ -1,5 +1,5 @@
-import { useEffect, useRef, useState } from "react";
-import { useNavigate } from "react-router-dom";
+import { type MouseEvent, useEffect, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
 import RouteTransitionOverlay from "@/components/RouteTransitionOverlay";
 import SubpageBackdrop from "@/components/SubpageBackdrop";
@@ -12,26 +12,56 @@ interface PageLayoutProps {
   mainClassName?: string;
 }
 
-interface HomeTransitionState {
+interface RouteTransitionState {
+  backdrop: "home" | "subpage";
   clipPath: string;
+  to: string;
 }
 
+const sectionNavItems = [
+  { label: "Projects", to: "/projects" },
+  { label: "Research", to: "/research" },
+  { label: "Resume", to: "/resume" },
+  { label: "About", to: "/about" },
+] as const;
+
 const PageLayout = ({ title, children, mainClassName }: PageLayoutProps) => {
+  const location = useLocation();
   const navigate = useNavigate();
-  const timeoutRef = useRef<number | null>(null);
+  const transitionTimeoutRef = useRef<number | null>(null);
   const homeButtonRef = useRef<HTMLButtonElement | null>(null);
-  const [homeTransition, setHomeTransition] = useState<HomeTransitionState | null>(null);
+  const [routeTransition, setRouteTransition] = useState<RouteTransitionState | null>(null);
 
   useEffect(() => {
     return () => {
-      if (timeoutRef.current) {
-        window.clearTimeout(timeoutRef.current);
+      if (transitionTimeoutRef.current) {
+        window.clearTimeout(transitionTimeoutRef.current);
       }
     };
   }, []);
 
+  const runRouteTransition = ({
+    backdrop,
+    clipPath,
+    to,
+  }: {
+    backdrop: "home" | "subpage";
+    clipPath: string;
+    to: string;
+  }) => {
+    if (transitionTimeoutRef.current) {
+      window.clearTimeout(transitionTimeoutRef.current);
+    }
+
+    setRouteTransition({ backdrop, clipPath, to });
+
+    transitionTimeoutRef.current = window.setTimeout(() => {
+      navigate(to);
+    }, 680);
+  };
+
   const handleHomeNavigation = () => {
-    if (homeTransition) {
+    if (routeTransition) {
       return;
     }
 
@@ -52,21 +82,36 @@ const PageLayout = ({ title, children, mainClassName }: PageLayoutProps) => {
     const computedRadius = window.getComputedStyle(homeButtonRef.current).borderRadius || "9999px";
     const clipPath = `inset(${rect.top}px ${window.innerWidth - rect.right}px ${window.innerHeight - rect.bottom}px ${rect.left}px round ${computedRadius})`;
 
-    setHomeTransition({ clipPath });
+    runRouteTransition({ backdrop: "home", clipPath, to: "/" });
+  };
 
-    timeoutRef.current = window.setTimeout(() => {
-      navigate("/");
-    }, 680);
+  const handleSectionNavigation = (event: MouseEvent<HTMLButtonElement>, to: string) => {
+    if (routeTransition || location.pathname === to) {
+      return;
+    }
+
+    const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+    if (prefersReducedMotion) {
+      navigate(to);
+      return;
+    }
+
+    const rect = event.currentTarget.getBoundingClientRect();
+    const computedRadius = window.getComputedStyle(event.currentTarget).borderRadius || "9999px";
+    const clipPath = `inset(${rect.top}px ${window.innerWidth - rect.right}px ${window.innerHeight - rect.bottom}px ${rect.left}px round ${computedRadius})`;
+
+    runRouteTransition({ backdrop: "subpage", clipPath, to });
   };
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground transition-colors duration-500">
       <AnimatePresence>
-        {homeTransition ? (
+        {routeTransition ? (
           <RouteTransitionOverlay
-            backdrop="home"
-            initialClipPath={homeTransition.clipPath}
-            animateToClipPath="inset(0px 0px 0px 0px round 0rem)"
+            backdrop={routeTransition.backdrop}
+            initialClipPath={routeTransition.clipPath}
+            animateToClipPath="inset(0px 0px 0px 0px round 2.4rem)"
           />
         ) : null}
       </AnimatePresence>
@@ -85,6 +130,28 @@ const PageLayout = ({ title, children, mainClassName }: PageLayoutProps) => {
         </button>
 
         <div className="flex items-center gap-3">
+          <div className="hidden items-center gap-1 rounded-full border border-white/26 bg-white/24 p-1 backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.06] lg:flex">
+            {sectionNavItems.map((item) => {
+              const isActive = location.pathname === item.to;
+
+              return (
+                <button
+                  key={item.to}
+                  type="button"
+                  disabled={isActive || !!routeTransition}
+                  onClick={(event) => handleSectionNavigation(event, item.to)}
+                  className={cn(
+                    "rounded-full px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.22em] transition-all duration-300",
+                    isActive
+                      ? "border border-white/24 bg-white/42 text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.12]"
+                      : "text-muted-foreground hover:bg-white/30 hover:text-foreground dark:hover:bg-white/[0.1]"
+                  )}
+                >
+                  {item.label}
+                </button>
+              );
+            })}
+          </div>
           <span className="hidden font-display text-xs tracking-[0.3em] uppercase text-muted-foreground sm:inline">
             {title}
           </span>
