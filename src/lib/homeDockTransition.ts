@@ -1,5 +1,5 @@
 const STORAGE_PREFIX = "home-dock-target:";
-const HOME_DOCK_ORDER = ["/projects", "/research", "/resume", "/about"];
+const HOME_DOCK_ORDER = ["/projects", "/research", "/cv", "/about"];
 
 export const saveHomeDockTarget = (path: string, clipPath: string) => {
   if (typeof window === "undefined") {

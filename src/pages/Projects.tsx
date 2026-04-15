@@ -15,6 +15,11 @@ import discordJson from "@/assets/Discord JSON.png";
 import coinSorterAssembly from "@/assets/coin_sorter_assembly.png";
 import coinSorterExploded from "@/assets/coin_sorter_exploded.png";
 import coinSorterIrl from "@/assets/coin_sorter_irl.png";
+import robosubArchitecture from "@/assets/robosub_architecture.png";
+import robosubIcon from "@/assets/robosub_icon.png";
+import websiteHeroPlaceholder from "@/assets/website_hero_placeholder.svg";
+import websiteResponsivePlaceholder from "@/assets/website_responsive_placeholder.svg";
+import websiteEngineeringPlaceholder from "@/assets/website_engineering_placeholder.svg";
 
 const motionEase = [0.22, 1, 0.36, 1] as const;
 const closeDelayMs = 220;
@@ -640,6 +645,207 @@ const coinSorterDetails: ProjectDetails = {
   ],
 };
 
+const robosubDetails: ProjectDetails = {
+  headerLabel: "Autonomous Robotics",
+  status: "Systems Integration Complete",
+  tagline: "AUV Integration | Controls | Perception | Embedded Systems | Cross-Functional Leadership",
+  summary:
+    "This RoboSub work focused on a systems-level engineering problem: turning independently built mechanical, electrical, controls, and perception modules into one reliable autonomous underwater vehicle. Instead of treating each subsystem in isolation, the project centered on interface quality, timing behavior, and mission-readiness under real underwater uncertainty. The objective was to build a cohesive architecture where visual detections translated into stable navigation actions, power and communication remained dependable, and mission sequences could execute without manual intervention. In practice, that meant coordinating tradeoffs across latency, control-loop stability, sensor noise, and bandwidth limits while preserving enough modularity for teams to debug and iterate quickly.",
+  designProblem: [
+    "Build a cohesive AUV stack that can navigate and stabilize in dynamic underwater conditions.",
+    "Convert computer-vision outputs into reliable, task-level control decisions for autonomous behavior.",
+    "Execute multi-stage missions such as gate traversal, navigation, and object interaction without operator control.",
+    "Maintain system reliability when hardware and software subsystems are tightly coupled.",
+    "Create a repeatable integration and test process that scales across multiple technical teams.",
+  ],
+  architectureDecisions: [
+    {
+      title: "Interface-First Integration",
+      detail:
+        "Defined clear handoff boundaries between perception, controls, electrical, and mechanical teams so each subsystem could evolve without breaking the full stack.",
+    },
+    {
+      title: "Perception to Controls Mapping",
+      detail:
+        "Structured detection outputs into navigation-relevant signals to reduce ambiguity before entering feedback-control loops.",
+    },
+    {
+      title: "Integration Checkpoints",
+      detail:
+        "Used staged validation milestones to catch coupling failures early rather than waiting for full-vehicle tests.",
+    },
+    {
+      title: "Deterministic Communication Focus",
+      detail:
+        "Prioritized predictable sensor, processor, and actuator data flow to limit synchronization drift during mission execution.",
+    },
+  ],
+  challengesTradeoffs: [
+    {
+      title: "Coupling vs Modularity",
+      detail:
+        "Higher coupling improved responsiveness but made root-cause debugging harder, so interfaces were standardized where possible.",
+    },
+    {
+      title: "Simulation vs Field Behavior",
+      detail:
+        "Algorithms that were stable in controlled tests often degraded underwater due to turbulence, lighting shifts, and sensor noise.",
+    },
+    {
+      title: "Latency vs Stability",
+      detail:
+        "Faster feedback loops improved responsiveness, but only when filtered carefully to avoid amplifying noisy measurements.",
+    },
+    {
+      title: "Data Sharing vs Overhead",
+      detail:
+        "More cross-subsystem telemetry improved situational awareness but increased bandwidth and synchronization constraints.",
+    },
+    {
+      title: "Hands-On Work vs Program Coordination",
+      detail:
+        "Balanced technical support for subsystem debugging with system-level planning, scheduling, and readiness alignment.",
+    },
+  ],
+  performanceValidation: [
+    {
+      title: "Cross-Team Integration Execution",
+      lines: [
+        "Established shared system-level constraints across mechanical, electrical, controls, and perception workstreams.",
+        "Resolved integration bottlenecks before full mission trials through staged subsystem coupling tests.",
+      ],
+    },
+    {
+      title: "System Reliability Improvements",
+      lines: [
+        "Strengthened interoperability between sensing, control, and actuation paths during iterative validation cycles.",
+        "Improved mission readiness by focusing on timing consistency and interface robustness under field-like conditions.",
+      ],
+    },
+    {
+      title: "Engineering Impact",
+      lines: [
+        "Shifted project execution from component-level progress to whole-system behavior and fault diagnosis.",
+        "Built a repeatable integration workflow for complex autonomous robotics development under uncertainty.",
+      ],
+    },
+  ],
+  visuals: [
+    {
+      src: robosubArchitecture,
+      alt: "RoboSub systems architecture overview",
+      caption: "System architecture view highlighting subsystem interfaces and integration pathways.",
+    },
+    {
+      src: robosubIcon,
+      alt: "RoboSub vehicle visual",
+      caption: "RoboSub vehicle visual used for project identity and selector preview.",
+    },
+  ],
+};
+
+const websiteDetails: ProjectDetails = {
+  headerLabel: "Product + Frontend Engineering",
+  status: "Actively Maintained",
+  tagline: "React | TypeScript | Tailwind | Framer Motion | UX Systems",
+  summary:
+    "This portfolio website was built as both a personal platform and an engineering artifact that demonstrates frontend architecture, interaction design, and iterative product thinking. The core objective was to create a cohesive user experience where visual identity, performance, and maintainability reinforce each other. Instead of a static showcase, the site is treated as a living system with reusable components, responsive layout behavior, animated route transitions, and content structures that can scale as new technical work is added. The project highlights how interface design and systems-level implementation can work together to deliver clarity, personality, and usability.",
+  designProblem: [
+    "Design a consistent visual language across landing, projects, research, CV, and about pages.",
+    "Support responsive behavior across desktop, tablet, and mobile without breaking layout hierarchy.",
+    "Implement expressive motion while preserving readability, context, and performance.",
+    "Structure project and research content so updates are easy as new work is published.",
+    "Maintain a polished glass-style UI without sacrificing navigation clarity or accessibility.",
+  ],
+  architectureDecisions: [
+    {
+      title: "Componentized UI Shell",
+      detail:
+        "Used reusable page-layout and glass-card patterns so visual consistency remains stable as sections evolve.",
+    },
+    {
+      title: "Data-Driven Content Blocks",
+      detail:
+        "Structured project detail content as typed data objects, enabling scalable updates without rewriting layouts.",
+    },
+    {
+      title: "Stateful Navigation Interactions",
+      detail:
+        "Combined selector state, scroll behavior, and transitions to preserve user orientation between sections.",
+    },
+    {
+      title: "Animation as Feedback",
+      detail:
+        "Applied motion cues to navigation, selection, and section focus to communicate state changes clearly.",
+    },
+  ],
+  challengesTradeoffs: [
+    {
+      title: "Visual Density vs Readability",
+      detail:
+        "Balanced layered glass effects with contrast tuning to keep text legible in both light and dark modes.",
+    },
+    {
+      title: "Motion Quality vs Simplicity",
+      detail:
+        "Added rich transitions without overwhelming users or introducing interaction friction.",
+    },
+    {
+      title: "Feature Growth vs Maintainability",
+      detail:
+        "Kept implementation modular so new project sections and interactions can be added without layout regressions.",
+    },
+    {
+      title: "Device Variability",
+      detail:
+        "Handled different viewport sizes and touch behaviors while preserving anchor/navigation usability.",
+    },
+  ],
+  performanceValidation: [
+    {
+      title: "Interaction Reliability",
+      lines: [
+        "Validated route transitions, project selector interactions, and anchored CV navigation across breakpoints.",
+        "Refined mobile behavior to keep controls discoverable and prevent accidental overlap with content.",
+      ],
+    },
+    {
+      title: "Scalable Content Workflow",
+      lines: [
+        "Added projects through structured data and media assets without rewriting the core page framework.",
+        "Maintained a repeatable update path for future project, research, and design iterations.",
+      ],
+    },
+    {
+      title: "Design System Consistency",
+      lines: [
+        "Preserved consistent glass bubble styling, rounded geometry, and subtle separators across all sections.",
+        "Used shared utility patterns for color, spacing, and card composition to avoid visual drift.",
+      ],
+    },
+  ],
+  visuals: [
+    {
+      src: websiteHeroPlaceholder,
+      alt: "Portfolio hero screenshot placeholder",
+      caption:
+        "Placeholder 1 - Hero overview. Replace with a full desktop screenshot of your strongest section (home or projects). Suggested filename: website_hero.png.",
+    },
+    {
+      src: websiteResponsivePlaceholder,
+      alt: "Responsive layout screenshot placeholder",
+      caption:
+        "Placeholder 2 - Responsive proof. Replace with one composite image showing desktop, tablet, and mobile views side-by-side. Suggested filename: website_responsive.png.",
+    },
+    {
+      src: websiteEngineeringPlaceholder,
+      alt: "Engineering evidence screenshot placeholder",
+      caption:
+        "Placeholder 3 - Engineering proof. Replace with Lighthouse metrics or architecture/code screenshot that demonstrates technical implementation. Suggested filename: website_engineering.png.",
+    },
+  ],
+};
+
 const projects: ProjectCard[] = [
   {
     title: "ESONIC",
@@ -678,12 +884,16 @@ const projects: ProjectCard[] = [
     details: coinSorterDetails,
   },
   {
-    title: "Project Seven",
-    note: "Placeholder layout for the seventh project page.",
+    title: "RoboSub AUV Integration",
+    note: "System-level integration for an autonomous underwater vehicle across mechanical, electrical, controls, and perception teams.",
+    previewImage: robosubIcon,
+    details: robosubDetails,
   },
   {
-    title: "Project Eight",
-    note: "Placeholder layout for the eighth project page.",
+    title: "Portfolio Website Engineering",
+    note: "This website as an engineering project: interaction architecture, responsive UI, and system-level frontend implementation.",
+    previewImage: websiteHeroPlaceholder,
+    details: websiteDetails,
   },
 ];
 
@@ -1383,8 +1593,8 @@ const Projects = () => {
                     </div>
 
                     {selectedDetails ? (
-                      <div className="mt-8 columns-1 gap-5 lg:columns-2 xl:gap-6">
-                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/28 bg-gradient-to-br from-white/72 via-white/28 to-white/12 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.26)] dark:border-white/10 dark:from-white/[0.11] dark:via-white/[0.04] dark:to-transparent sm:p-7">
+                      <div className="mt-8 grid gap-5 lg:grid-cols-2 xl:gap-6">
+                        <section className="rounded-[3rem] border border-white/28 bg-gradient-to-br from-white/72 via-white/28 to-white/12 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.26)] dark:border-white/10 dark:from-white/[0.11] dark:via-white/[0.04] dark:to-transparent sm:p-7 lg:col-span-2">
                           <p className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/80">
                             Project Summary
                           </p>
@@ -1393,8 +1603,29 @@ const Projects = () => {
                           </p>
                         </section>
 
+                        <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                          <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
+                            Design Problem
+                          </h3>
+                          <div className="mt-4 space-y-3">
+                            {selectedDetails.designProblem.map((item, itemIndex) => (
+                              <div
+                                key={item}
+                                className="flex items-start gap-3 rounded-[1.4rem] border border-white/22 bg-white/24 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                              >
+                                <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/24 bg-white/34 font-display text-[10px] text-foreground/90 dark:border-white/10 dark:bg-white/[0.06]">
+                                  {itemIndex + 1}
+                                </span>
+                                <p className="text-sm leading-relaxed text-muted-foreground">
+                                  {item}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </section>
+
                         {selectedDetails.visuals[0] ? (
-                          <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
+                          <figure className="rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] lg:col-start-2">
                             <button
                               type="button"
                               onClick={() => setActiveVisual(selectedDetails.visuals[0])}
@@ -1417,28 +1648,7 @@ const Projects = () => {
                           </figure>
                         ) : null}
 
-                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
-                          <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
-                            Design Problem
-                          </h3>
-                          <div className="mt-4 space-y-3">
-                            {selectedDetails.designProblem.map((item, itemIndex) => (
-                              <div
-                                key={item}
-                                className="flex items-start gap-3 rounded-[1.4rem] border border-white/22 bg-white/24 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
-                              >
-                                <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/24 bg-white/34 font-display text-[10px] text-foreground/90 dark:border-white/10 dark:bg-white/[0.06]">
-                                  {itemIndex + 1}
-                                </span>
-                                <p className="text-sm leading-relaxed text-muted-foreground">
-                                  {item}
-                                </p>
-                              </div>
-                            ))}
-                          </div>
-                        </section>
-
-                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                        <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
                           <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
                             Build Stack
                           </h3>
@@ -1458,7 +1668,7 @@ const Projects = () => {
                           </div>
                         </section>
 
-                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                        <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
                           <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
                             Key Architecture Decisions
                           </h3>
@@ -1480,7 +1690,7 @@ const Projects = () => {
                         </section>
 
                         {selectedDetails.visuals[1] ? (
-                          <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
+                          <figure className="rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
                             <button
                               type="button"
                               onClick={() => setActiveVisual(selectedDetails.visuals[1])}
@@ -1503,7 +1713,7 @@ const Projects = () => {
                           </figure>
                         ) : null}
 
-                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                        <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
                           <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
                             Engineering Challenges & Tradeoffs
                           </h3>
@@ -1525,7 +1735,7 @@ const Projects = () => {
                         </section>
 
                         {selectedDetails.visuals[2] ? (
-                          <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
+                          <figure className="rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] lg:col-span-2">
                             <button
                               type="button"
                               onClick={() => setActiveVisual(selectedDetails.visuals[2])}
@@ -1535,7 +1745,7 @@ const Projects = () => {
                                 <img
                                   src={selectedDetails.visuals[2].src}
                                   alt={selectedDetails.visuals[2].alt}
-                                  className="h-72 w-full object-cover sm:h-80"
+                                  className="h-72 w-full object-cover sm:h-[25rem]"
                                 />
                               </div>
                             </button>
@@ -1548,7 +1758,7 @@ const Projects = () => {
                           </figure>
                         ) : null}
 
-                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                        <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7 lg:col-span-2">
                           <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
                             Performance & Validation
                           </h3>

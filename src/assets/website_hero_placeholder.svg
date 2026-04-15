@@ -1,0 +1,19 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="120" y1="80" x2="1480" y2="860" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#4B4B77"/>
+      <stop offset="1" stop-color="#1C1C40"/>
+    </linearGradient>
+    <linearGradient id="card" x1="260" y1="210" x2="1340" y2="690" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#FFFFFF" stop-opacity="0.32"/>
+      <stop offset="1" stop-color="#FFFFFF" stop-opacity="0.12"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" rx="48" fill="url(#bg)"/>
+  <rect x="210" y="160" width="1180" height="580" rx="44" fill="url(#card)" stroke="#FFFFFF" stroke-opacity="0.35" stroke-width="3"/>
+  <rect x="270" y="250" width="1060" height="160" rx="28" fill="#FFFFFF" fill-opacity="0.18"/>
+  <rect x="270" y="450" width="500" height="230" rx="28" fill="#FFFFFF" fill-opacity="0.14"/>
+  <rect x="830" y="450" width="500" height="230" rx="28" fill="#FFFFFF" fill-opacity="0.14"/>
+  <text x="800" y="110" text-anchor="middle" fill="#F5F5FF" font-size="40" font-family="Arial, sans-serif" letter-spacing="4">WEBSITE HERO PLACEHOLDER</text>
+  <text x="800" y="560" text-anchor="middle" fill="#E8E8FF" font-size="38" font-family="Arial, sans-serif" letter-spacing="2">Replace with full desktop hero screenshot</text>
+</svg>

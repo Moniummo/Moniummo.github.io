@@ -21,7 +21,7 @@ interface RouteTransitionState {
 const sectionNavItems = [
   { label: "Projects", to: "/projects" },
   { label: "Research", to: "/research" },
-  { label: "Resume", to: "/resume" },
+  { label: "CV", to: "/cv" },
   { label: "About", to: "/about" },
 ] as const;
 

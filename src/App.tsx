@@ -1,5 +1,5 @@
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -25,7 +25,8 @@ const App = () => (
           <Routes>
             <Route path="/" element={<Index />} />
             <Route path="/projects" element={<Projects />} />
-            <Route path="/resume" element={<Resume />} />
+            <Route path="/cv" element={<Resume />} />
+            <Route path="/resume" element={<Navigate replace to="/cv" />} />
             <Route path="/research" element={<Research />} />
             <Route path="/about" element={<About />} />
             <Route path="*" element={<NotFound />} />

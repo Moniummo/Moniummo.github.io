@@ -18,8 +18,8 @@ const navItems = [
     summary: "analysis",
   },
   {
-    to: "/resume",
-    label: "Resume",
+    to: "/cv",
+    label: "CV",
     summary: "experience",
   },
   {
