@@ -113,7 +113,7 @@ const Index = () => {
 
       <HomeBackdrop />
 
-      <div className="relative flex min-h-screen flex-col px-6 py-6 sm:px-10 lg:px-14">
+      <main className="relative flex min-h-screen flex-col px-6 py-6 sm:px-10 lg:px-14">
         <div className="flex items-start justify-between gap-4">
           <p className="font-display text-[10px] tracking-[0.32em] uppercase text-muted-foreground">
             Portfolio / Biomedical Engineering
@@ -201,7 +201,7 @@ const Index = () => {
             </motion.div>
           </div>
         </div>
-      </div>
+      </main>
     </div>
   );
 };
