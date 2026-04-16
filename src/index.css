@@ -194,12 +194,10 @@ html.theme-transition-active::view-transition-new(root) {
 @keyframes page-layout-enter {
   from {
     opacity: 0;
-    transform: translateY(30px);
   }
 
   to {
     opacity: 1;
-    transform: translateY(0);
   }
 }
 
