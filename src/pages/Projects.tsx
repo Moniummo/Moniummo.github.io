@@ -20,6 +20,14 @@ import robosubIcon from "@/assets/robosub_icon.png";
 import websiteHeroPlaceholder from "@/assets/website_hero_placeholder.svg";
 import websiteResponsivePlaceholder from "@/assets/website_responsive_placeholder.svg";
 import websiteEngineeringPlaceholder from "@/assets/website_engineering_placeholder.svg";
+import esonicPreview from "@/assets/previews/esonic_preview.webp";
+import bikePreview from "@/assets/previews/bike_preview.webp";
+import thermalPreview from "@/assets/previews/thermal_preview.webp";
+import neurovascularPreview from "@/assets/previews/neurovascular_preview.webp";
+import nickAiPreview from "@/assets/previews/nickai_preview.webp";
+import coinSorterPreview from "@/assets/previews/coin_sorter_preview.webp";
+import robosubPreview from "@/assets/previews/robosub_preview.webp";
+import websitePreview from "@/assets/previews/website_preview.webp";
 
 const motionEase = [0.22, 1, 0.36, 1] as const;
 const closeDelayMs = 220;
@@ -850,49 +858,49 @@ const projects: ProjectCard[] = [
   {
     title: "ESONIC",
     note: "Distributed motion telemetry and closed-loop feedback with multi-rate sensing.",
-    previewImage: esonicVisualizer,
+    previewImage: esonicPreview,
     details: esonicDetails,
   },
   {
     title: "Bike Drivetrain",
     note: "Articulated drivetrain simulation with gear-ratio and constraint tradeoff analysis.",
-    previewImage: bicyclePicture,
+    previewImage: bikePreview,
     details: bikeDetails,
   },
   {
     title: "Thermal Energy Modeling",
     note: "MATLAB thermal-energy framework for efficiency analysis, extrapolation, and cost prediction.",
-    previewImage: matlabHeatGraph,
+    previewImage: thermalPreview,
     details: matlabDetails,
   },
   {
     title: "Neurovascular Imaging Pipeline",
     note: "MATLAB vessel-segmentation and dilation-analysis pipeline with artifact-aware visualization correction.",
-    previewImage: matlabVesselIdentification,
+    previewImage: neurovascularPreview,
     details: frostigImagingDetails,
   },
   {
     title: "NickAI Conversational LLM",
     note: "QLoRA fine-tuned LLaMA pipeline with local FastAPI serving, private web UI, and Discord integration.",
-    previewImage: aiProjectGpuUtilization,
+    previewImage: nickAiPreview,
     details: nickAiDetails,
   },
   {
     title: "Autonomous Coin Sorter",
     note: "Gravity-driven mechanical sorter with tolerance-calibrated geometry and iterative 3D-printed validation.",
-    previewImage: coinSorterIrl,
+    previewImage: coinSorterPreview,
     details: coinSorterDetails,
   },
   {
     title: "RoboSub AUV Integration",
     note: "System-level integration for an autonomous underwater vehicle across mechanical, electrical, controls, and perception teams.",
-    previewImage: robosubIcon,
+    previewImage: robosubPreview,
     details: robosubDetails,
   },
   {
     title: "Portfolio Website Engineering",
     note: "This website as an engineering project: interaction architecture, responsive UI, and system-level frontend implementation.",
-    previewImage: websiteHeroPlaceholder,
+    previewImage: websitePreview,
     details: websiteDetails,
   },
 ];
@@ -1286,6 +1294,8 @@ const Projects = () => {
                                 <img
                                   src={project.previewImage}
                                   alt={`${project.title} thumbnail`}
+                                  loading="lazy"
+                                  decoding="async"
                                   className="h-full w-full object-cover"
                                 />
                               ) : (
@@ -1521,6 +1531,8 @@ const Projects = () => {
                                 <img
                                   src={project.previewImage}
                                   alt={`${project.title} mini preview`}
+                                  loading="lazy"
+                                  decoding="async"
                                   className="h-full w-full object-cover"
                                 />
                               ) : null}
@@ -1593,8 +1605,8 @@ const Projects = () => {
                     </div>
 
                     {selectedDetails ? (
-                      <div className="mt-8 grid gap-5 lg:grid-cols-2 xl:gap-6">
-                        <section className="rounded-[3rem] border border-white/28 bg-gradient-to-br from-white/72 via-white/28 to-white/12 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.26)] dark:border-white/10 dark:from-white/[0.11] dark:via-white/[0.04] dark:to-transparent sm:p-7 lg:col-span-2">
+                      <div className="mt-8 columns-1 gap-5 lg:columns-2 xl:gap-6">
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/28 bg-gradient-to-br from-white/72 via-white/28 to-white/12 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.26)] dark:border-white/10 dark:from-white/[0.11] dark:via-white/[0.04] dark:to-transparent sm:p-7">
                           <p className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/80">
                             Project Summary
                           </p>
@@ -1603,7 +1615,31 @@ const Projects = () => {
                           </p>
                         </section>
 
-                        <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                        {selectedDetails.visuals[0] ? (
+                          <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
+                            <button
+                              type="button"
+                              onClick={() => setActiveVisual(selectedDetails.visuals[0])}
+                              className="w-full text-left"
+                            >
+                              <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-black/10 dark:border-white/10 dark:bg-black/25">
+                                <img
+                                  src={selectedDetails.visuals[0].src}
+                                  alt={selectedDetails.visuals[0].alt}
+                                  className="h-auto w-full object-contain"
+                                />
+                              </div>
+                            </button>
+                            <figcaption className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
+                              {selectedDetails.visuals[0].caption}
+                            </figcaption>
+                            <p className="mt-1 px-1 font-display text-[10px] uppercase tracking-[0.2em] text-primary/75">
+                              Click to zoom
+                            </p>
+                          </figure>
+                        ) : null}
+
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
                           <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
                             Design Problem
                           </h3>
@@ -1624,31 +1660,7 @@ const Projects = () => {
                           </div>
                         </section>
 
-                        {selectedDetails.visuals[0] ? (
-                          <figure className="rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] lg:col-start-2">
-                            <button
-                              type="button"
-                              onClick={() => setActiveVisual(selectedDetails.visuals[0])}
-                              className="w-full text-left"
-                            >
-                              <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-white/22 dark:border-white/10 dark:bg-white/[0.04]">
-                                <img
-                                  src={selectedDetails.visuals[0].src}
-                                  alt={selectedDetails.visuals[0].alt}
-                                  className="h-72 w-full object-cover sm:h-80"
-                                />
-                              </div>
-                            </button>
-                            <figcaption className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
-                              {selectedDetails.visuals[0].caption}
-                            </figcaption>
-                            <p className="mt-1 px-1 font-display text-[10px] uppercase tracking-[0.2em] text-primary/75">
-                              Click to zoom
-                            </p>
-                          </figure>
-                        ) : null}
-
-                        <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
                           <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
                             Build Stack
                           </h3>
@@ -1668,7 +1680,31 @@ const Projects = () => {
                           </div>
                         </section>
 
-                        <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                        {selectedDetails.visuals[1] ? (
+                          <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
+                            <button
+                              type="button"
+                              onClick={() => setActiveVisual(selectedDetails.visuals[1])}
+                              className="w-full text-left"
+                            >
+                              <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-black/10 dark:border-white/10 dark:bg-black/25">
+                                <img
+                                  src={selectedDetails.visuals[1].src}
+                                  alt={selectedDetails.visuals[1].alt}
+                                  className="h-auto w-full object-contain"
+                                />
+                              </div>
+                            </button>
+                            <figcaption className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
+                              {selectedDetails.visuals[1].caption}
+                            </figcaption>
+                            <p className="mt-1 px-1 font-display text-[10px] uppercase tracking-[0.2em] text-primary/75">
+                              Click to zoom
+                            </p>
+                          </figure>
+                        ) : null}
+
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
                           <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
                             Key Architecture Decisions
                           </h3>
@@ -1689,31 +1725,7 @@ const Projects = () => {
                           </div>
                         </section>
 
-                        {selectedDetails.visuals[1] ? (
-                          <figure className="rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
-                            <button
-                              type="button"
-                              onClick={() => setActiveVisual(selectedDetails.visuals[1])}
-                              className="w-full text-left"
-                            >
-                              <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-white/22 dark:border-white/10 dark:bg-white/[0.04]">
-                                <img
-                                  src={selectedDetails.visuals[1].src}
-                                  alt={selectedDetails.visuals[1].alt}
-                                  className="h-80 w-full object-cover sm:h-[26rem]"
-                                />
-                              </div>
-                            </button>
-                            <figcaption className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
-                              {selectedDetails.visuals[1].caption}
-                            </figcaption>
-                            <p className="mt-1 px-1 font-display text-[10px] uppercase tracking-[0.2em] text-primary/75">
-                              Click to zoom
-                            </p>
-                          </figure>
-                        ) : null}
-
-                        <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
                           <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
                             Engineering Challenges & Tradeoffs
                           </h3>
@@ -1735,17 +1747,17 @@ const Projects = () => {
                         </section>
 
                         {selectedDetails.visuals[2] ? (
-                          <figure className="rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] lg:col-span-2">
+                          <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
                             <button
                               type="button"
                               onClick={() => setActiveVisual(selectedDetails.visuals[2])}
                               className="w-full text-left"
                             >
-                              <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-white/22 dark:border-white/10 dark:bg-white/[0.04]">
+                              <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-black/10 dark:border-white/10 dark:bg-black/25">
                                 <img
                                   src={selectedDetails.visuals[2].src}
                                   alt={selectedDetails.visuals[2].alt}
-                                  className="h-72 w-full object-cover sm:h-[25rem]"
+                                  className="h-auto w-full object-contain"
                                 />
                               </div>
                             </button>
@@ -1758,7 +1770,7 @@ const Projects = () => {
                           </figure>
                         ) : null}
 
-                        <section className="rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7 lg:col-span-2">
+                        <section className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/24 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-7">
                           <h3 className="font-display text-sm uppercase tracking-[0.24em] text-foreground/90">
                             Performance & Validation
                           </h3>
