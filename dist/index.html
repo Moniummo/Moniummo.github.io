@@ -3,20 +3,6 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <script>
-      (function (location) {
-        if (location.search.startsWith("?/")) {
-          const decoded = location.search
-            .slice(1)
-            .split("&")
-            .map((entry) => entry.replace(/~and~/g, "&"))
-            .join("&");
-
-          const nextUrl = location.pathname.slice(0, -1) + decoded + location.hash;
-          window.history.replaceState(null, "", nextUrl);
-        }
-      })(window.location);
-    </script>
     <title>Arkan Dave | Portfolio</title>
     <meta
       name="description"
@@ -48,12 +34,12 @@
 
     <meta name="twitter:card" content="summary" />
 
-    <script type="module" crossorigin src="./assets/index-D5JtaGmj.js"></script>
+    <script type="module" crossorigin src="./assets/index-Cvt1Um3e.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-xs6BZJBh.css">
   </head>
 
   <body>
-    <div id="root"></div>
+    <div id="root"></div>
     <script>
       (function () {
         var host = window.location.hostname;

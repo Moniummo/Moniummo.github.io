@@ -113,6 +113,33 @@ const projects: CvEntry[] = [
       "Applied tolerancing, iteration, and design-for-manufacturability principles throughout the design process.",
     ],
   },
+  {
+    title: "NickAI Conversational LLM",
+    subtitle: "Python, QLoRA, LLaMA 8B, PEFT, FastAPI, Discord API",
+    details: [
+      "Built an end-to-end conversational AI pipeline from dataset preparation through fine-tuning and local deployment.",
+      "Fine-tuned a LLaMA 8B model using parameter-efficient training methods to preserve style and reduce hardware load.",
+      "Integrated private web and Discord interfaces to support real-time inference and multi-platform interaction.",
+    ],
+  },
+  {
+    title: "RoboSub AUV Integration",
+    subtitle: "Systems Engineering, Controls, Perception, Embedded Integration",
+    details: [
+      "Led cross-functional system integration for an autonomous underwater vehicle by coordinating mechanical, electrical, controls, and perception teams.",
+      "Defined subsystem interface constraints and resolved bottlenecks affecting end-to-end mission reliability.",
+      "Improved validation workflow through staged integration testing and issue triage across coupled hardware/software pipelines.",
+    ],
+  },
+  {
+    title: "Portfolio Website Engineering",
+    subtitle: "React, TypeScript, Tailwind, Framer Motion, Responsive UI",
+    details: [
+      "Designed and implemented this portfolio as a modular web application with reusable components and data-driven content structure.",
+      "Built responsive navigation and interaction systems optimized for desktop and mobile workflows.",
+      "Applied iterative performance optimization, media compression, and route-level loading improvements for production deployment.",
+    ],
+  },
 ];
 
 const professionalExperience: CvEntry[] = [
