@@ -17,9 +17,8 @@ import coinSorterExploded from "@/assets/coin_sorter_exploded.png";
 import coinSorterIrl from "@/assets/coin_sorter_irl.png";
 import robosubArchitecture from "@/assets/robosub_architecture.png";
 import robosubIcon from "@/assets/robosub_icon.png";
-import websiteHeroPlaceholder from "@/assets/website_hero_placeholder.svg";
-import websiteResponsivePlaceholder from "@/assets/website_responsive_placeholder.svg";
-import websiteEngineeringPlaceholder from "@/assets/website_engineering_placeholder.svg";
+import websiteHero from "@/assets/website_hero.png";
+import websiteLighthouseStack from "@/assets/website_lighthouse_stack.png";
 import esonicPreview from "@/assets/previews/esonic_preview.webp";
 import bikePreview from "@/assets/previews/bike_preview.webp";
 import thermalPreview from "@/assets/previews/thermal_preview.webp";
@@ -834,22 +833,16 @@ const websiteDetails: ProjectDetails = {
   ],
   visuals: [
     {
-      src: websiteHeroPlaceholder,
-      alt: "Portfolio hero screenshot placeholder",
+      src: websiteHero,
+      alt: "Portfolio website hero screenshot",
       caption:
-        "Placeholder 1 - Hero overview. Replace with a full desktop screenshot of your strongest section (home or projects). Suggested filename: website_hero.png.",
+        "Website hero view showing the core visual language and interaction-first landing design.",
     },
     {
-      src: websiteResponsivePlaceholder,
-      alt: "Responsive layout screenshot placeholder",
+      src: websiteLighthouseStack,
+      alt: "Lighthouse metrics across all major site routes",
       caption:
-        "Placeholder 2 - Responsive proof. Replace with one composite image showing desktop, tablet, and mobile views side-by-side. Suggested filename: website_responsive.png.",
-    },
-    {
-      src: websiteEngineeringPlaceholder,
-      alt: "Engineering evidence screenshot placeholder",
-      caption:
-        "Placeholder 3 - Engineering proof. Replace with Lighthouse metrics or architecture/code screenshot that demonstrates technical implementation. Suggested filename: website_engineering.png.",
+        "Lighthouse engineering proof stacked in a single-column composite for Home, Projects, CV, Research, and About routes.",
     },
   ],
 };
