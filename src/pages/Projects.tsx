@@ -18,7 +18,11 @@ import coinSorterIrl from "@/assets/coin_sorter_irl.png";
 import robosubArchitecture from "@/assets/robosub_architecture.png";
 import robosubIcon from "@/assets/robosub_icon.png";
 import websiteHero from "@/assets/website_hero.png";
-import websiteLighthouseStack from "@/assets/website_lighthouse_stack.png";
+import websiteLighthouseHome from "@/assets/website_lighthouse_home.png";
+import websiteLighthouseProjects from "@/assets/website_lighthouse_projects.png";
+import websiteLighthouseCv from "@/assets/website_lighthouse_cv.png";
+import websiteLighthouseResearch from "@/assets/website_lighthouse_research.png";
+import websiteLighthouseAbout from "@/assets/website_lighthouse_about.png";
 import esonicPreview from "@/assets/previews/esonic_preview.webp";
 import bikePreview from "@/assets/previews/bike_preview.webp";
 import thermalPreview from "@/assets/previews/thermal_preview.webp";
@@ -839,10 +843,33 @@ const websiteDetails: ProjectDetails = {
         "Website hero view showing the core visual language and interaction-first landing design.",
     },
     {
-      src: websiteLighthouseStack,
-      alt: "Lighthouse metrics across all major site routes",
+      src: websiteLighthouseHome,
+      alt: "Lighthouse metrics for home route",
       caption:
-        "Lighthouse engineering proof stacked in a single-column composite for Home, Projects, CV, Research, and About routes.",
+        "Home route Lighthouse metrics (https://arkandave.com/).",
+    },
+    {
+      src: websiteLighthouseProjects,
+      alt: "Lighthouse metrics for projects route",
+      caption:
+        "Projects route Lighthouse metrics (https://arkandave.com/projects/).",
+    },
+    {
+      src: websiteLighthouseCv,
+      alt: "Lighthouse metrics for CV route",
+      caption: "CV route Lighthouse metrics (https://arkandave.com/cv/).",
+    },
+    {
+      src: websiteLighthouseResearch,
+      alt: "Lighthouse metrics for research route",
+      caption:
+        "Research route Lighthouse metrics (https://arkandave.com/research/).",
+    },
+    {
+      src: websiteLighthouseAbout,
+      alt: "Lighthouse metrics for about route",
+      caption:
+        "About route Lighthouse metrics (https://arkandave.com/about/).",
     },
   ],
 };
@@ -981,6 +1008,13 @@ const Projects = () => {
   const isFloatingExpanded = showFloatingSelector && (isFloatingHovered || isFloatingPinned);
   const selectedProject = selectedIndex === null ? null : projects[selectedIndex];
   const selectedDetails = selectedProject?.details;
+  const useWebsiteLighthouseCollage =
+    selectedProject?.title === "Portfolio Website Engineering" &&
+    (selectedDetails?.visuals.length ?? 0) >= 6;
+  const websiteLighthouseCollageVisuals = useWebsiteLighthouseCollage
+    ? selectedDetails!.visuals.slice(1, 6)
+    : [];
+  const websiteLighthouseLabels = ["Home", "Projects", "CV", "Research", "About"];
 
   useEffect(() => {
     const handleResize = () => {
@@ -1673,7 +1707,62 @@ const Projects = () => {
                           </div>
                         </section>
 
-                        {selectedDetails.visuals[1] ? (
+                        {useWebsiteLighthouseCollage ? (
+                          <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03] sm:p-5">
+                            <div className="mb-3 flex items-center justify-between px-1">
+                              <p className="font-display text-[10px] uppercase tracking-[0.24em] text-primary/78">
+                                Engineering Proof
+                              </p>
+                              <p className="text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                                Lighthouse Routes
+                              </p>
+                            </div>
+
+                            <button
+                              type="button"
+                              onClick={() => setActiveVisual(websiteLighthouseCollageVisuals[0])}
+                              className="w-full text-left"
+                            >
+                              <div className="overflow-hidden rounded-[2rem] border border-white/20 bg-black/10 dark:border-white/10 dark:bg-black/25">
+                                <img
+                                  src={websiteLighthouseCollageVisuals[0].src}
+                                  alt={websiteLighthouseCollageVisuals[0].alt}
+                                  className="h-auto w-full object-contain"
+                                />
+                              </div>
+                            </button>
+
+                            <div className="mt-3 grid grid-cols-2 gap-2.5">
+                              {websiteLighthouseCollageVisuals.slice(1).map((visual, visualIndex) => (
+                                <button
+                                  key={visual.alt}
+                                  type="button"
+                                  onClick={() => setActiveVisual(visual)}
+                                  className="text-left"
+                                >
+                                  <div className="overflow-hidden rounded-[1.5rem] border border-white/20 bg-black/10 dark:border-white/10 dark:bg-black/25">
+                                    <img
+                                      src={visual.src}
+                                      alt={visual.alt}
+                                      className="h-auto w-full object-contain"
+                                    />
+                                  </div>
+                                  <p className="mt-1.5 px-1 font-display text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                                    {websiteLighthouseLabels[visualIndex + 1]}
+                                  </p>
+                                </button>
+                              ))}
+                            </div>
+
+                            <figcaption className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
+                              Home route shown in the primary panel, with Projects, CV, Research,
+                              and About Lighthouse snapshots in a 2x2 grid.
+                            </figcaption>
+                            <p className="mt-1 px-1 font-display text-[10px] uppercase tracking-[0.2em] text-primary/75">
+                              Click to zoom
+                            </p>
+                          </figure>
+                        ) : selectedDetails.visuals[1] ? (
                           <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
                             <button
                               type="button"
@@ -1739,7 +1828,7 @@ const Projects = () => {
                           </div>
                         </section>
 
-                        {selectedDetails.visuals[2] ? (
+                        {selectedDetails.visuals[2] && !useWebsiteLighthouseCollage ? (
                           <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
                             <button
                               type="button"
