@@ -1,6 +1,5 @@
 import { Suspense, lazy, type MouseEvent, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
 import SubpageBackdrop from "@/components/SubpageBackdrop";
 import { cn } from "@/lib/utils";
 
@@ -107,17 +106,15 @@ const PageLayout = ({ title, children, mainClassName }: PageLayoutProps) => {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground transition-colors duration-500">
-      <AnimatePresence>
-        {routeTransition ? (
-          <Suspense fallback={null}>
-            <RouteTransitionOverlay
-              backdrop={routeTransition.backdrop}
-              initialClipPath={routeTransition.clipPath}
-              animateToClipPath="inset(0px 0px 0px 0px round 2.4rem)"
-            />
-          </Suspense>
-        ) : null}
-      </AnimatePresence>
+      {routeTransition ? (
+        <Suspense fallback={null}>
+          <RouteTransitionOverlay
+            backdrop={routeTransition.backdrop}
+            initialClipPath={routeTransition.clipPath}
+            animateToClipPath="inset(0px 0px 0px 0px round 2.4rem)"
+          />
+        </Suspense>
+      ) : null}
 
       <SubpageBackdrop className="fixed inset-0" />
 
@@ -168,14 +165,14 @@ const PageLayout = ({ title, children, mainClassName }: PageLayoutProps) => {
         </div>
       </nav>
 
-      <motion.main
-        initial={{ opacity: 0, y: 30 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: "easeOut" }}
-        className={cn("relative mx-auto max-w-4xl px-6 pb-20 pt-28 sm:px-8", mainClassName)}
+      <main
+        className={cn(
+          "page-layout-enter relative mx-auto max-w-4xl px-6 pb-20 pt-28 sm:px-8",
+          mainClassName
+        )}
       >
         {children}
-      </motion.main>
+      </main>
     </div>
   );
 };

@@ -7,6 +7,23 @@
       (function () {
         const pathSegmentsToKeep = 0;
         const location = window.location;
+        const knownRoutes = new Set(["projects", "research", "cv", "resume", "about"]);
+        const pathParts = location.pathname.replace(/^\/+|\/+$/g, "").split("/").filter(Boolean);
+        const firstSegment = pathParts[0];
+
+        if (knownRoutes.has(firstSegment)) {
+          const normalizedPath = "/" + pathParts.join("/") + "/";
+          location.replace(
+            location.protocol +
+              "//" +
+              location.hostname +
+              (location.port ? ":" + location.port : "") +
+              normalizedPath +
+              location.search +
+              location.hash
+          );
+          return;
+        }
 
         location.replace(
           location.protocol +

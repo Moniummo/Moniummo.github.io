@@ -1,4 +1,3 @@
-import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
 import PageLayout from "@/components/PageLayout";
 
@@ -280,91 +279,82 @@ const Resume = () => {
   const desktopAnchorGap = 10;
 
   useEffect(() => {
+    const visibilityBySection: Record<string, boolean> = {};
     let frameId = 0;
 
-    const updateActiveSection = () => {
-      const doc = document.documentElement;
-      const distanceFromBottom = doc.scrollHeight - (window.scrollY + window.innerHeight);
-      if (distanceFromBottom <= 20) {
+    const resolveActiveSection = () => {
+      const active = [...resumeSections]
+        .reverse()
+        .find((section) => visibilityBySection[section.id]);
+
+      if (!active) {
+        return;
+      }
+
+      setActiveSectionId((current) => (current === active.id ? current : active.id));
+    };
+
+    const centerLineObserver = new IntersectionObserver(
+      (entries) => {
+        for (const entry of entries) {
+          const target = entry.target as HTMLElement;
+          visibilityBySection[target.id] = entry.isIntersecting;
+        }
+
+        window.cancelAnimationFrame(frameId);
+        frameId = window.requestAnimationFrame(resolveActiveSection);
+      },
+      {
+        threshold: 0,
+        rootMargin: "-45% 0px -45% 0px",
+      }
+    );
+
+    for (const section of resumeSections) {
+      const node = sectionRefs.current[section.id];
+      if (node) {
+        centerLineObserver.observe(node);
+      }
+    }
+
+    const bottomSentinel = document.getElementById("cv-end-sentinel");
+    const bottomObserver = new IntersectionObserver(
+      (entries) => {
+        if (!entries[0]?.isIntersecting) {
+          return;
+        }
+
         setActiveSectionId((current) => (current === lastSectionId ? current : lastSectionId));
-        return;
+      },
+      {
+        threshold: 0,
+        rootMargin: "0px 0px -2% 0px",
       }
+    );
 
-      const scanLine = window.innerHeight * 0.45;
-      let steppedId = resumeSections[0].id;
-      let crossedAny = false;
-
-      for (const section of resumeSections) {
-        const element = sectionRefs.current[section.id];
-        if (!element) {
-          continue;
-        }
-
-        if (element.getBoundingClientRect().top <= scanLine) {
-          steppedId = section.id;
-          crossedAny = true;
-        } else {
-          break;
-        }
-      }
-
-      if (crossedAny) {
-        setActiveSectionId((current) => (current === steppedId ? current : steppedId));
-        return;
-      }
-
-      let nearestId = resumeSections[0].id;
-      let nearestDistance = Number.POSITIVE_INFINITY;
-
-      for (const section of resumeSections) {
-        const element = sectionRefs.current[section.id];
-        if (!element) {
-          continue;
-        }
-
-        const rect = element.getBoundingClientRect();
-        const sectionCenter = rect.top + rect.height / 2;
-        const distance = Math.abs(sectionCenter - scanLine);
-
-        if (distance < nearestDistance) {
-          nearestDistance = distance;
-          nearestId = section.id;
-        }
-      }
-
-      setActiveSectionId((current) => (current === nearestId ? current : nearestId));
-    };
-
-    const queueUpdate = () => {
-      window.cancelAnimationFrame(frameId);
-      frameId = window.requestAnimationFrame(updateActiveSection);
-    };
-
-    queueUpdate();
-    window.addEventListener("scroll", queueUpdate, { passive: true });
-    window.addEventListener("resize", queueUpdate);
+    if (bottomSentinel) {
+      bottomObserver.observe(bottomSentinel);
+    }
 
     return () => {
       window.cancelAnimationFrame(frameId);
-      window.removeEventListener("scroll", queueUpdate);
-      window.removeEventListener("resize", queueUpdate);
+      centerLineObserver.disconnect();
+      bottomObserver.disconnect();
     };
   }, [lastSectionId]);
 
   useEffect(() => {
     const scrollContainer = mobileAnchorScrollRef.current;
     const activeButton = mobileAnchorButtonRefs.current[activeSectionId];
-    if (!scrollContainer || !activeButton) {
+    if (!scrollContainer || !activeButton || !scrollContainer.contains(activeButton)) {
       return;
     }
 
     const prefersReducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const targetLeft =
-      activeButton.offsetLeft - scrollContainer.clientWidth / 2 + activeButton.offsetWidth / 2;
-
-    scrollContainer.scrollTo({
-      left: Math.max(0, targetLeft),
+    activeButton.scrollIntoView({
       behavior: prefersReducedMotion ? "auto" : "smooth",
+      block: "nearest",
+      inline: "center",
     });
   }, [activeSectionId]);
 
@@ -389,12 +379,13 @@ const Resume = () => {
                 (resumeSections.length - 1) * desktopAnchorGap,
             }}
           >
-            <motion.div
+            <div
               className="pointer-events-none absolute left-0 right-0 rounded-full border border-white/34 bg-white/52 shadow-[0_10px_24px_rgba(173,133,37,0.14)] dark:border-white/22 dark:bg-white/[0.16]"
-              style={{ height: desktopAnchorRowHeight }}
-              initial={false}
-              animate={{ y: activeSectionIndex * (desktopAnchorRowHeight + desktopAnchorGap) }}
-              transition={{ type: "spring", stiffness: 440, damping: 16, mass: 0.58 }}
+              style={{
+                height: desktopAnchorRowHeight,
+                transform: `translateY(${activeSectionIndex * (desktopAnchorRowHeight + desktopAnchorGap)}px)`,
+                transition: "transform 360ms cubic-bezier(0.22, 1, 0.36, 1)",
+              }}
             />
 
             <div className="relative flex flex-col" style={{ gap: desktopAnchorGap }}>
@@ -402,30 +393,23 @@ const Resume = () => {
               const isActive = section.id === activeSectionId;
 
               return (
-                <motion.button
+                <button
                   key={section.id}
                   type="button"
                   aria-label={`Jump to ${section.label}`}
                   aria-current={isActive ? "true" : undefined}
                   onClick={() => scrollToSection(section.id)}
-                  initial={false}
-                  animate={{
-                    scale: isActive ? 1.3 : 0.96,
-                    y: isActive ? -1.25 : 0,
-                    opacity: isActive ? 1 : 0.9,
-                  }}
-                  transition={{ type: "spring", stiffness: 430, damping: 20, mass: 0.56 }}
                   style={{ height: desktopAnchorRowHeight }}
-                  className={`relative z-10 flex w-full items-center justify-center rounded-full px-3 text-center transition-colors duration-300 ${
+                  className={`relative z-10 flex w-full items-center justify-center rounded-full px-3 text-center transition-all duration-300 ${
                     isActive
-                      ? "text-foreground"
-                      : "text-muted-foreground hover:text-foreground dark:text-muted-foreground"
+                      ? "-translate-y-[1.25px] scale-[1.3] text-foreground opacity-100"
+                      : "scale-[0.96] text-muted-foreground opacity-90 hover:text-foreground dark:text-muted-foreground"
                   }`}
                 >
                   <span className="font-display text-[11px] uppercase tracking-[0.16em]">
                     {section.label}
                   </span>
-                </motion.button>
+                </button>
               );
             })}
             </div>
@@ -440,24 +424,21 @@ const Resume = () => {
               const isActive = section.id === activeSectionId;
 
               return (
-                <motion.button
+                <button
                   key={`mobile-${section.id}`}
                   type="button"
                   ref={(node) => {
                     mobileAnchorButtonRefs.current[section.id] = node;
                   }}
                   onClick={() => scrollToSection(section.id)}
-                  initial={false}
-                  animate={{ scale: isActive ? 1.1 : 0.96, y: isActive ? -1.25 : 0, opacity: isActive ? 1 : 0.9 }}
-                  transition={{ type: "spring", stiffness: 420, damping: 20, mass: 0.55 }}
-                  className={`shrink-0 rounded-full border px-3 py-2.5 font-display text-[11px] uppercase tracking-[0.16em] transition-colors duration-300 ${
+                  className={`shrink-0 rounded-full border px-3 py-2.5 font-display text-[11px] uppercase tracking-[0.16em] transition-all duration-300 ${
                     isActive
-                      ? "border-white/38 bg-white/54 text-foreground dark:border-white/22 dark:bg-white/[0.15]"
-                      : "border-white/22 bg-white/28 text-muted-foreground dark:border-white/12 dark:bg-white/[0.08]"
+                      ? "-translate-y-[1.25px] scale-110 border-white/38 bg-white/54 text-foreground opacity-100 dark:border-white/22 dark:bg-white/[0.15]"
+                      : "scale-[0.96] border-white/22 bg-white/28 text-muted-foreground opacity-90 dark:border-white/12 dark:bg-white/[0.08]"
                   }`}
                 >
                   {section.label}
-                </motion.button>
+                </button>
               );
             })}
           </div>
@@ -481,14 +462,14 @@ const Resume = () => {
         </div>
       </header>
 
-      <section ref={setSectionRef("education")} id="education" className="mb-8 scroll-mt-28">
+      <section ref={setSectionRef("education")} id="education" className="cv-content-section mb-8 scroll-mt-28">
         <div className={sectionShellClass}>
           <h2 className="font-display text-sm uppercase tracking-[0.32em] text-primary/85">Education</h2>
           <div className="mt-5 space-y-6">{renderEntries(education)}</div>
         </div>
       </section>
 
-      <section ref={setSectionRef("research")} id="research" className="mb-8 scroll-mt-28">
+      <section ref={setSectionRef("research")} id="research" className="cv-content-section mb-8 scroll-mt-28">
         <div className={sectionShellClass}>
           <h2 className="font-display text-sm uppercase tracking-[0.32em] text-primary/85">
             Research Experience
@@ -497,7 +478,7 @@ const Resume = () => {
         </div>
       </section>
 
-      <section ref={setSectionRef("teaching")} id="teaching" className="mb-8 scroll-mt-28">
+      <section ref={setSectionRef("teaching")} id="teaching" className="cv-content-section mb-8 scroll-mt-28">
         <div className={sectionShellClass}>
           <h2 className="font-display text-sm uppercase tracking-[0.32em] text-primary/85">
             Teaching and Instructional Experience
@@ -506,14 +487,14 @@ const Resume = () => {
         </div>
       </section>
 
-      <section ref={setSectionRef("projects")} id="projects" className="mb-8 scroll-mt-28">
+      <section ref={setSectionRef("projects")} id="projects" className="cv-content-section mb-8 scroll-mt-28">
         <div className={sectionShellClass}>
           <h2 className="font-display text-sm uppercase tracking-[0.32em] text-primary/85">Projects</h2>
           <div className="mt-5 space-y-6">{renderEntries(projects)}</div>
         </div>
       </section>
 
-      <section ref={setSectionRef("professional")} id="professional" className="mb-8 scroll-mt-28">
+      <section ref={setSectionRef("professional")} id="professional" className="cv-content-section mb-8 scroll-mt-28">
         <div className={sectionShellClass}>
           <h2 className="font-display text-sm uppercase tracking-[0.32em] text-primary/85">
             Professional Experience
@@ -522,7 +503,7 @@ const Resume = () => {
         </div>
       </section>
 
-      <section ref={setSectionRef("service")} id="service" className="mb-8 scroll-mt-28">
+      <section ref={setSectionRef("service")} id="service" className="cv-content-section mb-8 scroll-mt-28">
         <div className={sectionShellClass}>
           <h2 className="font-display text-sm uppercase tracking-[0.32em] text-primary/85">
             Service and Volunteering
@@ -531,7 +512,7 @@ const Resume = () => {
         </div>
       </section>
 
-      <section ref={setSectionRef("honors")} id="honors" className="mb-8 scroll-mt-28">
+      <section ref={setSectionRef("honors")} id="honors" className="cv-content-section mb-8 scroll-mt-28">
         <div className={sectionShellClass}>
           <h2 className="font-display text-sm uppercase tracking-[0.32em] text-primary/85">
             Honors and Awards
@@ -540,7 +521,7 @@ const Resume = () => {
         </div>
       </section>
 
-      <section ref={setSectionRef("skills")} id="skills" className="mb-8 scroll-mt-28">
+      <section ref={setSectionRef("skills")} id="skills" className="cv-content-section mb-8 scroll-mt-28">
         <div className={sectionShellClass}>
           <h2 className="font-display text-sm uppercase tracking-[0.32em] text-primary/85">
             Technical Skills
@@ -558,7 +539,7 @@ const Resume = () => {
         </div>
       </section>
 
-      <section ref={setSectionRef("interests")} id="interests" className="scroll-mt-28">
+      <section ref={setSectionRef("interests")} id="interests" className="cv-content-section scroll-mt-28">
         <div className={sectionShellClass}>
           <h2 className="font-display text-sm uppercase tracking-[0.32em] text-primary/85">
             Interests and Hobbies
@@ -587,6 +568,8 @@ const Resume = () => {
           </div>
         </div>
       </section>
+
+      <div id="cv-end-sentinel" aria-hidden="true" className="h-px w-full" />
     </PageLayout>
   );
 };

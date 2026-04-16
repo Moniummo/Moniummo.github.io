@@ -190,3 +190,40 @@ html.theme-transition-active::view-transition-new(root) {
       drop-shadow(0 0 0px transparent);
   }
 }
+
+@keyframes page-layout-enter {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-layout-enter {
+  animation: page-layout-enter 600ms ease-out both;
+}
+
+.cv-content-section {
+  content-visibility: auto;
+  contain-intrinsic-size: 1px 760px;
+}
+
+@media (max-width: 767px) {
+  body {
+    background-attachment: scroll;
+  }
+
+  .cv-content-section {
+    contain-intrinsic-size: 1px 920px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .page-layout-enter {
+    animation: none;
+  }
+}
