@@ -1,9 +1,10 @@
-import { useEffect, useRef, useState, type MouseEvent } from "react";
+import { Suspense, lazy, useEffect, useRef, useState, type MouseEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { AnimatePresence, motion } from "framer-motion";
+import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import HomeBackdrop from "@/components/HomeBackdrop";
-import RouteTransitionOverlay from "@/components/RouteTransitionOverlay";
-import ThemeToggle from "@/components/ThemeToggle";
+
+const ThemeToggle = lazy(() => import("@/components/ThemeToggle"));
+const RouteTransitionOverlay = lazy(() => import("@/components/RouteTransitionOverlay"));
 
 // These links stay simple on the landing page so the hero can do most of the visual work.
 const navItems = [
@@ -37,13 +38,31 @@ interface PageTransitionState {
 const Index = () => {
   const navigate = useNavigate();
   const timeoutRef = useRef<number | null>(null);
+  const prefersReducedMotion = useReducedMotion();
+  const [isMobileViewport, setIsMobileViewport] = useState(
+    typeof window !== "undefined" ? window.innerWidth < 768 : false
+  );
   const [transitionState, setTransitionState] = useState<PageTransitionState | null>(null);
+  const skipEntranceMotion = prefersReducedMotion || isMobileViewport;
 
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         window.clearTimeout(timeoutRef.current);
       }
+    };
+  }, []);
+
+  useEffect(() => {
+    const updateViewport = () => {
+      setIsMobileViewport(window.innerWidth < 768);
+    };
+
+    updateViewport();
+    window.addEventListener("resize", updateViewport);
+
+    return () => {
+      window.removeEventListener("resize", updateViewport);
     };
   }, []);
 
@@ -83,10 +102,12 @@ const Index = () => {
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground transition-colors duration-500">
       <AnimatePresence>
         {transitionState ? (
-          <RouteTransitionOverlay
-            initialClipPath={transitionState.clipPath}
-            animateToClipPath="inset(0px 0px 0px 0px round 2.4rem)"
-          />
+          <Suspense fallback={null}>
+            <RouteTransitionOverlay
+              initialClipPath={transitionState.clipPath}
+              animateToClipPath="inset(0px 0px 0px 0px round 2.4rem)"
+            />
+          </Suspense>
         ) : null}
       </AnimatePresence>
 
@@ -97,24 +118,34 @@ const Index = () => {
           <p className="font-display text-[10px] tracking-[0.32em] uppercase text-muted-foreground">
             Portfolio / Biomedical Engineering
           </p>
-          <ThemeToggle />
+          <Suspense
+            fallback={
+              <div className="h-[3rem] w-[11.5rem] rounded-full border border-white/16 bg-white/12 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]" />
+            }
+          >
+            <ThemeToggle />
+          </Suspense>
         </div>
 
         <div className="relative flex flex-1 flex-col justify-between pb-10 pt-10 sm:pb-14 sm:pt-16">
           <div className="relative z-10 max-w-[1300px]">
             {/* The diagonal stroke now lives inside the "Arkan" span so it tracks the word instead of the page. */}
             <motion.h1
-              initial={{ opacity: 0, y: 28 }}
+              initial={skipEntranceMotion ? false : { opacity: 0, y: 28 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.85, ease: "easeOut" }}
+              transition={skipEntranceMotion ? { duration: 0 } : { duration: 0.85, ease: "easeOut" }}
               className="max-w-max font-script text-[clamp(4.5rem,12vw,12rem)] leading-[0.8] tracking-[-0.035em] text-foreground"
             >
               <span className="relative inline-block pr-[0.08em]">
                 <span className="pointer-events-none absolute left-[0.02em] top-[-2.15em] rotate-[35deg] sm:left-[0.06em] sm:top-[-2.4em] lg:left-[0.1em] lg:top-[-2.7em]">
                   <motion.span
-                    initial={{ opacity: 0, scaleY: 0.7 }}
+                    initial={skipEntranceMotion ? false : { opacity: 0, scaleY: 0.7 }}
                     animate={{ opacity: 1, scaleY: 1 }}
-                    transition={{ duration: 0.9, ease: "easeOut", delay: 0.15 }}
+                    transition={
+                      skipEntranceMotion
+                        ? { duration: 0 }
+                        : { duration: 0.9, ease: "easeOut", delay: 0.15 }
+                    }
                     className="block h-[6.6em] w-[0.06em] origin-top rounded-full bg-foreground/100 shadow-[0_0_40px_rgba(255,255,255,0.2)] sm:h-[7.8em] lg:h-[9.2em]"
                   />
                 </span>
@@ -124,10 +155,12 @@ const Index = () => {
             </motion.h1>
 
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
+              initial={skipEntranceMotion ? false : { opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: "easeOut", delay: 0.18 }}
-              className="mt-10 ml-[clamp(3.5rem,11vw,10.5rem)] max-w-[34rem] rounded-[2rem] border border-white/34 bg-white/28 px-6 py-6 shadow-[0_28px_78px_rgba(173,133,37,0.16)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.06] dark:shadow-[0_24px_80px_rgba(8,5,18,0.42)] sm:px-7"
+              transition={
+                skipEntranceMotion ? { duration: 0 } : { duration: 0.7, ease: "easeOut", delay: 0.18 }
+              }
+              className="mt-10 ml-[clamp(3.5rem,11vw,10.5rem)] max-w-[34rem] rounded-[2rem] border border-white/34 bg-white/28 px-6 py-6 shadow-[0_28px_78px_rgba(173,133,37,0.16)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.06] dark:shadow-[0_24px_80px_rgba(8,5,18,0.42)] sm:px-7 sm:backdrop-blur-2xl"
             >
               <p className="font-display text-[11px] tracking-[0.36em] uppercase text-primary/85">
                 Biomedical Engineer
@@ -142,10 +175,12 @@ const Index = () => {
           <div className="relative z-10 mt-14 flex justify-center lg:mt-20 lg:justify-end">
             {/* The nav becomes a single glass dock so it feels more like one polished object. */}
             <motion.div
-              initial={{ opacity: 0, y: 24 }}
+              initial={skipEntranceMotion ? false : { opacity: 0, y: 24 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.7, ease: "easeOut", delay: 0.34 }}
-              className="w-full max-w-[66rem] rounded-[2.25rem] border border-white/30 bg-white/22 p-3 shadow-[0_30px_88px_rgba(173,133,37,0.16)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_30px_90px_rgba(8,5,18,0.48)]"
+              transition={
+                skipEntranceMotion ? { duration: 0 } : { duration: 0.7, ease: "easeOut", delay: 0.34 }
+              }
+              className="w-full max-w-[66rem] rounded-[2.25rem] border border-white/30 bg-white/22 p-3 shadow-[0_30px_88px_rgba(173,133,37,0.16)] backdrop-blur-xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_30px_90px_rgba(8,5,18,0.48)] sm:backdrop-blur-3xl"
             >
               <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                 {navItems.map((item) => (

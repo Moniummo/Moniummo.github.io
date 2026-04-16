@@ -538,12 +538,24 @@ const Resume = () => {
           </h2>
           <div className="mt-5 flex flex-wrap gap-2.5">
             {interests.map((interest) => (
-              <span
-                key={interest}
-                className="rounded-full border border-white/28 bg-white/36 px-3.5 py-1.5 font-display text-xs uppercase tracking-[0.18em] text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] dark:border-white/12 dark:bg-white/[0.06]"
-              >
-                {interest}
-              </span>
+              interest === "Chess" ? (
+                <a
+                  key={interest}
+                  href="https://www.chess.com"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="rounded-full border border-white/28 bg-white/36 px-3.5 py-1.5 font-display text-xs uppercase tracking-[0.18em] text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] transition-colors hover:bg-white/48 hover:text-foreground dark:border-white/12 dark:bg-white/[0.06] dark:hover:bg-white/[0.12]"
+                >
+                  {interest}
+                </a>
+              ) : (
+                <span
+                  key={interest}
+                  className="rounded-full border border-white/28 bg-white/36 px-3.5 py-1.5 font-display text-xs uppercase tracking-[0.18em] text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] dark:border-white/12 dark:bg-white/[0.06]"
+                >
+                  {interest}
+                </span>
+              )
             ))}
           </div>
         </div>

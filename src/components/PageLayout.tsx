@@ -1,10 +1,11 @@
-import { type MouseEvent, useEffect, useRef, useState } from "react";
+import { Suspense, lazy, type MouseEvent, useEffect, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion } from "framer-motion";
-import RouteTransitionOverlay from "@/components/RouteTransitionOverlay";
 import SubpageBackdrop from "@/components/SubpageBackdrop";
-import ThemeToggle from "@/components/ThemeToggle";
 import { cn } from "@/lib/utils";
+
+const ThemeToggle = lazy(() => import("@/components/ThemeToggle"));
+const RouteTransitionOverlay = lazy(() => import("@/components/RouteTransitionOverlay"));
 
 interface PageLayoutProps {
   title: string;
@@ -108,11 +109,13 @@ const PageLayout = ({ title, children, mainClassName }: PageLayoutProps) => {
     <div className="relative min-h-screen overflow-hidden bg-background text-foreground transition-colors duration-500">
       <AnimatePresence>
         {routeTransition ? (
-          <RouteTransitionOverlay
-            backdrop={routeTransition.backdrop}
-            initialClipPath={routeTransition.clipPath}
-            animateToClipPath="inset(0px 0px 0px 0px round 2.4rem)"
-          />
+          <Suspense fallback={null}>
+            <RouteTransitionOverlay
+              backdrop={routeTransition.backdrop}
+              initialClipPath={routeTransition.clipPath}
+              animateToClipPath="inset(0px 0px 0px 0px round 2.4rem)"
+            />
+          </Suspense>
         ) : null}
       </AnimatePresence>
 
@@ -155,7 +158,13 @@ const PageLayout = ({ title, children, mainClassName }: PageLayoutProps) => {
           <span className="hidden font-display text-xs tracking-[0.3em] uppercase text-muted-foreground sm:inline">
             {title}
           </span>
-          <ThemeToggle />
+          <Suspense
+            fallback={
+              <div className="h-[3rem] w-[11.5rem] rounded-full border border-white/16 bg-white/12 backdrop-blur-sm dark:border-white/10 dark:bg-white/[0.05]" />
+            }
+          >
+            <ThemeToggle />
+          </Suspense>
         </div>
       </nav>
 
