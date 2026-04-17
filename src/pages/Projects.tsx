@@ -1215,9 +1215,9 @@ const Projects = () => {
                     <h1 className="mt-4 text-3xl text-foreground sm:text-4xl">
                       Explore the work.
                     </h1>
-                    <p className="mt-5 max-w-xs text-sm leading-relaxed text-muted-foreground sm:text-base">
-                      Hover over the selector to open the project orbit, then choose a tile to
-                      open its page below.
+                    <p className="mt-5 max-w-sm text-base leading-relaxed text-foreground/92 sm:text-lg">
+                      <span className="font-semibold text-foreground">Hover or tap the selector</span>{" "}
+                      to open the project orbit, then choose a tile to open its page below.
                     </p>
                   </div>
                 </div>
@@ -1355,11 +1355,19 @@ const Projects = () => {
                                 boxShadow: "0px 28px 110px rgba(173,133,37,0.22)",
                               }
                             : {
-                                scale: 0.9,
-                                boxShadow: "0px 24px 80px rgba(173,133,37,0.12)",
+                                scale: [0.9, 0.94, 0.9],
+                                boxShadow: [
+                                  "0px 24px 80px rgba(173,133,37,0.12)",
+                                  "0px 28px 94px rgba(173,133,37,0.2)",
+                                  "0px 24px 80px rgba(173,133,37,0.12)",
+                                ],
                               }
                         }
-                        transition={{ duration: 0.45, ease: motionEase }}
+                        transition={
+                          isExpanded
+                            ? { duration: 0.45, ease: motionEase }
+                            : { duration: 2.4, ease: "easeInOut", repeat: Infinity }
+                        }
                         style={{
                           height: metrics.buttonSize,
                           width: metrics.buttonSize,
@@ -1371,14 +1379,20 @@ const Projects = () => {
                           animate={
                             isExpanded
                               ? { opacity: 0.95, scale: 1.08 }
-                              : { opacity: 0.6, scale: 1 }
+                              : {
+                                  opacity: [0.56, 0.72, 0.56],
+                                  scale: [1, 1.06, 1],
+                                }
                           }
-                          transition={{ duration: 0.45, ease: motionEase }}
+                          transition={
+                            isExpanded
+                              ? { duration: 0.45, ease: motionEase }
+                              : { duration: 2.2, ease: "easeInOut", repeat: Infinity }
+                          }
                           className="pointer-events-none absolute -inset-7 rounded-full bg-primary/18 blur-3xl dark:bg-primary/20"
                         />
 
                         <span className="pointer-events-none absolute inset-0 rounded-full bg-[radial-gradient(circle_at_28%_22%,rgba(255,255,255,0.72),transparent_32%),radial-gradient(circle_at_72%_78%,rgba(255,255,255,0.08),transparent_42%)]" />
-                        <span className="pointer-events-none absolute inset-x-[18%] top-[10%] h-px bg-gradient-to-r from-transparent via-white/90 to-transparent opacity-95" />
                         <span className="pointer-events-none absolute inset-[8%] rounded-full border border-white/16 bg-white/[0.03] dark:border-white/10 dark:bg-white/[0.02]" />
 
                         <motion.span
@@ -1389,7 +1403,7 @@ const Projects = () => {
                           transition={
                             isExpanded
                               ? { duration: 6.6, ease: "linear", repeat: Infinity }
-                              : { duration: 0.6, ease: motionEase }
+                              : { duration: 0.7, ease: motionEase }
                           }
                           className="pointer-events-none absolute inset-[22%] rounded-full"
                         >
