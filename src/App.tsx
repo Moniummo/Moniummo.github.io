@@ -15,7 +15,7 @@ const routerBase =
     : "/";
 
 const App = () => (
-  <ThemeProvider attribute="class" defaultTheme="light" enableSystem={false}>
+  <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
     <BrowserRouter basename={routerBase}>
       <Suspense fallback={<div className="min-h-screen bg-background" />}>
         <Routes>
