@@ -14,7 +14,8 @@ const main = async () => {
   const rootHtml = await readFile(indexPath, "utf8");
   const routeHtml = rootHtml
     .replace(/(src|href)="\.\/assets\//g, '$1="../assets/')
-    .replace(/(src|href)="\.\/favicon\.ico"/g, '$1="../favicon.ico"')
+    .replace(/(src|href)="\.\/favicon\.svg([^"]*)"/g, '$1="../favicon.svg$2"')
+    .replace(/(src|href)="\.\/favicon\.ico([^"]*)"/g, '$1="../favicon.ico$2"')
     .replace(/(src|href)="\.\/robots\.txt"/g, '$1="../robots.txt"')
     .replace(/(src|href)="\.\/placeholder\.svg"/g, '$1="../placeholder.svg"');
 
