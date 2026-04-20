@@ -1,4 +1,5 @@
 import { AnimatePresence, motion } from "framer-motion";
+import { MousePointer2 } from "lucide-react";
 import { type FocusEvent, useEffect, useRef, useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import esonicBoxChart from "@/assets/ESONIC_Box_Chart.png";
@@ -161,12 +162,14 @@ const esonicDetails: ProjectDetails = {
     {
       src: esonicVisualizer,
       alt: "ESONIC real-time visualizer interface",
-      caption: "Real-time ESONIC visualizer for telemetry and feedback monitoring.",
+      caption:
+        "Real-time ESONIC visualizer for telemetry and feedback monitoring.",
     },
     {
       src: esonicBoxChart,
       alt: "ESONIC architecture and data flow chart",
-      caption: "System-level transport and control flow used in the ESONIC pipeline.",
+      caption:
+        "System-level transport and control flow used in the ESONIC pipeline.",
     },
   ],
 };
@@ -255,12 +258,14 @@ const bikeDetails: ProjectDetails = {
     {
       src: bicyclePicture,
       alt: "Articulated bicycle drivetrain assembly model",
-      caption: "Full drivetrain assembly used for articulation, mate, and motion-validation studies.",
+      caption:
+        "Full drivetrain assembly used for articulation, mate, and motion-validation studies.",
     },
     {
       src: gearMate,
       alt: "Gear mate and rotational coupling view for drivetrain simulation",
-      caption: "Gear mate configuration showing rotational coupling and ratio-driven motion behavior.",
+      caption:
+        "Gear mate configuration showing rotational coupling and ratio-driven motion behavior.",
     },
   ],
 };
@@ -268,7 +273,8 @@ const bikeDetails: ProjectDetails = {
 const matlabDetails: ProjectDetails = {
   headerLabel: "Computational Modeling",
   status: "Model Complete",
-  tagline: "Energy Balance | Experimental Modeling | System Efficiency Analysis",
+  tagline:
+    "Energy Balance | Experimental Modeling | System Efficiency Analysis",
   summary:
     "This MATLAB project developed a quantitative thermal modeling framework to estimate incident energy, heat retention behavior, and annual energy cost required to maintain indoor comfort under different insulation and material configurations. The model links experimental probe data with scaled environmental inputs, then applies transient energy-balance logic to evaluate heating and cooling demand. The core goal was to understand how thermal properties and system assumptions shape long-term energy efficiency decisions.",
   designProblem: [
@@ -349,12 +355,14 @@ const matlabDetails: ProjectDetails = {
     {
       src: matlabHeatGraph,
       alt: "MATLAB thermal distribution heatmap output",
-      caption: "Heat-distribution visualization used to compare thermal behavior across configurations.",
+      caption:
+        "Heat-distribution visualization used to compare thermal behavior across configurations.",
     },
     {
       src: matlab2dGraph,
       alt: "MATLAB 2D energy and temperature trend analysis plot",
-      caption: "Time-domain model outputs used for incident energy and thermal-demand analysis.",
+      caption:
+        "Time-domain model outputs used for incident energy and thermal-demand analysis.",
     },
   ],
 };
@@ -362,7 +370,8 @@ const matlabDetails: ProjectDetails = {
 const frostigImagingDetails: ProjectDetails = {
   headerLabel: "Frostig Lab Work",
   status: "Pipeline Validated",
-  tagline: "MATLAB | Image Segmentation | Signal Processing | Interactive Data Analysis",
+  tagline:
+    "MATLAB | Image Segmentation | Signal Processing | Interactive Data Analysis",
   summary:
     "This project developed a quantitative neurovascular imaging pipeline in MATLAB to transform high-noise cortical imaging data into stable vessel dilation metrics over time. The workflow combined vessel segmentation, user-guided segment selection, state-aligned temporal analysis, and surface artifact correction to preserve analytical integrity while improving interpretability. The primary engineering objective was to balance structural fidelity, noise suppression, and computational practicality in a reproducible imaging pipeline.",
   designProblem: [
@@ -443,17 +452,20 @@ const frostigImagingDetails: ProjectDetails = {
     {
       src: matlabVesselIdentification,
       alt: "Cortical vessel identification and segmentation mask output",
-      caption: "Vessel identification stage used to isolate analyzable vascular structures.",
+      caption:
+        "Vessel identification stage used to isolate analyzable vascular structures.",
     },
     {
       src: matlabSurfPlotAnalysis,
       alt: "Neurovascular surface analysis visualization",
-      caption: "Surface-based analysis view of neurovascular signal structure before correction.",
+      caption:
+        "Surface-based analysis view of neurovascular signal structure before correction.",
     },
     {
       src: matlabSurfPlotModification,
       alt: "Corrected neurovascular surface plot after selective smoothing",
-      caption: "Post-correction surf view showing reduced visualization artifacts with preserved signal integrity.",
+      caption:
+        "Post-correction surf view showing reduced visualization artifacts with preserved signal integrity.",
     },
   ],
 };
@@ -461,7 +473,8 @@ const frostigImagingDetails: ProjectDetails = {
 const nickAiDetails: ProjectDetails = {
   headerLabel: "Applied AI Systems",
   status: "Locally Deployed",
-  tagline: "HuggingFace | QLoRA | LLaMA 8B | PEFT | WSL Ubuntu | Discord API | Web Deployment",
+  tagline:
+    "HuggingFace | QLoRA | LLaMA 8B | PEFT | WSL Ubuntu | Discord API | Web Deployment",
   summary:
     "NickAI is a full training-to-deployment conversational LLM pipeline built around parameter-efficient fine-tuning and local inference. The system takes structured dialogue logs, converts them into supervised conversational pairs, fine-tunes a LLaMA 8B base model with QLoRA, and serves responses through both a private web client and a Discord bot integration. The primary engineering objective was to maintain high stylistic coherence while staying within consumer-GPU memory limits and preserving deployment flexibility.",
   designProblem: [
@@ -547,12 +560,14 @@ const nickAiDetails: ProjectDetails = {
     {
       src: aiProjectGpuUtilization,
       alt: "NickAI local LLaMA inference GPU utilization view",
-      caption: "Local inference performance profile during NickAI operation on consumer GPU hardware.",
+      caption:
+        "Local inference performance profile during NickAI operation on consumer GPU hardware.",
     },
     {
       src: discordJson,
       alt: "NickAI Discord JSON preprocessing and structured dataset workflow view",
-      caption: "Discord log preprocessing stage used to build structured prompt/completion training data.",
+      caption:
+        "Discord log preprocessing stage used to build structured prompt/completion training data.",
     },
   ],
 };
@@ -560,7 +575,8 @@ const nickAiDetails: ProjectDetails = {
 const coinSorterDetails: ProjectDetails = {
   headerLabel: "Mechanical Product Design",
   status: "Fabricated and Tested",
-  tagline: "CAD | Tolerance Design | Iterative Prototyping | 3D Printing | Mechanical Flow Control",
+  tagline:
+    "CAD | Tolerance Design | Iterative Prototyping | 3D Printing | Mechanical Flow Control",
   summary:
     "This project designed and fabricated an autonomous gravity-driven coin sorting system that separates mixed U.S. coins by diameter without electronics. The design translated subtle dimensional differences into reliable mechanical filtering by combining slot geometry, tolerance-aware CAD, and iterative 3D-printed prototyping. The core engineering objective was stable, repeatable one-at-a-time flow while minimizing jams, overlap, and misclassification under real-world manufacturing variation.",
   designProblem: [
@@ -641,17 +657,20 @@ const coinSorterDetails: ProjectDetails = {
     {
       src: coinSorterAssembly,
       alt: "Coin sorter CAD assembly view",
-      caption: "Primary CAD assembly showing channel geometry, slot progression, and plate structure.",
+      caption:
+        "Primary CAD assembly showing channel geometry, slot progression, and plate structure.",
     },
     {
       src: coinSorterExploded,
       alt: "Coin sorter exploded view and component breakdown",
-      caption: "Exploded view used to evaluate modular part relationships and manufacturability details.",
+      caption:
+        "Exploded view used to evaluate modular part relationships and manufacturability details.",
     },
     {
       src: coinSorterIrl,
       alt: "Physical 3D-printed coin sorter prototype",
-      caption: "Fabricated prototype used for real-world jam testing and denomination sorting validation.",
+      caption:
+        "Fabricated prototype used for real-world jam testing and denomination sorting validation.",
     },
   ],
 };
@@ -659,7 +678,8 @@ const coinSorterDetails: ProjectDetails = {
 const robosubDetails: ProjectDetails = {
   headerLabel: "Autonomous Robotics",
   status: "Systems Integration Complete",
-  tagline: "AUV Integration | Controls | Perception | Embedded Systems | Cross-Functional Leadership",
+  tagline:
+    "AUV Integration | Controls | Perception | Embedded Systems | Cross-Functional Leadership",
   summary:
     "This RoboSub work focused on a systems-level engineering problem: turning independently built mechanical, electrical, controls, and perception modules into one reliable autonomous underwater vehicle. Instead of treating each subsystem in isolation, the project centered on interface quality, timing behavior, and mission-readiness under real underwater uncertainty. The objective was to build a cohesive architecture where visual detections translated into stable navigation actions, power and communication remained dependable, and mission sequences could execute without manual intervention. In practice, that meant coordinating tradeoffs across latency, control-loop stability, sensor noise, and bandwidth limits while preserving enough modularity for teams to debug and iterate quickly.",
   designProblem: [
@@ -745,12 +765,14 @@ const robosubDetails: ProjectDetails = {
     {
       src: robosubArchitecture,
       alt: "RoboSub systems architecture overview",
-      caption: "System architecture view highlighting subsystem interfaces and integration pathways.",
+      caption:
+        "System architecture view highlighting subsystem interfaces and integration pathways.",
     },
     {
       src: robosubIcon,
       alt: "RoboSub vehicle visual",
-      caption: "RoboSub vehicle visual used for project identity and selector preview.",
+      caption:
+        "RoboSub vehicle visual used for project identity and selector preview.",
     },
   ],
 };
@@ -845,8 +867,7 @@ const websiteDetails: ProjectDetails = {
     {
       src: websiteLighthouseHome,
       alt: "Lighthouse metrics for home route",
-      caption:
-        "Home route Lighthouse metrics (https://arkandave.com/).",
+      caption: "Home route Lighthouse metrics (https://arkandave.com/).",
     },
     {
       src: websiteLighthouseProjects,
@@ -868,8 +889,7 @@ const websiteDetails: ProjectDetails = {
     {
       src: websiteLighthouseAbout,
       alt: "Lighthouse metrics for about route",
-      caption:
-        "About route Lighthouse metrics (https://arkandave.com/about/).",
+      caption: "About route Lighthouse metrics (https://arkandave.com/about/).",
     },
   ],
 };
@@ -994,8 +1014,12 @@ const Projects = () => {
   const [isPinned, setIsPinned] = useState(false);
   const [isFloatingHovered, setIsFloatingHovered] = useState(false);
   const [isFloatingPinned, setIsFloatingPinned] = useState(false);
-  const [hoveredOrbitIndex, setHoveredOrbitIndex] = useState<number | null>(null);
-  const [hoveredFloatingIndex, setHoveredFloatingIndex] = useState<number | null>(null);
+  const [hoveredOrbitIndex, setHoveredOrbitIndex] = useState<number | null>(
+    null,
+  );
+  const [hoveredFloatingIndex, setHoveredFloatingIndex] = useState<
+    number | null
+  >(null);
   const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
   const [metrics, setMetrics] = useState<OrbitMetrics>(getOrbitMetrics);
   const closeTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -1003,10 +1027,18 @@ const Projects = () => {
   const selectorAnchorRef = useRef<HTMLDivElement | null>(null);
   const [showFloatingSelector, setShowFloatingSelector] = useState(false);
   const [activeVisual, setActiveVisual] = useState<ProjectVisual | null>(null);
+  const [hasDismissedMainSelectorHint, setHasDismissedMainSelectorHint] =
+    useState(false);
+  const [
+    hasDismissedFloatingSelectorHint,
+    setHasDismissedFloatingSelectorHint,
+  ] = useState(false);
 
   const isExpanded = isHovered || isPinned;
-  const isFloatingExpanded = showFloatingSelector && (isFloatingHovered || isFloatingPinned);
-  const selectedProject = selectedIndex === null ? null : projects[selectedIndex];
+  const isFloatingExpanded =
+    showFloatingSelector && (isFloatingHovered || isFloatingPinned);
+  const selectedProject =
+    selectedIndex === null ? null : projects[selectedIndex];
   const selectedDetails = selectedProject?.details;
   const useWebsiteLighthouseCollage =
     selectedProject?.title === "Portfolio Website Engineering" &&
@@ -1014,7 +1046,13 @@ const Projects = () => {
   const websiteLighthouseCollageVisuals = useWebsiteLighthouseCollage
     ? selectedDetails!.visuals.slice(1, 6)
     : [];
-  const websiteLighthouseLabels = ["Home", "Projects", "CV", "Research", "About"];
+  const websiteLighthouseLabels = [
+    "Home",
+    "Projects",
+    "CV",
+    "Research",
+    "About",
+  ];
 
   useEffect(() => {
     const handleResize = () => {
@@ -1043,7 +1081,10 @@ const Projects = () => {
     }
 
     const raf = window.requestAnimationFrame(() => {
-      selectedSectionRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
+      selectedSectionRef.current?.scrollIntoView({
+        behavior: "smooth",
+        block: "start",
+      });
     });
 
     return () => window.cancelAnimationFrame(raf);
@@ -1080,7 +1121,7 @@ const Projects = () => {
       ([entry]) => {
         setShowFloatingSelector(!entry.isIntersecting);
       },
-      { threshold: 0.2 }
+      { threshold: 0.2 },
     );
 
     observer.observe(selectorAnchorRef.current);
@@ -1095,8 +1136,17 @@ const Projects = () => {
     }
   };
 
+  const dismissMainSelectorHint = () => {
+    setHasDismissedMainSelectorHint(true);
+  };
+
+  const dismissFloatingSelectorHint = () => {
+    setHasDismissedFloatingSelectorHint(true);
+  };
+
   const openOrbit = () => {
     clearCloseTimer();
+    dismissMainSelectorHint();
     setIsHovered(true);
   };
 
@@ -1115,6 +1165,7 @@ const Projects = () => {
 
   const toggleOrbit = () => {
     clearCloseTimer();
+    dismissMainSelectorHint();
     const nextPinned = !isPinned;
     setIsPinned(nextPinned);
     setIsHovered(nextPinned);
@@ -1134,6 +1185,7 @@ const Projects = () => {
   };
 
   const openFloatingOrbit = () => {
+    dismissFloatingSelectorHint();
     setIsFloatingHovered(true);
   };
 
@@ -1148,6 +1200,7 @@ const Projects = () => {
   };
 
   const toggleFloatingOrbit = () => {
+    dismissFloatingSelectorHint();
     const nextPinned = !isFloatingPinned;
     setIsFloatingPinned(nextPinned);
     setIsFloatingHovered(nextPinned);
@@ -1173,7 +1226,10 @@ const Projects = () => {
     stackGap: 12,
     stackOffset: 10,
   };
-  const floatingBoundsWidth = Math.max(floatingMetrics.cardWidth, floatingMetrics.buttonSize);
+  const floatingBoundsWidth = Math.max(
+    floatingMetrics.cardWidth,
+    floatingMetrics.buttonSize,
+  );
   const floatingBoundsHeight =
     projects.length * (floatingMetrics.cardHeight + floatingMetrics.stackGap) +
     floatingMetrics.buttonSize;
@@ -1185,11 +1241,13 @@ const Projects = () => {
       ? null
       : {
           x:
-            Math.cos((Math.PI * 2 * hoveredOrbitIndex) / projects.length - Math.PI / 2) *
-            metrics.radius,
+            Math.cos(
+              (Math.PI * 2 * hoveredOrbitIndex) / projects.length - Math.PI / 2,
+            ) * metrics.radius,
           y:
-            Math.sin((Math.PI * 2 * hoveredOrbitIndex) / projects.length - Math.PI / 2) *
-            metrics.radius,
+            Math.sin(
+              (Math.PI * 2 * hoveredOrbitIndex) / projects.length - Math.PI / 2,
+            ) * metrics.radius,
         };
 
   return (
@@ -1203,11 +1261,17 @@ const Projects = () => {
                 className="grid min-h-[calc(100vh-11rem)] gap-6 lg:gap-8 xl:gap-10"
                 style={
                   metrics.stageSize > 380
-                    ? { alignItems: "center", gridTemplateColumns: "minmax(0,1fr) minmax(0,2fr)" }
+                    ? {
+                        alignItems: "center",
+                        gridTemplateColumns: "minmax(0,1fr) minmax(0,2fr)",
+                      }
                     : undefined
                 }
               >
-                <div ref={selectorAnchorRef} className="flex flex-col justify-center">
+                <div
+                  ref={selectorAnchorRef}
+                  className="flex flex-col justify-center"
+                >
                   <div className="rounded-[3.2rem] border border-white/30 bg-white/30 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.26)] backdrop-blur-2xl dark:border-white/10 dark:bg-white/[0.05] sm:rounded-[3.8rem] sm:p-8">
                     <p className="font-display text-[10px] uppercase tracking-[0.34em] text-primary/80">
                       Project Page
@@ -1216,8 +1280,11 @@ const Projects = () => {
                       Explore the work.
                     </h1>
                     <p className="mt-5 max-w-sm text-base leading-relaxed text-foreground/92 sm:text-lg">
-                      <span className="font-semibold text-foreground">Hover or tap the selector</span>{" "}
-                      to open the project orbit, then choose a tile to open its page below.
+                      <span className="font-semibold text-foreground">
+                        Hover or tap the selector
+                      </span>{" "}
+                      to open the project orbit, then choose a tile to open its
+                      page below.
                     </p>
                   </div>
                 </div>
@@ -1241,7 +1308,8 @@ const Projects = () => {
                     }}
                   >
                     {projects.map((project, index) => {
-                      const angle = (Math.PI * 2 * index) / projects.length - Math.PI / 2;
+                      const angle =
+                        (Math.PI * 2 * index) / projects.length - Math.PI / 2;
                       const x = Math.cos(angle) * metrics.radius;
                       const y = Math.sin(angle) * metrics.radius;
                       let pushedX = x;
@@ -1255,7 +1323,10 @@ const Projects = () => {
                           const dx = x - hoveredOrbitPosition.x;
                           const dy = y - hoveredOrbitPosition.y;
                           const distance = Math.hypot(dx, dy) || 1;
-                          const influence = Math.max(0, 1 - distance / (metrics.radius * 1.45));
+                          const influence = Math.max(
+                            0,
+                            1 - distance / (metrics.radius * 1.45),
+                          );
                           const pushDistance = influence * 34;
                           pushedX += (dx / distance) * pushDistance;
                           pushedY += (dy / distance) * pushDistance;
@@ -1303,12 +1374,13 @@ const Projects = () => {
                             }}
                             onMouseLeave={() => {
                               setHoveredOrbitIndex((current) =>
-                                current === index ? null : current
+                                current === index ? null : current,
                               );
                             }}
                             onFocus={openOrbit}
                             onClick={() => {
                               clearCloseTimer();
+                              dismissMainSelectorHint();
                               setSelectedIndex(index);
                               setIsPinned(true);
                               setIsHovered(true);
@@ -1352,7 +1424,8 @@ const Projects = () => {
                           isExpanded
                             ? {
                                 scale: 1,
-                                boxShadow: "0px 28px 110px rgba(173,133,37,0.22)",
+                                boxShadow:
+                                  "0px 28px 110px rgba(173,133,37,0.22)",
                               }
                             : {
                                 scale: [0.9, 0.94, 0.9],
@@ -1366,7 +1439,11 @@ const Projects = () => {
                         transition={
                           isExpanded
                             ? { duration: 0.45, ease: motionEase }
-                            : { duration: 2.4, ease: "easeInOut", repeat: Infinity }
+                            : {
+                                duration: 2.4,
+                                ease: "easeInOut",
+                                repeat: Infinity,
+                              }
                         }
                         style={{
                           height: metrics.buttonSize,
@@ -1387,7 +1464,11 @@ const Projects = () => {
                           transition={
                             isExpanded
                               ? { duration: 0.45, ease: motionEase }
-                              : { duration: 2.2, ease: "easeInOut", repeat: Infinity }
+                              : {
+                                  duration: 2.2,
+                                  ease: "easeInOut",
+                                  repeat: Infinity,
+                                }
                           }
                           className="pointer-events-none absolute -inset-7 rounded-full bg-primary/18 blur-3xl dark:bg-primary/20"
                         />
@@ -1398,11 +1479,17 @@ const Projects = () => {
                         <motion.span
                           aria-hidden="true"
                           animate={
-                            isExpanded ? { rotate: 360, scale: 1.02 } : { rotate: 0, scale: 1 }
+                            isExpanded
+                              ? { rotate: 360, scale: 1.02 }
+                              : { rotate: 0, scale: 1 }
                           }
                           transition={
                             isExpanded
-                              ? { duration: 6.6, ease: "linear", repeat: Infinity }
+                              ? {
+                                  duration: 6.6,
+                                  ease: "linear",
+                                  repeat: Infinity,
+                                }
                               : { duration: 0.7, ease: motionEase }
                           }
                           className="pointer-events-none absolute inset-[22%] rounded-full"
@@ -1420,7 +1507,11 @@ const Projects = () => {
                           animate={isExpanded ? { rotate: 360 } : { rotate: 0 }}
                           transition={
                             isExpanded
-                              ? { duration: 2.8, ease: "linear", repeat: Infinity }
+                              ? {
+                                  duration: 2.8,
+                                  ease: "linear",
+                                  repeat: Infinity,
+                                }
                               : { duration: 0.5, ease: motionEase }
                           }
                           className="pointer-events-none absolute inset-[19%] rounded-full border border-primary/22"
@@ -1430,10 +1521,16 @@ const Projects = () => {
 
                         <motion.span
                           aria-hidden="true"
-                          animate={isExpanded ? { rotate: -360 } : { rotate: 0 }}
+                          animate={
+                            isExpanded ? { rotate: -360 } : { rotate: 0 }
+                          }
                           transition={
                             isExpanded
-                              ? { duration: 3.8, ease: "linear", repeat: Infinity }
+                              ? {
+                                  duration: 3.8,
+                                  ease: "linear",
+                                  repeat: Infinity,
+                                }
                               : { duration: 0.55, ease: motionEase }
                           }
                           className="pointer-events-none absolute inset-[29%] rounded-full border border-dashed border-white/26 dark:border-primary/30"
@@ -1454,7 +1551,11 @@ const Projects = () => {
                           }
                           transition={
                             isExpanded
-                              ? { duration: 1.8, ease: "easeInOut", repeat: Infinity }
+                              ? {
+                                  duration: 1.8,
+                                  ease: "easeInOut",
+                                  repeat: Infinity,
+                                }
                               : { duration: 0.45, ease: motionEase }
                           }
                           className="pointer-events-none absolute inset-[37%] rounded-full border border-white/18 bg-white/22 shadow-[inset_0_1px_0_rgba(255,255,255,0.24)] dark:border-white/10 dark:bg-white/[0.05]"
@@ -1464,6 +1565,27 @@ const Projects = () => {
                           <span className="h-4 w-4 rounded-full bg-white/82 shadow-[0_0_28px_rgba(255,255,255,0.48)] dark:bg-primary/82 dark:shadow-[0_0_28px_rgba(155,120,255,0.34)] sm:h-5 sm:w-5" />
                         </span>
                       </motion.button>
+
+                      <AnimatePresence initial={false}>
+                        {!hasDismissedMainSelectorHint && !isExpanded ? (
+                          <motion.span
+                            key="selector-cta"
+                            initial={{ opacity: 0, scale: 0.92 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.94 }}
+                            transition={{
+                              duration: 0.55,
+                              ease: motionEase,
+                            }}
+                            className="pointer-events-none absolute left-1/2 top-1/2 z-20 -translate-x-1/2 -translate-y-1/2 whitespace-nowrap rounded-full border border-white/24 bg-white/58 px-3 py-2 text-center text-[10px] font-medium uppercase tracking-[0.22em] text-primary/88 shadow-[0_16px_38px_rgba(173,133,37,0.14)] backdrop-blur-xl dark:border-white/12 dark:bg-[rgba(12,11,22,0.74)] dark:text-primary/82 dark:shadow-[0_18px_40px_rgba(8,5,18,0.48)]"
+                          >
+                            <span className="flex items-center gap-1.5">
+                              <MousePointer2 className="h-3 w-3" />
+                              Hover / tap
+                            </span>
+                          </motion.span>
+                        ) : null}
+                      </AnimatePresence>
                     </div>
                   </div>
                 </div>
@@ -1498,7 +1620,9 @@ const Projects = () => {
                   <div className="pointer-events-none absolute bottom-0 right-0">
                     {projects.map((project, index) => {
                       const yOffset =
-                        (index + 1) * (floatingMetrics.cardHeight + floatingMetrics.stackGap) +
+                        (index + 1) *
+                          (floatingMetrics.cardHeight +
+                            floatingMetrics.stackGap) +
                         floatingMetrics.stackOffset;
                       let yShift = 0;
                       let popupScale = 1;
@@ -1507,9 +1631,15 @@ const Projects = () => {
                         if (hoveredFloatingIndex === index) {
                           popupScale = 1.22;
                         } else {
-                          const relativeDistance = Math.abs(index - hoveredFloatingIndex);
-                          const influence = Math.max(0, 1 - relativeDistance / 3);
-                          const direction = index < hoveredFloatingIndex ? 1 : -1;
+                          const relativeDistance = Math.abs(
+                            index - hoveredFloatingIndex,
+                          );
+                          const influence = Math.max(
+                            0,
+                            1 - relativeDistance / 3,
+                          );
+                          const direction =
+                            index < hoveredFloatingIndex ? 1 : -1;
                           yShift = direction * influence * 12;
                           popupScale = 1 - influence * 0.06;
                         }
@@ -1555,11 +1685,12 @@ const Projects = () => {
                             }}
                             onMouseLeave={() => {
                               setHoveredFloatingIndex((current) =>
-                                current === index ? null : current
+                                current === index ? null : current,
                               );
                             }}
                             onFocus={openFloatingOrbit}
                             onClick={() => {
+                              dismissFloatingSelectorHint();
                               setSelectedIndex(index);
                               setIsFloatingPinned(true);
                               setIsFloatingHovered(true);
@@ -1592,8 +1723,14 @@ const Projects = () => {
                     onClick={toggleFloatingOrbit}
                     animate={
                       isFloatingExpanded
-                        ? { scale: 1, boxShadow: "0px 18px 70px rgba(173,133,37,0.3)" }
-                        : { scale: 0.92, boxShadow: "0px 12px 46px rgba(173,133,37,0.2)" }
+                        ? {
+                            scale: 1,
+                            boxShadow: "0px 18px 70px rgba(173,133,37,0.3)",
+                          }
+                        : {
+                            scale: 0.92,
+                            boxShadow: "0px 12px 46px rgba(173,133,37,0.2)",
+                          }
                     }
                     transition={{ duration: 0.35, ease: motionEase }}
                     style={{
@@ -1606,6 +1743,28 @@ const Projects = () => {
                     <span className="pointer-events-none absolute inset-[14%] rounded-full border border-white/24 bg-white/10" />
                     <span className="pointer-events-none absolute inset-[34%] rounded-full bg-primary/70 shadow-[0_0_18px_rgba(173,133,37,0.4)] dark:bg-primary/85 dark:shadow-[0_0_18px_rgba(155,120,255,0.32)]" />
                   </motion.button>
+
+                  <AnimatePresence initial={false}>
+                    {!hasDismissedFloatingSelectorHint &&
+                    !isFloatingExpanded ? (
+                      <motion.span
+                        key="floating-selector-label"
+                        initial={{ opacity: 0, scale: 0.92 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0, scale: 0.94 }}
+                        transition={{
+                          duration: 0.55,
+                          ease: motionEase,
+                        }}
+                        className="pointer-events-none absolute bottom-[34px] right-[34px] z-20 -translate-x-1/2 translate-y-1/2 whitespace-nowrap rounded-full border border-white/24 bg-white/58 px-2.5 py-1.5 text-[8px] font-medium uppercase tracking-[0.18em] text-primary/88 shadow-[0_14px_32px_rgba(173,133,37,0.14)] backdrop-blur-xl dark:border-white/12 dark:bg-[rgba(12,11,22,0.72)] dark:text-primary/82 dark:shadow-[0_16px_34px_rgba(8,5,18,0.44)]"
+                      >
+                        <span className="flex items-center gap-1">
+                          <MousePointer2 className="h-2.5 w-2.5" />
+                          Hover / tap
+                        </span>
+                      </motion.span>
+                    ) : null}
+                  </AnimatePresence>
                 </div>
               </motion.div>
             ) : null}
@@ -1615,7 +1774,12 @@ const Projects = () => {
             {selectedProject ? (
               <motion.section
                 key={selectedProject.title}
-                initial={{ opacity: 0, y: 26, scale: 0.985, filter: "blur(10px)" }}
+                initial={{
+                  opacity: 0,
+                  y: 26,
+                  scale: 0.985,
+                  filter: "blur(10px)",
+                }}
                 animate={{ opacity: 1, y: 0, scale: 1, filter: "blur(0px)" }}
                 exit={{ opacity: 0, y: 20, scale: 0.985, filter: "blur(8px)" }}
                 transition={{ duration: 0.48, ease: motionEase }}
@@ -1629,7 +1793,8 @@ const Projects = () => {
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-start sm:justify-between">
                       <div>
                         <p className="font-display text-[10px] uppercase tracking-[0.34em] text-primary/80">
-                          {selectedDetails?.headerLabel ?? "Project Placeholder"}
+                          {selectedDetails?.headerLabel ??
+                            "Project Placeholder"}
                         </p>
                         <h2 className="mt-3 text-2xl text-foreground sm:text-4xl">
                           {selectedProject.title}
@@ -1660,7 +1825,9 @@ const Projects = () => {
                           <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
                             <button
                               type="button"
-                              onClick={() => setActiveVisual(selectedDetails.visuals[0])}
+                              onClick={() =>
+                                setActiveVisual(selectedDetails.visuals[0])
+                              }
                               className="w-full text-left"
                             >
                               <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-black/10 dark:border-white/10 dark:bg-black/25">
@@ -1685,19 +1852,21 @@ const Projects = () => {
                             Design Problem
                           </h3>
                           <div className="mt-4 space-y-3">
-                            {selectedDetails.designProblem.map((item, itemIndex) => (
-                              <div
-                                key={item}
-                                className="flex items-start gap-3 rounded-[1.4rem] border border-white/22 bg-white/24 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
-                              >
-                                <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/24 bg-white/34 font-display text-[10px] text-foreground/90 dark:border-white/10 dark:bg-white/[0.06]">
-                                  {itemIndex + 1}
-                                </span>
-                                <p className="text-sm leading-relaxed text-muted-foreground">
-                                  {item}
-                                </p>
-                              </div>
-                            ))}
+                            {selectedDetails.designProblem.map(
+                              (item, itemIndex) => (
+                                <div
+                                  key={item}
+                                  className="flex items-start gap-3 rounded-[1.4rem] border border-white/22 bg-white/24 px-3.5 py-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                                >
+                                  <span className="mt-0.5 inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full border border-white/24 bg-white/34 font-display text-[10px] text-foreground/90 dark:border-white/10 dark:bg-white/[0.06]">
+                                    {itemIndex + 1}
+                                  </span>
+                                  <p className="text-sm leading-relaxed text-muted-foreground">
+                                    {item}
+                                  </p>
+                                </div>
+                              ),
+                            )}
                           </div>
                         </section>
 
@@ -1734,7 +1903,11 @@ const Projects = () => {
 
                             <button
                               type="button"
-                              onClick={() => setActiveVisual(websiteLighthouseCollageVisuals[0])}
+                              onClick={() =>
+                                setActiveVisual(
+                                  websiteLighthouseCollageVisuals[0],
+                                )
+                              }
                               className="w-full text-left"
                             >
                               <div className="overflow-hidden rounded-[2rem] border border-white/20 bg-black/10 dark:border-white/10 dark:bg-black/25">
@@ -1747,30 +1920,33 @@ const Projects = () => {
                             </button>
 
                             <div className="mt-3 grid grid-cols-2 gap-2.5">
-                              {websiteLighthouseCollageVisuals.slice(1).map((visual, visualIndex) => (
-                                <button
-                                  key={visual.alt}
-                                  type="button"
-                                  onClick={() => setActiveVisual(visual)}
-                                  className="text-left"
-                                >
-                                  <div className="overflow-hidden rounded-[1.5rem] border border-white/20 bg-black/10 dark:border-white/10 dark:bg-black/25">
-                                    <img
-                                      src={visual.src}
-                                      alt={visual.alt}
-                                      className="h-auto w-full object-contain"
-                                    />
-                                  </div>
-                                  <p className="mt-1.5 px-1 font-display text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                                    {websiteLighthouseLabels[visualIndex + 1]}
-                                  </p>
-                                </button>
-                              ))}
+                              {websiteLighthouseCollageVisuals
+                                .slice(1)
+                                .map((visual, visualIndex) => (
+                                  <button
+                                    key={visual.alt}
+                                    type="button"
+                                    onClick={() => setActiveVisual(visual)}
+                                    className="text-left"
+                                  >
+                                    <div className="overflow-hidden rounded-[1.5rem] border border-white/20 bg-black/10 dark:border-white/10 dark:bg-black/25">
+                                      <img
+                                        src={visual.src}
+                                        alt={visual.alt}
+                                        className="h-auto w-full object-contain"
+                                      />
+                                    </div>
+                                    <p className="mt-1.5 px-1 font-display text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                                      {websiteLighthouseLabels[visualIndex + 1]}
+                                    </p>
+                                  </button>
+                                ))}
                             </div>
 
                             <figcaption className="mt-3 px-1 text-xs leading-relaxed text-muted-foreground">
-                              Home route shown in the primary panel, with Projects, CV, Research,
-                              and About Lighthouse snapshots in a 2x2 grid.
+                              Home route shown in the primary panel, with
+                              Projects, CV, Research, and About Lighthouse
+                              snapshots in a 2x2 grid.
                             </figcaption>
                             <p className="mt-1 px-1 font-display text-[10px] uppercase tracking-[0.2em] text-primary/75">
                               Click to zoom
@@ -1780,7 +1956,9 @@ const Projects = () => {
                           <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
                             <button
                               type="button"
-                              onClick={() => setActiveVisual(selectedDetails.visuals[1])}
+                              onClick={() =>
+                                setActiveVisual(selectedDetails.visuals[1])
+                              }
                               className="w-full text-left"
                             >
                               <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-black/10 dark:border-white/10 dark:bg-black/25">
@@ -1805,19 +1983,21 @@ const Projects = () => {
                             Key Architecture Decisions
                           </h3>
                           <div className="mt-4 space-y-3">
-                            {selectedDetails.architectureDecisions.map((decision) => (
-                              <article
-                                key={decision.title}
-                                className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
-                              >
-                                <p className="text-sm leading-relaxed text-muted-foreground">
-                                  <span className="font-semibold text-foreground/90">
-                                    {decision.title}
-                                  </span>{" "}
-                                  {decision.detail}
-                                </p>
-                              </article>
-                            ))}
+                            {selectedDetails.architectureDecisions.map(
+                              (decision) => (
+                                <article
+                                  key={decision.title}
+                                  className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                                >
+                                  <p className="text-sm leading-relaxed text-muted-foreground">
+                                    <span className="font-semibold text-foreground/90">
+                                      {decision.title}
+                                    </span>{" "}
+                                    {decision.detail}
+                                  </p>
+                                </article>
+                              ),
+                            )}
                           </div>
                         </section>
 
@@ -1826,27 +2006,32 @@ const Projects = () => {
                             Engineering Challenges & Tradeoffs
                           </h3>
                           <div className="mt-4 space-y-3">
-                            {selectedDetails.challengesTradeoffs.map((challenge) => (
-                              <article
-                                key={challenge.title}
-                                className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
-                              >
-                                <p className="text-sm leading-relaxed text-muted-foreground">
-                                  <span className="font-semibold text-foreground/90">
-                                    {challenge.title}
-                                  </span>{" "}
-                                  {challenge.detail}
-                                </p>
-                              </article>
-                            ))}
+                            {selectedDetails.challengesTradeoffs.map(
+                              (challenge) => (
+                                <article
+                                  key={challenge.title}
+                                  className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                                >
+                                  <p className="text-sm leading-relaxed text-muted-foreground">
+                                    <span className="font-semibold text-foreground/90">
+                                      {challenge.title}
+                                    </span>{" "}
+                                    {challenge.detail}
+                                  </p>
+                                </article>
+                              ),
+                            )}
                           </div>
                         </section>
 
-                        {selectedDetails.visuals[2] && !useWebsiteLighthouseCollage ? (
+                        {selectedDetails.visuals[2] &&
+                        !useWebsiteLighthouseCollage ? (
                           <figure className="mb-5 break-inside-avoid rounded-[3rem] border border-white/26 bg-white/22 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.03]">
                             <button
                               type="button"
-                              onClick={() => setActiveVisual(selectedDetails.visuals[2])}
+                              onClick={() =>
+                                setActiveVisual(selectedDetails.visuals[2])
+                              }
                               className="w-full text-left"
                             >
                               <div className="overflow-hidden rounded-[2.1rem] border border-white/20 bg-black/10 dark:border-white/10 dark:bg-black/25">
@@ -1871,23 +2056,28 @@ const Projects = () => {
                             Performance & Validation
                           </h3>
                           <div className="mt-4 space-y-3">
-                            {selectedDetails.performanceValidation.map((block) => (
-                              <article
-                                key={block.title}
-                                className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
-                              >
-                                <h4 className="font-display text-[11px] uppercase tracking-[0.2em] text-foreground/90">
-                                  {block.title}
-                                </h4>
-                                <div className="mt-2 space-y-1.5">
-                                  {block.lines.map((line) => (
-                                    <p key={line} className="text-sm leading-relaxed text-muted-foreground">
-                                      {line}
-                                    </p>
-                                  ))}
-                                </div>
-                              </article>
-                            ))}
+                            {selectedDetails.performanceValidation.map(
+                              (block) => (
+                                <article
+                                  key={block.title}
+                                  className="rounded-[1.5rem] border border-white/22 bg-white/24 px-4 py-3.5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                                >
+                                  <h4 className="font-display text-[11px] uppercase tracking-[0.2em] text-foreground/90">
+                                    {block.title}
+                                  </h4>
+                                  <div className="mt-2 space-y-1.5">
+                                    {block.lines.map((line) => (
+                                      <p
+                                        key={line}
+                                        className="text-sm leading-relaxed text-muted-foreground"
+                                      >
+                                        {line}
+                                      </p>
+                                    ))}
+                                  </div>
+                                </article>
+                              ),
+                            )}
                           </div>
                         </section>
                       </div>
@@ -1898,29 +2088,33 @@ const Projects = () => {
                             {selectedProject.note}
                           </p>
                           <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                            This is placeholder content for {selectedProject.title}. Lorem ipsum
-                            dolor sit amet, consectetur adipiscing elit. Sed do eiusmod tempor
+                            This is placeholder content for{" "}
+                            {selectedProject.title}. Lorem ipsum dolor sit amet,
+                            consectetur adipiscing elit. Sed do eiusmod tempor
                             incididunt ut labore et dolore magna aliqua.
                           </p>
                           <p className="mt-4 text-sm leading-relaxed text-muted-foreground sm:text-base">
-                            Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi
-                            ut aliquip ex ea commodo consequat. This section will be replaced with
-                            your real project summary later.
+                            Ut enim ad minim veniam, quis nostrud exercitation
+                            ullamco laboris nisi ut aliquip ex ea commodo
+                            consequat. This section will be replaced with your
+                            real project summary later.
                           </p>
                         </div>
 
                         <div className="flex flex-col gap-4 rounded-[3.1rem] border border-white/26 bg-white/20 p-5 dark:border-white/10 dark:bg-white/[0.03] sm:rounded-[3.6rem] sm:p-6">
-                          {["Project 1", "Project 2", "Project 3"].map((label) => (
-                            <div
-                              key={label}
-                              className="rounded-[2.2rem] border border-white/24 bg-white/22 p-4 dark:border-white/10 dark:bg-white/[0.03]"
-                            >
-                              <div className="h-24 rounded-[1.7rem] border border-white/20 bg-gradient-to-br from-white/56 via-white/22 to-transparent dark:border-white/10 dark:from-white/[0.06] dark:via-white/[0.02] dark:to-transparent" />
-                              <p className="mt-3 text-center font-display text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
-                                {label}
-                              </p>
-                            </div>
-                          ))}
+                          {["Project 1", "Project 2", "Project 3"].map(
+                            (label) => (
+                              <div
+                                key={label}
+                                className="rounded-[2.2rem] border border-white/24 bg-white/22 p-4 dark:border-white/10 dark:bg-white/[0.03]"
+                              >
+                                <div className="h-24 rounded-[1.7rem] border border-white/20 bg-gradient-to-br from-white/56 via-white/22 to-transparent dark:border-white/10 dark:from-white/[0.06] dark:via-white/[0.02] dark:to-transparent" />
+                                <p className="mt-3 text-center font-display text-[10px] uppercase tracking-[0.26em] text-muted-foreground">
+                                  {label}
+                                </p>
+                              </div>
+                            ),
+                          )}
                         </div>
                       </div>
                     )}
@@ -1978,4 +2172,3 @@ const Projects = () => {
 };
 
 export default Projects;
-

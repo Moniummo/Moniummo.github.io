@@ -1,0 +1,117 @@
+<svg
+  xmlns="http://www.w3.org/2000/svg"
+  viewBox="0 0 64 64"
+  role="img"
+  aria-labelledby="title desc"
+>
+  <title id="title">Arkan Dave AD monogram icon</title>
+  <desc id="desc">
+    A dark rounded square with an AD monogram in gold and purple.
+  </desc>
+  <defs>
+    <linearGradient
+      id="bg"
+      x1="10"
+      y1="6"
+      x2="56"
+      y2="58"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop offset="0" stop-color="#12131e" />
+      <stop offset="1" stop-color="#080910" />
+    </linearGradient>
+    <radialGradient
+      id="glow"
+      cx="0"
+      cy="0"
+      r="1"
+      gradientTransform="translate(44 27) rotate(126.87) scale(24.8204 24.5452)"
+      gradientUnits="userSpaceOnUse"
+    >
+      <stop offset="0" stop-color="#b088ff" stop-opacity="0.3" />
+      <stop offset="1" stop-color="#b088ff" stop-opacity="0" />
+    </radialGradient>
+    <style>
+      .frame {
+        stroke: rgba(255, 255, 255, 0.1);
+      }
+
+      .a-stroke {
+        stroke: #ad8525;
+      }
+
+      .d-stroke {
+        stroke: #8f63f6;
+      }
+
+      .orbit-stroke {
+        stroke: rgba(173, 133, 37, 0.42);
+      }
+
+      .orbit-dot {
+        fill: #ad8525;
+      }
+
+      @media (prefers-color-scheme: dark) {
+        .frame {
+          stroke: rgba(255, 255, 255, 0.12);
+        }
+
+        .a-stroke {
+          stroke: #f0ca72;
+        }
+
+        .d-stroke {
+          stroke: #b088ff;
+        }
+
+        .orbit-stroke {
+          stroke: rgba(176, 136, 255, 0.34);
+        }
+
+        .orbit-dot {
+          fill: #f0ca72;
+        }
+      }
+    </style>
+  </defs>
+
+  <rect width="64" height="64" rx="16" fill="url(#bg)" />
+  <rect
+    x="1.25"
+    y="1.25"
+    width="61.5"
+    height="61.5"
+    rx="14.75"
+    fill="none"
+    class="frame"
+  />
+  <circle cx="44" cy="27" r="16" fill="url(#glow)" />
+
+  <path
+    d="M14 48L24 16L34 48M19 35H29"
+    fill="none"
+    class="a-stroke"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="5.2"
+  />
+  <path
+    d="M37 17V47M37 17H42C49.18 17 54 22.3 54 32C54 41.7 49.18 47 42 47H37"
+    fill="none"
+    class="d-stroke"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    stroke-width="5.2"
+  />
+
+  <circle
+    cx="46"
+    cy="21"
+    r="7.2"
+    fill="none"
+    class="orbit-stroke"
+    stroke-width="1.6"
+  />
+  <circle cx="46" cy="21" r="4.1" class="orbit-dot" />
+</svg>
