@@ -13,16 +13,20 @@ import {
 } from "@/components/ui/select";
 import { Textarea } from "@/components/ui/textarea";
 import {
+  fetchAppPresence,
   createWebsiteReminder,
   fetchSharedTasks,
   isSupabaseConfigured,
   supabaseConfigError,
+  type AppPresence,
   type SharedTask,
 } from "@/lib/supabase";
 import { cn } from "@/lib/utils";
 
 const generalReminderValue = "__general__";
-const taskRefreshIntervalMs = 30000;
+const appPresenceDeviceId = "MonTop-Duo";
+const dataRefreshIntervalMs = 15000;
+const onlineThresholdMs = 90000;
 const submitCooldownMs = 2500;
 
 interface FormFeedback {
@@ -48,10 +52,50 @@ const formatTimestamp = (value: string | null) => {
   }).format(parsedDate);
 };
 
+const formatElapsedTime = (value: string | null) => {
+  if (!value) {
+    return "No heartbeat yet";
+  }
+
+  const elapsedMs = Date.now() - new Date(value).getTime();
+
+  if (Number.isNaN(elapsedMs) || elapsedMs < 0) {
+    return "Just now";
+  }
+
+  const elapsedSeconds = Math.floor(elapsedMs / 1000);
+
+  if (elapsedSeconds < 60) {
+    return `${elapsedSeconds}s ago`;
+  }
+
+  const elapsedMinutes = Math.floor(elapsedSeconds / 60);
+
+  if (elapsedMinutes < 60) {
+    return `${elapsedMinutes}m ago`;
+  }
+
+  const elapsedHours = Math.floor(elapsedMinutes / 60);
+  return `${elapsedHours}h ago`;
+};
+
 const formatTaskKind = (value: string) =>
   value
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
+
+const isPendingTask = (task: SharedTask) => {
+  const normalizedStatus = task.status.toLowerCase();
+
+  return ![
+    "done",
+    "complete",
+    "completed",
+    "cancelled",
+    "canceled",
+    "archived",
+  ].some((keyword) => normalizedStatus.includes(keyword));
+};
 
 const getStatusTone = (status: string) => {
   const normalizedStatus = status.toLowerCase();
@@ -75,6 +119,9 @@ const AppDevelopment = () => {
   const [tasks, setTasks] = useState<SharedTask[]>([]);
   const [isLoadingTasks, setIsLoadingTasks] = useState(true);
   const [tasksError, setTasksError] = useState<string | null>(null);
+  const [presence, setPresence] = useState<AppPresence | null>(null);
+  const [isLoadingPresence, setIsLoadingPresence] = useState(true);
+  const [presenceError, setPresenceError] = useState<string | null>(null);
   const [lastSyncedAt, setLastSyncedAt] = useState<string | null>(null);
   const [senderName, setSenderName] = useState("");
   const [message, setMessage] = useState("");
@@ -101,50 +148,78 @@ const AppDevelopment = () => {
     if (!isSupabaseConfigured) {
       setIsLoadingTasks(false);
       setTasksError(supabaseConfigError);
+      setIsLoadingPresence(false);
+      setPresenceError(supabaseConfigError);
       return;
     }
 
     let isActive = true;
 
-    const loadTasks = async (showSpinner: boolean) => {
+    const loadPageData = async (showSpinner: boolean) => {
       if (showSpinner) {
         setIsLoadingTasks(true);
+        setIsLoadingPresence(true);
       }
 
-      try {
-        const nextTasks = await fetchSharedTasks();
+      const [tasksResult, presenceResult] = await Promise.allSettled([
+        fetchSharedTasks(),
+        fetchAppPresence(appPresenceDeviceId),
+      ]);
 
-        if (!isActive) {
-          return;
-        }
+      if (!isActive) {
+        return;
+      }
 
-        setTasks(nextTasks);
+      if (tasksResult.status === "fulfilled") {
+        setTasks(tasksResult.value);
         setTasksError(null);
-        setLastSyncedAt(new Date().toISOString());
-      } catch (error) {
-        if (!isActive) {
-          return;
-        }
+      } else {
+        setTasksError(
+          tasksResult.reason instanceof Error
+            ? tasksResult.reason.message
+            : "Unable to load shared tasks."
+        );
+      }
 
-        setTasksError(error instanceof Error ? error.message : "Unable to load shared tasks.");
-      } finally {
-        if (isActive && showSpinner) {
-          setIsLoadingTasks(false);
-        }
+      if (presenceResult.status === "fulfilled") {
+        setPresence(presenceResult.value);
+        setPresenceError(null);
+      } else {
+        setPresenceError(
+          presenceResult.reason instanceof Error
+            ? presenceResult.reason.message
+            : "Unable to load laptop presence."
+        );
+      }
+
+      if (tasksResult.status === "fulfilled" || presenceResult.status === "fulfilled") {
+        setLastSyncedAt(new Date().toISOString());
+      }
+
+      if (showSpinner) {
+        setIsLoadingTasks(false);
+        setIsLoadingPresence(false);
       }
     };
 
-    void loadTasks(true);
+    void loadPageData(true);
 
     const refreshInterval = window.setInterval(() => {
-      void loadTasks(false);
-    }, taskRefreshIntervalMs);
+      void loadPageData(false);
+    }, dataRefreshIntervalMs);
 
     return () => {
       isActive = false;
       window.clearInterval(refreshInterval);
     };
   }, []);
+
+  const visibleTasks = tasks.filter(isPendingTask);
+  const isLaptopOnline =
+    Boolean(presence) &&
+    Date.now() - new Date(presence.last_seen_at).getTime() <= onlineThresholdMs;
+  const laptopName = presence?.device_name?.trim() || "My Laptop";
+  const laptopStatusLabel = isLaptopOnline ? "Online / laptop connected" : "Offline / messages will queue until the laptop reconnects";
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
     event.preventDefault();
@@ -195,9 +270,13 @@ const AppDevelopment = () => {
       setFormFeedback({
         title: "Reminder sent",
         description:
-          selectedTaskId === generalReminderValue
-            ? "The popup message was added as a general reminder."
-            : "The popup message was linked to the selected task.",
+          isLaptopOnline
+            ? selectedTaskId === generalReminderValue
+              ? "The popup message was added as a general reminder."
+              : "The popup message was linked to the selected task."
+            : selectedTaskId === generalReminderValue
+              ? "The laptop is offline right now. Your general reminder was queued and should deliver when it reconnects."
+              : "The laptop is offline right now. Your task-specific reminder was queued and should deliver when it reconnects.",
         variant: "default",
       });
     } catch (error) {
@@ -243,142 +322,247 @@ const AppDevelopment = () => {
               Task-linked reminders
             </div>
             <div className="rounded-full border border-white/24 bg-white/30 px-4 py-2 font-display text-[10px] uppercase tracking-[0.22em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]">
-              Auto refresh every 30s
+              Polling every 15s
             </div>
           </div>
         </div>
       </motion.section>
 
       <div className="mt-7 grid gap-7 xl:grid-cols-[1.15fr_0.85fr]">
-        <motion.section
-          initial={{ opacity: 0, y: 26 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-[3rem] border border-white/30 bg-white/30 p-5 shadow-[0_24px_76px_rgba(173,133,37,0.12)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_26px_88px_rgba(8,5,18,0.46)] sm:p-6"
-        >
-          <div className="flex flex-wrap items-start justify-between gap-4">
-            <div>
-              <p className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/78">
-                Shared Tasks
-              </p>
-              <h2 className="mt-2 text-2xl text-foreground">Current task feed</h2>
-            </div>
-
-            <div className="rounded-[1.4rem] border border-white/24 bg-white/28 px-4 py-3 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.04]">
-              <p className="font-display text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                Last Sync
-              </p>
-              <p className="mt-1 text-sm text-foreground">
-                {lastSyncedAt ? formatTimestamp(lastSyncedAt) : "Waiting for first load"}
-              </p>
-            </div>
-          </div>
-
-          <div className="mt-5 space-y-4">
-            {tasksError ? (
-              <Alert className="rounded-[1.8rem] border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-200">
-                <AlertCircle className="h-4 w-4" />
-                <AlertTitle>Could not load the shared tasks</AlertTitle>
-                <AlertDescription>{tasksError}</AlertDescription>
-              </Alert>
-            ) : null}
-
-            {isLoadingTasks ? (
-              <div className="rounded-[2rem] border border-white/24 bg-white/22 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
-                <div className="flex items-center gap-3 text-muted-foreground">
-                  <LoaderCircle className="h-4 w-4 animate-spin" />
-                  <p className="text-sm">Loading tasks from Supabase...</p>
-                </div>
-              </div>
-            ) : null}
-
-            {!isLoadingTasks && !tasks.length && !tasksError ? (
-              <div className="rounded-[2rem] border border-white/24 bg-white/22 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
-                <p className="font-display text-[10px] uppercase tracking-[0.24em] text-primary/78">
-                  Nothing shared yet
+        <div className="space-y-7">
+          <motion.section
+            initial={{ opacity: 0, y: 26 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.08, ease: [0.22, 1, 0.36, 1] }}
+            className="rounded-[3rem] border border-white/30 bg-white/30 p-5 shadow-[0_24px_76px_rgba(173,133,37,0.12)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_26px_88px_rgba(8,5,18,0.46)] sm:p-6"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/78">
+                  Laptop Status
                 </p>
-                <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
-                  The website is connected, but there are no rows in <code>public.shared_tasks</code>
-                  {" "}right now.
+                <h2 className="mt-2 text-2xl text-foreground">{laptopName}</h2>
+                <p className="mt-2 font-display text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  {appPresenceDeviceId}
                 </p>
               </div>
-            ) : null}
 
-            {tasks.map((task) => (
-              <article
-                key={task.task_id}
-                className="rounded-[2rem] border border-white/24 bg-white/24 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
-              >
-                <div className="flex flex-wrap items-start justify-between gap-3">
-                  <div className="min-w-0">
-                    <p className="font-display text-[10px] uppercase tracking-[0.24em] text-primary/78">
-                      {formatTaskKind(task.kind)} | {task.source_id}
-                    </p>
-                    <h3 className="mt-2 text-lg leading-snug text-foreground">{task.title}</h3>
-                  </div>
-
-                  <span
-                    className={cn(
-                      "rounded-full border px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.18em]",
-                      getStatusTone(task.status)
-                    )}
-                  >
-                    {task.status}
-                  </span>
-                </div>
-
-                <div className="mt-4 flex flex-wrap gap-2.5">
-                  {task.priority ? (
-                    <span className="rounded-full border border-white/24 bg-white/30 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]">
-                      Priority {task.priority}
-                    </span>
-                  ) : null}
-                  {task.scheduled_date ? (
-                    <span className="rounded-full border border-white/24 bg-white/30 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]">
-                      Scheduled {task.scheduled_date}
-                    </span>
-                  ) : null}
-                  {task.rule_summary ? (
-                    <span className="rounded-full border border-white/24 bg-white/30 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]">
-                      {task.rule_summary}
-                    </span>
-                  ) : null}
-                </div>
-
-                <div className="mt-4 grid gap-3 sm:grid-cols-3">
-                  <div className="rounded-[1.35rem] border border-white/22 bg-white/28 px-3.5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
-                    <p className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                      Due
-                    </p>
-                    <p className="mt-1.5 text-sm leading-relaxed text-foreground">
-                      {formatTimestamp(task.due_at)}
-                    </p>
-                  </div>
-                  <div className="rounded-[1.35rem] border border-white/22 bg-white/28 px-3.5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
-                    <p className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                      Reminder
-                    </p>
-                    <p className="mt-1.5 text-sm leading-relaxed text-foreground">
-                      {formatTimestamp(task.reminder_at)}
-                    </p>
-                  </div>
-                  <div className="rounded-[1.35rem] border border-white/22 bg-white/28 px-3.5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
-                    <p className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
-                      Updated
-                    </p>
-                    <p className="mt-1.5 text-sm leading-relaxed text-foreground">
-                      {formatTimestamp(task.updated_at)}
-                    </p>
-                  </div>
-                </div>
-
-                <p className="mt-4 break-all font-display text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  {task.task_id}
+              <div className="rounded-[1.4rem] border border-white/24 bg-white/28 px-4 py-3 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.04]">
+                <p className="font-display text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  Last Sync
                 </p>
-              </article>
-            ))}
-          </div>
-        </motion.section>
+                <p className="mt-1 text-sm text-foreground">
+                  {lastSyncedAt ? formatTimestamp(lastSyncedAt) : "Waiting for first load"}
+                </p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              {presenceError ? (
+                <Alert className="rounded-[1.8rem] border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-200">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Could not load laptop presence</AlertTitle>
+                  <AlertDescription>{presenceError}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              {isLoadingPresence ? (
+                <div className="rounded-[2rem] border border-white/24 bg-white/22 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    <p className="text-sm">Checking whether the laptop is connected...</p>
+                  </div>
+                </div>
+              ) : null}
+
+              {!isLoadingPresence && !presenceError ? (
+                <div className="rounded-[2rem] border border-white/24 bg-white/24 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]">
+                  <div className="flex flex-wrap items-center justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <span
+                        className={cn(
+                          "h-3.5 w-3.5 rounded-full border",
+                          isLaptopOnline
+                            ? "border-emerald-500/40 bg-emerald-500/80 shadow-[0_0_18px_rgba(16,185,129,0.45)]"
+                            : "border-rose-500/40 bg-rose-500/80 shadow-[0_0_18px_rgba(244,63,94,0.35)]"
+                        )}
+                      />
+                      <div>
+                        <p className="font-display text-[10px] uppercase tracking-[0.22em] text-primary/78">
+                          Heartbeat Status
+                        </p>
+                        <p className="mt-1 text-base text-foreground">{laptopStatusLabel}</p>
+                      </div>
+                    </div>
+
+                    <span
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.18em]",
+                        isLaptopOnline
+                          ? "border-emerald-500/25 bg-emerald-500/12 text-emerald-700 dark:text-emerald-300"
+                          : "border-amber-500/25 bg-amber-500/12 text-amber-700 dark:text-amber-300"
+                      )}
+                    >
+                      {isLaptopOnline ? "Online" : "Offline"}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-[1.35rem] border border-white/22 bg-white/28 px-3.5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
+                      <p className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        Last Seen
+                      </p>
+                      <p className="mt-1.5 text-sm leading-relaxed text-foreground">
+                        {presence?.last_seen_at ? formatTimestamp(presence.last_seen_at) : "No heartbeat row found"}
+                      </p>
+                    </div>
+
+                    <div className="rounded-[1.35rem] border border-white/22 bg-white/28 px-3.5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
+                      <p className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        Heartbeat Age
+                      </p>
+                      <p className="mt-1.5 text-sm leading-relaxed text-foreground">
+                        {presence?.last_seen_at ? formatElapsedTime(presence.last_seen_at) : "Waiting for heartbeat"}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+                    The website treats the laptop as online when <code>last_seen_at</code> is within the last 90 seconds.
+                    If it drops offline, reminders can still be sent and will wait in the inbox until it reconnects.
+                  </p>
+                </div>
+              ) : null}
+            </div>
+          </motion.section>
+
+          <motion.section
+            initial={{ opacity: 0, y: 26 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.12, ease: [0.22, 1, 0.36, 1] }}
+            className="rounded-[3rem] border border-white/30 bg-white/30 p-5 shadow-[0_24px_76px_rgba(173,133,37,0.12)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_26px_88px_rgba(8,5,18,0.46)] sm:p-6"
+          >
+            <div className="flex flex-wrap items-start justify-between gap-4">
+              <div>
+                <p className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/78">
+                  Shared Tasks
+                </p>
+                <h2 className="mt-2 text-2xl text-foreground">Current task feed</h2>
+              </div>
+
+              <div className="rounded-[1.4rem] border border-white/24 bg-white/28 px-4 py-3 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.04]">
+                <p className="font-display text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  Pending Items
+                </p>
+                <p className="mt-1 text-sm text-foreground">{visibleTasks.length}</p>
+              </div>
+            </div>
+
+            <div className="mt-5 space-y-4">
+              {tasksError ? (
+                <Alert className="rounded-[1.8rem] border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-200">
+                  <AlertCircle className="h-4 w-4" />
+                  <AlertTitle>Could not load the shared tasks</AlertTitle>
+                  <AlertDescription>{tasksError}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              {isLoadingTasks ? (
+                <div className="rounded-[2rem] border border-white/24 bg-white/22 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
+                  <div className="flex items-center gap-3 text-muted-foreground">
+                    <LoaderCircle className="h-4 w-4 animate-spin" />
+                    <p className="text-sm">Loading tasks from Supabase...</p>
+                  </div>
+                </div>
+              ) : null}
+
+              {!isLoadingTasks && !visibleTasks.length && !tasksError ? (
+                <div className="rounded-[2rem] border border-white/24 bg-white/22 p-6 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
+                  <p className="font-display text-[10px] uppercase tracking-[0.24em] text-primary/78">
+                    No active tasks right now
+                  </p>
+                  <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+                    The shared feed is connected, but there are no pending task or routine rows to show right now.
+                  </p>
+                </div>
+              ) : null}
+
+              {visibleTasks.map((task) => (
+                <article
+                  key={task.task_id}
+                  className="rounded-[2rem] border border-white/24 bg-white/24 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.03]"
+                >
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <p className="font-display text-[10px] uppercase tracking-[0.24em] text-primary/78">
+                        {formatTaskKind(task.kind)} | {task.source_id}
+                      </p>
+                      <h3 className="mt-2 text-lg leading-snug text-foreground">{task.title}</h3>
+                    </div>
+
+                    <span
+                      className={cn(
+                        "rounded-full border px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.18em]",
+                        getStatusTone(task.status)
+                      )}
+                    >
+                      {task.status}
+                    </span>
+                  </div>
+
+                  <div className="mt-4 flex flex-wrap gap-2.5">
+                    {task.priority ? (
+                      <span className="rounded-full border border-white/24 bg-white/30 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]">
+                        Priority {task.priority}
+                      </span>
+                    ) : null}
+                    {task.scheduled_date ? (
+                      <span className="rounded-full border border-white/24 bg-white/30 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]">
+                        Scheduled {task.scheduled_date}
+                      </span>
+                    ) : null}
+                    {task.rule_summary ? (
+                      <span className="rounded-full border border-white/24 bg-white/30 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]">
+                        {task.rule_summary}
+                      </span>
+                    ) : null}
+                  </div>
+
+                  <div className="mt-4 grid gap-3 sm:grid-cols-3">
+                    <div className="rounded-[1.35rem] border border-white/22 bg-white/28 px-3.5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
+                      <p className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        Due
+                      </p>
+                      <p className="mt-1.5 text-sm leading-relaxed text-foreground">
+                        {formatTimestamp(task.due_at)}
+                      </p>
+                    </div>
+                    <div className="rounded-[1.35rem] border border-white/22 bg-white/28 px-3.5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
+                      <p className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        Reminder
+                      </p>
+                      <p className="mt-1.5 text-sm leading-relaxed text-foreground">
+                        {formatTimestamp(task.reminder_at)}
+                      </p>
+                    </div>
+                    <div className="rounded-[1.35rem] border border-white/22 bg-white/28 px-3.5 py-3 dark:border-white/10 dark:bg-white/[0.04]">
+                      <p className="font-display text-[10px] uppercase tracking-[0.2em] text-muted-foreground">
+                        Updated
+                      </p>
+                      <p className="mt-1.5 text-sm leading-relaxed text-foreground">
+                        {formatTimestamp(task.updated_at)}
+                      </p>
+                    </div>
+                  </div>
+
+                  <p className="mt-4 break-all font-display text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    {task.task_id}
+                  </p>
+                </article>
+              ))}
+            </div>
+          </motion.section>
+        </div>
 
         <motion.section
           initial={{ opacity: 0, y: 26 }}
@@ -403,6 +587,17 @@ const AppDevelopment = () => {
             message to one of the shared tasks below.
           </p>
 
+          <div className="mt-4 rounded-[1.8rem] border border-white/22 bg-white/24 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
+            <p className="font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90">
+              Delivery Status
+            </p>
+            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+              {isLaptopOnline
+                ? `${laptopName} is online, so new reminders should arrive right away.`
+                : `${laptopName} is offline right now. You can still send reminders and they will wait in the inbox until the laptop reconnects.`}
+            </p>
+          </div>
+
           <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
             <div className="space-y-2">
               <label
@@ -420,7 +615,7 @@ const AppDevelopment = () => {
                 </SelectTrigger>
                 <SelectContent className="rounded-[1.2rem] border-white/20 bg-white/95 backdrop-blur-xl dark:border-white/10 dark:bg-[#151126]/95">
                   <SelectItem value={generalReminderValue}>General reminder</SelectItem>
-                  {tasks.map((task) => (
+                  {visibleTasks.map((task) => (
                     <SelectItem key={task.task_id} value={task.task_id}>
                       {task.title} ({formatTaskKind(task.kind)})
                     </SelectItem>

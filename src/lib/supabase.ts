@@ -14,6 +14,13 @@ export interface SharedTask {
   updated_at: string;
 }
 
+export interface AppPresence {
+  device_id: string;
+  device_name: string | null;
+  last_seen_at: string;
+  updated_at: string;
+}
+
 interface WebsiteReminderInsert {
   senderName?: string | null;
   message: string;
@@ -57,6 +64,24 @@ export const fetchSharedTasks = async () => {
   }
 
   return (data ?? []) as SharedTask[];
+};
+
+export const fetchAppPresence = async (deviceId: string) => {
+  if (!supabase) {
+    throw new Error(supabaseConfigError ?? "Supabase is unavailable.");
+  }
+
+  const { data, error } = await supabase
+    .from("app_presence")
+    .select("device_id, device_name, last_seen_at, updated_at")
+    .eq("device_id", deviceId)
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(error.message);
+  }
+
+  return (data ?? null) as AppPresence | null;
 };
 
 export const createWebsiteReminder = async ({
