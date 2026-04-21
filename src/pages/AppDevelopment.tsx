@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { AlertCircle, BellRing, CheckCircle2, Clock3, LoaderCircle, MessageSquareText } from "lucide-react";
-import { type FormEvent, useEffect, useState } from "react";
+import { type FormEvent, type KeyboardEvent, useEffect, useState } from "react";
 import PageLayout from "@/components/PageLayout";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Input } from "@/components/ui/input";
@@ -288,6 +288,22 @@ const AppDevelopment = () => {
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleMessageKeyDown = (event: KeyboardEvent<HTMLTextAreaElement>) => {
+    if (
+      event.key !== "Enter" ||
+      event.shiftKey ||
+      event.altKey ||
+      event.ctrlKey ||
+      event.metaKey ||
+      event.nativeEvent.isComposing
+    ) {
+      return;
+    }
+
+    event.preventDefault();
+    event.currentTarget.form?.requestSubmit();
   };
 
   const isSubmitLocked = Boolean(submitLockUntil && submitLockUntil > Date.now());
@@ -652,6 +668,7 @@ const AppDevelopment = () => {
                 id="reminder-message"
                 value={message}
                 onChange={(event) => setMessage(event.target.value)}
+                onKeyDown={handleMessageKeyDown}
                 placeholder="Write the popup message here"
                 rows={6}
                 maxLength={400}
@@ -708,7 +725,7 @@ const AppDevelopment = () => {
 
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               <Clock3 className="h-3.5 w-3.5" />
-              <p>Messages are trimmed, empty submissions are blocked, and rapid repeats are throttled.</p>
+              <p>Press Enter to send, Shift+Enter for a new line. Empty messages and rapid repeats are blocked.</p>
             </div>
           </form>
         </motion.section>
