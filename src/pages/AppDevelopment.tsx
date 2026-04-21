@@ -14,6 +14,7 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import {
   fetchAppPresence,
+  createWebsiteTaskSubmission,
   createWebsiteReminder,
   fetchSharedTasks,
   isSupabaseConfigured,
@@ -24,7 +25,10 @@ import {
 import { cn } from "@/lib/utils";
 
 const generalReminderValue = "__general__";
-const appPresenceDeviceId = "MonTop-Duo";
+const appPresenceDeviceId =
+  import.meta.env.VITE_SUPABASE_PRESENCE_DEVICE_ID?.trim() || "MonTop-Duo";
+const appPresenceDeviceName =
+  import.meta.env.VITE_SUPABASE_PRESENCE_DEVICE_NAME?.trim() || "My Laptop";
 const dataRefreshIntervalMs = 15000;
 const onlineThresholdMs = 90000;
 const submitCooldownMs = 2500;
@@ -129,6 +133,12 @@ const AppDevelopment = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitLockUntil, setSubmitLockUntil] = useState<number | null>(null);
   const [formFeedback, setFormFeedback] = useState<FormFeedback | null>(null);
+  const [suggestionSenderName, setSuggestionSenderName] = useState("");
+  const [suggestionTitle, setSuggestionTitle] = useState("");
+  const [suggestionDetails, setSuggestionDetails] = useState("");
+  const [isSubmittingSuggestion, setIsSubmittingSuggestion] = useState(false);
+  const [suggestionSubmitLockUntil, setSuggestionSubmitLockUntil] = useState<number | null>(null);
+  const [suggestionFeedback, setSuggestionFeedback] = useState<FormFeedback | null>(null);
 
   useEffect(() => {
     if (!submitLockUntil) {
@@ -143,6 +153,20 @@ const AppDevelopment = () => {
       window.clearTimeout(timeout);
     };
   }, [submitLockUntil]);
+
+  useEffect(() => {
+    if (!suggestionSubmitLockUntil) {
+      return;
+    }
+
+    const timeout = window.setTimeout(() => {
+      setSuggestionSubmitLockUntil(null);
+    }, Math.max(0, suggestionSubmitLockUntil - Date.now()));
+
+    return () => {
+      window.clearTimeout(timeout);
+    };
+  }, [suggestionSubmitLockUntil]);
 
   useEffect(() => {
     if (!isSupabaseConfigured) {
@@ -218,7 +242,7 @@ const AppDevelopment = () => {
   const isLaptopOnline =
     Boolean(presence) &&
     Date.now() - new Date(presence.last_seen_at).getTime() <= onlineThresholdMs;
-  const laptopName = presence?.device_name?.trim() || "My Laptop";
+  const laptopName = presence?.device_name?.trim() || appPresenceDeviceName;
   const laptopStatusLabel = isLaptopOnline ? "Online / laptop connected" : "Offline / messages will queue until the laptop reconnects";
 
   const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
@@ -307,6 +331,75 @@ const AppDevelopment = () => {
   };
 
   const isSubmitLocked = Boolean(submitLockUntil && submitLockUntil > Date.now());
+  const isSuggestionSubmitLocked = Boolean(
+    suggestionSubmitLockUntil && suggestionSubmitLockUntil > Date.now()
+  );
+
+  const handleTaskSuggestionSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!isSupabaseConfigured) {
+      setSuggestionFeedback({
+        title: "Supabase not configured",
+        description:
+          supabaseConfigError ?? "Add the Vite Supabase environment variables before using this form.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (suggestionSubmitLockUntil && suggestionSubmitLockUntil > Date.now()) {
+      setSuggestionFeedback({
+        title: "Please wait a moment",
+        description: "Rapid repeat submits are blocked for a couple of seconds.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    const trimmedTitle = suggestionTitle.trim();
+
+    if (!trimmedTitle) {
+      setSuggestionFeedback({
+        title: "Title required",
+        description: "Give the suggested task a short title before submitting it.",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setIsSubmittingSuggestion(true);
+    setSuggestionFeedback(null);
+
+    try {
+      await createWebsiteTaskSubmission({
+        senderName: suggestionSenderName,
+        title: trimmedTitle,
+        details: suggestionDetails,
+      });
+
+      setSuggestionSenderName("");
+      setSuggestionTitle("");
+      setSuggestionDetails("");
+      setSuggestionSubmitLockUntil(Date.now() + submitCooldownMs);
+      setSuggestionFeedback({
+        title: "Task suggestion submitted",
+        description: isLaptopOnline
+          ? "It was added to the website review queue and will be reviewed before it reaches your real task list."
+          : "It was added to the website review queue and will stay there for later review even while the laptop is offline.",
+        variant: "default",
+      });
+    } catch (error) {
+      setSuggestionFeedback({
+        title: "Submission failed",
+        description:
+          error instanceof Error ? error.message : "Unable to submit the task suggestion.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsSubmittingSuggestion(false);
+    }
+  };
 
   return (
     <PageLayout title="App Development" mainClassName="max-w-6xl px-5 sm:px-7">
@@ -336,6 +429,9 @@ const AppDevelopment = () => {
             </div>
             <div className="rounded-full border border-white/24 bg-white/30 px-4 py-2 font-display text-[10px] uppercase tracking-[0.22em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]">
               Task-linked reminders
+            </div>
+            <div className="rounded-full border border-white/24 bg-white/30 px-4 py-2 font-display text-[10px] uppercase tracking-[0.22em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]">
+              Review queue suggestions
             </div>
             <div className="rounded-full border border-white/24 bg-white/30 px-4 py-2 font-display text-[10px] uppercase tracking-[0.22em] text-foreground/90 dark:border-white/10 dark:bg-white/[0.05]">
               Polling every 15s
@@ -580,155 +676,306 @@ const AppDevelopment = () => {
           </motion.section>
         </div>
 
-        <motion.section
-          initial={{ opacity: 0, y: 26 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
-          className="rounded-[3rem] border border-white/30 bg-white/30 p-5 shadow-[0_24px_76px_rgba(173,133,37,0.12)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_26px_88px_rgba(8,5,18,0.46)] sm:p-6"
-        >
-          <div className="flex items-center gap-3">
-            <div className="rounded-[1.25rem] border border-white/24 bg-white/28 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.05]">
-              <BellRing className="h-5 w-5 text-primary" />
-            </div>
-            <div>
-              <p className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/78">
-                Popup Inbox
-              </p>
-              <h2 className="mt-1 text-2xl text-foreground">Send a reminder</h2>
-            </div>
-          </div>
-
-          <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-            Leave the task selector on the general option for a standalone popup, or link the
-            message to one of the shared tasks below.
-          </p>
-
-          <div className="mt-4 rounded-[1.8rem] border border-white/22 bg-white/24 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
-            <p className="font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90">
-              Delivery Status
-            </p>
-            <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-              {isLaptopOnline
-                ? `${laptopName} is online, so new reminders should arrive right away.`
-                : `${laptopName} is offline right now. You can still send reminders and they will wait in the inbox until the laptop reconnects.`}
-            </p>
-          </div>
-
-          <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
-            <div className="space-y-2">
-              <label
-                htmlFor="target-task"
-                className="font-display text-[10px] uppercase tracking-[0.24em] text-foreground/90"
-              >
-                Target
-              </label>
-              <Select value={selectedTaskId} onValueChange={setSelectedTaskId}>
-                <SelectTrigger
-                  id="target-task"
-                  className="h-12 rounded-[1.4rem] border-white/24 bg-white/32 text-left text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.04]"
-                >
-                  <SelectValue placeholder="Choose where the popup should go" />
-                </SelectTrigger>
-                <SelectContent className="rounded-[1.2rem] border-white/20 bg-white/95 backdrop-blur-xl dark:border-white/10 dark:bg-[#151126]/95">
-                  <SelectItem value={generalReminderValue}>General reminder</SelectItem>
-                  {visibleTasks.map((task) => (
-                    <SelectItem key={task.task_id} value={task.task_id}>
-                      {task.title} ({formatTaskKind(task.kind)})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="sender-name"
-                className="font-display text-[10px] uppercase tracking-[0.24em] text-foreground/90"
-              >
-                Sender Name
-              </label>
-              <Input
-                id="sender-name"
-                value={senderName}
-                onChange={(event) => setSenderName(event.target.value)}
-                placeholder="Optional"
-                maxLength={80}
-                className="h-12 rounded-[1.4rem] border-white/24 bg-white/32 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] placeholder:text-muted-foreground/80 dark:border-white/10 dark:bg-white/[0.04]"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <label
-                htmlFor="reminder-message"
-                className="font-display text-[10px] uppercase tracking-[0.24em] text-foreground/90"
-              >
-                Message
-              </label>
-              <Textarea
-                id="reminder-message"
-                value={message}
-                onChange={(event) => setMessage(event.target.value)}
-                onKeyDown={handleMessageKeyDown}
-                placeholder="Write the popup message here"
-                rows={6}
-                maxLength={400}
-                required
-                className="min-h-[9rem] rounded-[1.4rem] border-white/24 bg-white/32 text-sm leading-relaxed shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] placeholder:text-muted-foreground/80 dark:border-white/10 dark:bg-white/[0.04]"
-              />
-            </div>
-
-            {formFeedback ? (
-              <Alert
-                variant={formFeedback.variant}
-                className={cn(
-                  "rounded-[1.8rem] border shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]",
-                  formFeedback.variant === "destructive"
-                    ? "border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-200"
-                    : "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"
-                )}
-              >
-                {formFeedback.variant === "destructive" ? (
-                  <AlertCircle className="h-4 w-4" />
-                ) : (
-                  <CheckCircle2 className="h-4 w-4" />
-                )}
-                <AlertTitle>{formFeedback.title}</AlertTitle>
-                <AlertDescription>{formFeedback.description}</AlertDescription>
-              </Alert>
-            ) : null}
-
-            <div className="rounded-[1.8rem] border border-white/22 bg-white/24 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
-              <div className="flex items-start gap-3">
-                <div className="rounded-[1rem] border border-white/22 bg-white/30 p-2 dark:border-white/10 dark:bg-white/[0.05]">
-                  <MessageSquareText className="h-4 w-4 text-primary" />
-                </div>
-                <div>
-                  <p className="font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90">
-                    Reminder behavior
-                  </p>
-                  <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
-                    General reminders insert <code>task_id = null</code>. Task-specific reminders use
-                    the exact <code>shared_tasks.task_id</code> value from the selector.
-                  </p>
-                </div>
+        <div className="space-y-7">
+          <motion.section
+            initial={{ opacity: 0, y: 26 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.14, ease: [0.22, 1, 0.36, 1] }}
+            className="rounded-[3rem] border border-white/30 bg-white/30 p-5 shadow-[0_24px_76px_rgba(173,133,37,0.12)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_26px_88px_rgba(8,5,18,0.46)] sm:p-6"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-[1.25rem] border border-white/24 bg-white/28 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.05]">
+                <BellRing className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/78">
+                  Popup Inbox
+                </p>
+                <h2 className="mt-1 text-2xl text-foreground">Send a reminder</h2>
               </div>
             </div>
 
-            <button
-              type="submit"
-              disabled={isSubmitting || isSubmitLocked || !isSupabaseConfigured}
-              className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[1.5rem] border border-white/26 bg-white/36 px-5 py-3 font-display text-[11px] uppercase tracking-[0.24em] text-foreground shadow-[0_18px_46px_rgba(173,133,37,0.12),inset_0_1px_0_rgba(255,255,255,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/48 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
-            >
-              {isSubmitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <BellRing className="h-4 w-4" />}
-              {isSubmitting ? "Sending..." : isSubmitLocked ? "Hold for a second" : "Send popup reminder"}
-            </button>
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              Leave the task selector on the general option for a standalone popup, or link the
+              message to one of the shared tasks below.
+            </p>
 
-            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-              <Clock3 className="h-3.5 w-3.5" />
-              <p>Press Enter to send, Shift+Enter for a new line. Empty messages and rapid repeats are blocked.</p>
+            <div className="mt-4 rounded-[1.8rem] border border-white/22 bg-white/24 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
+              <p className="font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90">
+                Delivery Status
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                {isLaptopOnline
+                  ? `${laptopName} is online, so new reminders should arrive right away.`
+                  : `${laptopName} is offline right now. You can still send reminders and they will wait in the inbox until the laptop reconnects.`}
+              </p>
             </div>
-          </form>
-        </motion.section>
+
+            <form className="mt-6 space-y-4" onSubmit={handleSubmit}>
+              <div className="space-y-2">
+                <label
+                  htmlFor="target-task"
+                  className="font-display text-[10px] uppercase tracking-[0.24em] text-foreground/90"
+                >
+                  Target
+                </label>
+                <Select value={selectedTaskId} onValueChange={setSelectedTaskId}>
+                  <SelectTrigger
+                    id="target-task"
+                    className="h-12 rounded-[1.4rem] border-white/24 bg-white/32 text-left text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.04]"
+                  >
+                    <SelectValue placeholder="Choose where the popup should go" />
+                  </SelectTrigger>
+                  <SelectContent className="rounded-[1.2rem] border-white/20 bg-white/95 backdrop-blur-xl dark:border-white/10 dark:bg-[#151126]/95">
+                    <SelectItem value={generalReminderValue}>General reminder</SelectItem>
+                    {visibleTasks.map((task) => (
+                      <SelectItem key={task.task_id} value={task.task_id}>
+                        {task.title} ({formatTaskKind(task.kind)})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="sender-name"
+                  className="font-display text-[10px] uppercase tracking-[0.24em] text-foreground/90"
+                >
+                  Sender Name
+                </label>
+                <Input
+                  id="sender-name"
+                  value={senderName}
+                  onChange={(event) => setSenderName(event.target.value)}
+                  placeholder="Optional"
+                  maxLength={80}
+                  className="h-12 rounded-[1.4rem] border-white/24 bg-white/32 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] placeholder:text-muted-foreground/80 dark:border-white/10 dark:bg-white/[0.04]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="reminder-message"
+                  className="font-display text-[10px] uppercase tracking-[0.24em] text-foreground/90"
+                >
+                  Message
+                </label>
+                <Textarea
+                  id="reminder-message"
+                  value={message}
+                  onChange={(event) => setMessage(event.target.value)}
+                  onKeyDown={handleMessageKeyDown}
+                  placeholder="Write the popup message here"
+                  rows={6}
+                  maxLength={400}
+                  required
+                  className="min-h-[9rem] rounded-[1.4rem] border-white/24 bg-white/32 text-sm leading-relaxed shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] placeholder:text-muted-foreground/80 dark:border-white/10 dark:bg-white/[0.04]"
+                />
+              </div>
+
+              {formFeedback ? (
+                <Alert
+                  variant={formFeedback.variant}
+                  className={cn(
+                    "rounded-[1.8rem] border shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]",
+                    formFeedback.variant === "destructive"
+                      ? "border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-200"
+                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"
+                  )}
+                >
+                  {formFeedback.variant === "destructive" ? (
+                    <AlertCircle className="h-4 w-4" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4" />
+                  )}
+                  <AlertTitle>{formFeedback.title}</AlertTitle>
+                  <AlertDescription>{formFeedback.description}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              <div className="rounded-[1.8rem] border border-white/22 bg-white/24 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-[1rem] border border-white/22 bg-white/30 p-2 dark:border-white/10 dark:bg-white/[0.05]">
+                    <MessageSquareText className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90">
+                      Reminder behavior
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      General reminders insert <code>task_id = null</code>. Task-specific reminders use
+                      the exact <code>shared_tasks.task_id</code> value from the selector.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmitting || isSubmitLocked || !isSupabaseConfigured}
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[1.5rem] border border-white/26 bg-white/36 px-5 py-3 font-display text-[11px] uppercase tracking-[0.24em] text-foreground shadow-[0_18px_46px_rgba(173,133,37,0.12),inset_0_1px_0_rgba(255,255,255,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/48 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
+              >
+                {isSubmitting ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <BellRing className="h-4 w-4" />}
+                {isSubmitting ? "Sending..." : isSubmitLocked ? "Hold for a second" : "Send popup reminder"}
+              </button>
+
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock3 className="h-3.5 w-3.5" />
+                <p>Press Enter to send, Shift+Enter for a new line. Empty messages and rapid repeats are blocked.</p>
+              </div>
+            </form>
+          </motion.section>
+
+          <motion.section
+            initial={{ opacity: 0, y: 26 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5, delay: 0.18, ease: [0.22, 1, 0.36, 1] }}
+            className="rounded-[3rem] border border-white/30 bg-white/30 p-5 shadow-[0_24px_76px_rgba(173,133,37,0.12)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_26px_88px_rgba(8,5,18,0.46)] sm:p-6"
+          >
+            <div className="flex items-center gap-3">
+              <div className="rounded-[1.25rem] border border-white/24 bg-white/28 p-3 shadow-[inset_0_1px_0_rgba(255,255,255,0.22)] dark:border-white/10 dark:bg-white/[0.05]">
+                <MessageSquareText className="h-5 w-5 text-primary" />
+              </div>
+              <div>
+                <p className="font-display text-[10px] uppercase tracking-[0.3em] text-primary/78">
+                  Website Tasks
+                </p>
+                <h2 className="mt-1 text-2xl text-foreground">Suggest a task</h2>
+              </div>
+            </div>
+
+            <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
+              Use this to suggest something new for the workflow. Suggestions go into a separate
+              review queue first and are not added straight into the real task list.
+            </p>
+
+            <div className="mt-4 rounded-[1.8rem] border border-white/22 bg-white/24 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
+              <p className="font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90">
+                Review Flow
+              </p>
+              <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                Submitted tasks land in the website review queue with a pending status. They are
+                reviewed later and only become real tasks if accepted from that separate queue.
+              </p>
+            </div>
+
+            <form className="mt-6 space-y-4" onSubmit={handleTaskSuggestionSubmit}>
+              <div className="space-y-2">
+                <label
+                  htmlFor="suggestion-sender-name"
+                  className="font-display text-[10px] uppercase tracking-[0.24em] text-foreground/90"
+                >
+                  Sender Name
+                </label>
+                <Input
+                  id="suggestion-sender-name"
+                  value={suggestionSenderName}
+                  onChange={(event) => setSuggestionSenderName(event.target.value)}
+                  placeholder="Optional"
+                  maxLength={80}
+                  className="h-12 rounded-[1.4rem] border-white/24 bg-white/32 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] placeholder:text-muted-foreground/80 dark:border-white/10 dark:bg-white/[0.04]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="suggestion-title"
+                  className="font-display text-[10px] uppercase tracking-[0.24em] text-foreground/90"
+                >
+                  Task Title
+                </label>
+                <Input
+                  id="suggestion-title"
+                  value={suggestionTitle}
+                  onChange={(event) => setSuggestionTitle(event.target.value)}
+                  placeholder="Required"
+                  maxLength={140}
+                  required
+                  className="h-12 rounded-[1.4rem] border-white/24 bg-white/32 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] placeholder:text-muted-foreground/80 dark:border-white/10 dark:bg-white/[0.04]"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="suggestion-details"
+                  className="font-display text-[10px] uppercase tracking-[0.24em] text-foreground/90"
+                >
+                  Details
+                </label>
+                <Textarea
+                  id="suggestion-details"
+                  value={suggestionDetails}
+                  onChange={(event) => setSuggestionDetails(event.target.value)}
+                  placeholder="Optional background or explanation"
+                  rows={5}
+                  maxLength={600}
+                  className="min-h-[8rem] rounded-[1.4rem] border-white/24 bg-white/32 text-sm leading-relaxed shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] placeholder:text-muted-foreground/80 dark:border-white/10 dark:bg-white/[0.04]"
+                />
+              </div>
+
+              {suggestionFeedback ? (
+                <Alert
+                  variant={suggestionFeedback.variant}
+                  className={cn(
+                    "rounded-[1.8rem] border shadow-[inset_0_1px_0_rgba(255,255,255,0.18)]",
+                    suggestionFeedback.variant === "destructive"
+                      ? "border-rose-500/30 bg-rose-500/10 text-rose-800 dark:text-rose-200"
+                      : "border-emerald-500/30 bg-emerald-500/10 text-emerald-800 dark:text-emerald-200"
+                  )}
+                >
+                  {suggestionFeedback.variant === "destructive" ? (
+                    <AlertCircle className="h-4 w-4" />
+                  ) : (
+                    <CheckCircle2 className="h-4 w-4" />
+                  )}
+                  <AlertTitle>{suggestionFeedback.title}</AlertTitle>
+                  <AlertDescription>{suggestionFeedback.description}</AlertDescription>
+                </Alert>
+              ) : null}
+
+              <div className="rounded-[1.8rem] border border-white/22 bg-white/24 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
+                <div className="flex items-start gap-3">
+                  <div className="rounded-[1rem] border border-white/22 bg-white/30 p-2 dark:border-white/10 dark:bg-white/[0.05]">
+                    <Clock3 className="h-4 w-4 text-primary" />
+                  </div>
+                  <div>
+                    <p className="font-display text-[10px] uppercase tracking-[0.2em] text-foreground/90">
+                      Queue behavior
+                    </p>
+                    <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                      Suggestions are stored in <code>task_submissions</code> with a pending status.
+                      They do not create a real task immediately, and they do not go into the popup
+                      reminder inbox.
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                type="submit"
+                disabled={isSubmittingSuggestion || isSuggestionSubmitLocked || !isSupabaseConfigured}
+                className="inline-flex min-h-12 w-full items-center justify-center gap-2 rounded-[1.5rem] border border-white/26 bg-white/36 px-5 py-3 font-display text-[11px] uppercase tracking-[0.24em] text-foreground shadow-[0_18px_46px_rgba(173,133,37,0.12),inset_0_1px_0_rgba(255,255,255,0.24)] transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/48 disabled:cursor-not-allowed disabled:opacity-60 dark:border-white/10 dark:bg-white/[0.06] dark:hover:bg-white/[0.1]"
+              >
+                {isSubmittingSuggestion ? (
+                  <LoaderCircle className="h-4 w-4 animate-spin" />
+                ) : (
+                  <MessageSquareText className="h-4 w-4" />
+                )}
+                {isSubmittingSuggestion
+                  ? "Submitting..."
+                  : isSuggestionSubmitLocked
+                    ? "Hold for a second"
+                    : "Submit task suggestion"}
+              </button>
+
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <Clock3 className="h-3.5 w-3.5" />
+                <p>Task suggestions are stored for later review even if the laptop is offline.</p>
+              </div>
+            </form>
+          </motion.section>
+        </div>
       </div>
     </PageLayout>
   );

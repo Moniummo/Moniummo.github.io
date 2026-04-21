@@ -27,6 +27,12 @@ interface WebsiteReminderInsert {
   taskId?: string | null;
 }
 
+interface WebsiteTaskSubmissionInsert {
+  senderName?: string | null;
+  title: string;
+  details?: string | null;
+}
+
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
 
@@ -105,6 +111,36 @@ export const createWebsiteReminder = async ({
     is_read: false,
     source: "website",
     task_id: taskId ?? null,
+  });
+
+  if (error) {
+    throw new Error(error.message);
+  }
+};
+
+export const createWebsiteTaskSubmission = async ({
+  senderName,
+  title,
+  details,
+}: WebsiteTaskSubmissionInsert) => {
+  if (!supabase) {
+    throw new Error(supabaseConfigError ?? "Supabase is unavailable.");
+  }
+
+  const trimmedTitle = title.trim();
+
+  if (!trimmedTitle) {
+    throw new Error("Task title cannot be empty.");
+  }
+
+  const trimmedDetails = details?.trim() || null;
+
+  const { error } = await supabase.from("task_submissions").insert({
+    sender_name: senderName?.trim() || null,
+    title: trimmedTitle,
+    details: trimmedDetails,
+    status: "pending",
+    source: "website",
   });
 
   if (error) {
