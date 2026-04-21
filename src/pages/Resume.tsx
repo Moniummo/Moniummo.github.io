@@ -557,7 +557,7 @@ const Resume = () => {
             ))}
             <Link
               to="/cv/app-development"
-              className="rounded-full border border-primary/24 bg-primary/10 px-3.5 py-1.5 font-display text-xs uppercase tracking-[0.18em] text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition-colors hover:bg-primary/16 hover:text-foreground dark:border-primary/28 dark:bg-primary/12"
+              className="cursor-default rounded-full border border-white/28 bg-white/36 px-3.5 py-1.5 font-display text-xs uppercase tracking-[0.18em] text-muted-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.25)] dark:border-white/12 dark:bg-white/[0.06]"
             >
               App Development
             </Link>
