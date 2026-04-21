@@ -7,6 +7,7 @@ const Projects = lazy(() => import("./pages/Projects.tsx"));
 const Resume = lazy(() => import("./pages/Resume.tsx"));
 const Research = lazy(() => import("./pages/Research.tsx"));
 const About = lazy(() => import("./pages/About.tsx"));
+const AppDevelopment = lazy(() => import("./pages/AppDevelopment.tsx"));
 const NotFound = lazy(() => import("./pages/NotFound.tsx"));
 
 const routerBase =
@@ -25,6 +26,7 @@ const App = () => (
           <Route path="/resume" element={<Navigate replace to="/cv" />} />
           <Route path="/research" element={<Research />} />
           <Route path="/about" element={<About />} />
+          <Route path="/cv/app-development" element={<AppDevelopment />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

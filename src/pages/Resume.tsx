@@ -1,5 +1,6 @@
 import { motion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { Link } from "react-router-dom";
 import PageLayout from "@/components/PageLayout";
 
 interface CvEntry {
@@ -554,6 +555,12 @@ const Resume = () => {
                 {skill}
               </span>
             ))}
+            <Link
+              to="/cv/app-development"
+              className="rounded-full border border-primary/24 bg-primary/10 px-3.5 py-1.5 font-display text-xs uppercase tracking-[0.18em] text-primary shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] transition-colors hover:bg-primary/16 hover:text-foreground dark:border-primary/28 dark:bg-primary/12"
+            >
+              App Development
+            </Link>
           </div>
         </div>
       </section>
