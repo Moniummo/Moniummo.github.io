@@ -46,8 +46,19 @@ const appPresenceDeviceId =
   import.meta.env.VITE_SUPABASE_PRESENCE_DEVICE_ID?.trim() || "MonTop-Duo";
 const appPresenceDeviceName =
   import.meta.env.VITE_SUPABASE_PRESENCE_DEVICE_NAME?.trim() || "My Laptop";
-const emergencyPopupPasswordHash =
-  import.meta.env.VITE_EMERGENCY_POPUP_PASSWORD_HASH?.trim().toLowerCase() || "";
+const splitConfiguredValues = (value?: string) =>
+  value
+    ?.split(/\r?\n|,|;/)
+    .map((entry) => entry.trim().toLowerCase())
+    .filter(Boolean) ?? [];
+
+const configuredEmergencyPasswordHashes = Array.from(
+  new Set([
+    ...splitConfiguredValues(import.meta.env.VITE_EMERGENCY_POPUP_PASSWORD_HASHES),
+    ...splitConfiguredValues(import.meta.env.VITE_EMERGENCY_POPUP_PASSWORD_HASH),
+  ]),
+);
+const hasConfiguredEmergencyPasswords = configuredEmergencyPasswordHashes.length > 0;
 
 const dataRefreshIntervalMs = 15000;
 const onlineThresholdMs = 90000;
@@ -397,11 +408,11 @@ const AppDevelopment = () => {
       return;
     }
 
-    if (isEmergencyReminder && !emergencyPopupPasswordHash) {
+    if (isEmergencyReminder && !hasConfiguredEmergencyPasswords) {
       setFormFeedback(
         createFeedback(
           "Emergency password missing",
-          "Set VITE_EMERGENCY_POPUP_PASSWORD_HASH before using emergency reminder mode.",
+          "Set EMERGENCY_POPUP_PASSWORDS in GitHub Actions or VITE_EMERGENCY_POPUP_PASSWORD_HASHES for local builds before using emergency reminder mode.",
           "destructive",
         ),
       );
@@ -412,7 +423,7 @@ const AppDevelopment = () => {
       setFormFeedback(
         createFeedback(
           "Password required",
-          "Enter the emergency password before sending a full-screen popup.",
+          "Enter one of the configured emergency passwords before sending a full-screen popup.",
           "destructive",
         ),
       );
@@ -426,12 +437,12 @@ const AppDevelopment = () => {
       if (isEmergencyReminder) {
         const hashedPassword = await hashToSha256Hex(emergencyPassword.trim());
 
-        if (hashedPassword !== emergencyPopupPasswordHash) {
+        if (!configuredEmergencyPasswordHashes.includes(hashedPassword)) {
           setEmergencyPassword("");
           setFormFeedback(
             createFeedback(
               "Incorrect password",
-              "The emergency popup password was incorrect, so nothing was sent.",
+              "The entered emergency password did not match any configured password, so nothing was sent.",
               "destructive",
             ),
           );
@@ -1114,7 +1125,8 @@ const AppDevelopment = () => {
                       <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
                         Toggle this on to send the reminder as a full-screen alert. Emergency mode
                         always sends <code>task_id = null</code> and uses
-                        <code> source = 'website-emergency'</code>.
+                        <code> source = 'website-emergency'</code>. Any configured emergency
+                        password can unlock it.
                       </p>
                     </div>
                   </div>
@@ -1150,16 +1162,23 @@ const AppDevelopment = () => {
                         type="password"
                         value={emergencyPassword}
                         onChange={(event) => setEmergencyPassword(event.target.value)}
-                        placeholder="Required to send a full-screen alert"
+                        placeholder="Enter any configured emergency password"
                         maxLength={160}
                         className="h-12 rounded-[1.4rem] border-white/24 bg-white/32 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] placeholder:text-muted-foreground/80 dark:border-white/10 dark:bg-white/[0.04]"
                       />
                     </div>
 
-                    {!emergencyPopupPasswordHash ? (
+                    {!hasConfiguredEmergencyPasswords ? (
                       <div className="rounded-[1.5rem] border border-amber-500/25 bg-amber-500/10 p-3 text-sm leading-relaxed text-amber-800 dark:text-amber-200">
                         Emergency mode is not configured in this build yet. Add
-                        <code> VITE_EMERGENCY_POPUP_PASSWORD_HASH</code> before using it.
+                        <code> EMERGENCY_POPUP_PASSWORDS</code> in GitHub Actions, or set
+                        <code> VITE_EMERGENCY_POPUP_PASSWORD_HASHES</code> for local builds.
+                      </div>
+                    ) : null}
+                    {hasConfiguredEmergencyPasswords ? (
+                      <div className="rounded-[1.5rem] border border-emerald-500/20 bg-emerald-500/10 p-3 text-sm leading-relaxed text-emerald-800 dark:text-emerald-200">
+                        This build has {configuredEmergencyPasswordHashes.length} emergency password
+                        {configuredEmergencyPasswordHashes.length === 1 ? "" : "s"} configured.
                       </div>
                     ) : null}
                   </div>
@@ -1200,7 +1219,7 @@ const AppDevelopment = () => {
                         <>
                           Emergency reminders insert <code>task_id = null</code> and send
                           <code> source = 'website-emergency'</code>, so they open full-screen
-                          after the password hash check passes.
+                          after the entered password hash matches one of the configured passwords.
                         </>
                       ) : (
                         <>

@@ -32,6 +32,44 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Prepare emergency password hashes
+        env:
+          EMERGENCY_POPUP_PASSWORDS: ${{ vars.EMERGENCY_POPUP_PASSWORDS || secrets.EMERGENCY_POPUP_PASSWORDS }}
+          VITE_EMERGENCY_POPUP_PASSWORD_HASHES: ${{ vars.VITE_EMERGENCY_POPUP_PASSWORD_HASHES || secrets.VITE_EMERGENCY_POPUP_PASSWORD_HASHES }}
+          VITE_EMERGENCY_POPUP_PASSWORD_HASH: ${{ vars.VITE_EMERGENCY_POPUP_PASSWORD_HASH || secrets.VITE_EMERGENCY_POPUP_PASSWORD_HASH }}
+        run: |
+          node --input-type=module <<'NODE'
+          import crypto from 'node:crypto';
+          import fs from 'node:fs';
+
+          const splitValues = (value = '') =>
+            value
+              .split(/\r?\n|,|;/)
+              .map((entry) => entry.trim())
+              .filter(Boolean);
+
+          const hashPassword = (value) =>
+            crypto.createHash('sha256').update(value, 'utf8').digest('hex');
+
+          const configuredHashes = [
+            ...splitValues(process.env.VITE_EMERGENCY_POPUP_PASSWORD_HASHES).map((value) =>
+              value.toLowerCase(),
+            ),
+            ...splitValues(process.env.VITE_EMERGENCY_POPUP_PASSWORD_HASH).map((value) =>
+              value.toLowerCase(),
+            ),
+            ...splitValues(process.env.EMERGENCY_POPUP_PASSWORDS).map((value) =>
+              hashPassword(value),
+            ),
+          ];
+
+          const uniqueHashes = [...new Set(configuredHashes)];
+          fs.appendFileSync(
+            process.env.GITHUB_ENV,
+            `VITE_EMERGENCY_POPUP_PASSWORD_HASHES=${uniqueHashes.join(',')}\n`,
+          );
+          NODE
+
       - name: Build site
         run: npm run build
         env:
@@ -39,7 +77,6 @@ jobs:
           VITE_SUPABASE_PUBLISHABLE_KEY: ${{ vars.VITE_SUPABASE_PUBLISHABLE_KEY || secrets.VITE_SUPABASE_PUBLISHABLE_KEY }}
           VITE_SUPABASE_PRESENCE_DEVICE_ID: ${{ vars.VITE_SUPABASE_PRESENCE_DEVICE_ID || secrets.VITE_SUPABASE_PRESENCE_DEVICE_ID }}
           VITE_SUPABASE_PRESENCE_DEVICE_NAME: ${{ vars.VITE_SUPABASE_PRESENCE_DEVICE_NAME || secrets.VITE_SUPABASE_PRESENCE_DEVICE_NAME }}
-          VITE_EMERGENCY_POPUP_PASSWORD_HASH: ${{ vars.VITE_EMERGENCY_POPUP_PASSWORD_HASH || secrets.VITE_EMERGENCY_POPUP_PASSWORD_HASH }}
 
       - name: Setup Pages
         uses: actions/configure-pages@v5
