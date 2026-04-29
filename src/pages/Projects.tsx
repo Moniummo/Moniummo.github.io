@@ -18,6 +18,8 @@ import coinSorterExploded from "@/assets/coin_sorter_exploded.png";
 import coinSorterIrl from "@/assets/coin_sorter_irl.png";
 import robosubArchitecture from "@/assets/robosub_architecture.png";
 import robosubIcon from "@/assets/robosub_icon.png";
+import desktopPlannerHome from "@/assets/desktop_planner_home.png";
+import desktopPlannerMiniWindow from "@/assets/desktop_planner_mini_window.png";
 import websiteHero from "@/assets/website_hero.png";
 import websiteLighthouseHome from "@/assets/website_lighthouse_home.png";
 import websiteLighthouseProjects from "@/assets/website_lighthouse_projects.png";
@@ -777,6 +779,108 @@ const robosubDetails: ProjectDetails = {
   ],
 };
 
+const desktopPlannerDetails: ProjectDetails = {
+  headerLabel: "Desktop + Web Systems",
+  status: "Personal Production Build",
+  tagline:
+    "Electron | React | TypeScript | Supabase | Vite | Local-First UX",
+  summary:
+    "Desktop Planner is a local-first productivity system built around the way I actually manage work: fast desktop task capture, custom reminder surfaces, recurring routines, and a private web collaboration layer for lightweight accountability. The desktop app remains the source of truth for my real workflow, while selected task state and outside input flow through Supabase so trusted collaborators can send reminders, suggest new tasks, and propose edits without directly changing my main task list. The project is less about building another checklist and more about designing a planning console that is hard to ignore, quick to update, and resilient when the laptop is offline.",
+  designProblem: [
+    "Build a task manager that actively pulls attention back to the right work instead of passively storing intentions.",
+    "Support one-off tasks and recurring routines without making repeated work awkward to review or complete.",
+    "Keep the personal desktop workflow clean while still accepting useful outside reminders and suggestions.",
+    "Queue web-originated input during offline periods so reminders and collaboration events can be processed later.",
+    "Provide a higher-urgency interruption channel for exceptional cases without exposing the normal workflow to noise.",
+  ],
+  architectureDecisions: [
+    {
+      title: "Local-First Desktop Source of Truth",
+      detail:
+        "Kept the Electron app responsible for the real task workflow, local state, recurrence handling, and popup window orchestration.",
+    },
+    {
+      title: "Typed Electron Boundary",
+      detail:
+        "Used a preload bridge with typed IPC so renderer interactions can safely call desktop capabilities without blurring process responsibilities.",
+    },
+    {
+      title: "Supabase Coordination Layer",
+      detail:
+        "Published selected task state, reminders, suggestion queues, and laptop presence through real-time tables while keeping direct edits out of the main workflow.",
+    },
+    {
+      title: "Moderation Before Mutation",
+      detail:
+        "Stored proposed new tasks and edit suggestions separately so outside input can be accepted or dismissed before it affects the trusted task list.",
+    },
+  ],
+  challengesTradeoffs: [
+    {
+      title: "Interruption vs Control",
+      detail:
+        "Allowed reminders to be visible and actionable while keeping task creation and edits behind review queues to protect the daily workflow.",
+    },
+    {
+      title: "Offline Delivery",
+      detail:
+        "Handled sleep and offline periods by leaving unread reminder rows in Supabase and processing the backlog on startup or resume.",
+    },
+    {
+      title: "Recurring Routine Logic",
+      detail:
+        "Built custom recurrence handling so routines can generate meaningful occurrences while preserving completion history.",
+    },
+    {
+      title: "Nullable Edit Semantics",
+      detail:
+        "Used explicit change flags alongside nullable suggested values to distinguish no suggested change from an intentional request to clear a field.",
+    },
+    {
+      title: "Static Hosting Constraints",
+      detail:
+        "Designed protected urgency flows for a statically hosted web layer by using client-side checks and maintainable deployment-time configuration.",
+    },
+  ],
+  performanceValidation: [
+    {
+      title: "Daily Workflow Coverage",
+      lines: [
+        "Supports task creation, completion, reopening, deletion, snoozing, priority changes, notes, due dates, reminders, and history review.",
+        "Includes quick-add and mini-window flows for low-friction capture during active work.",
+      ],
+    },
+    {
+      title: "Collaboration Safety",
+      lines: [
+        "Trusted collaborators can send reminders and propose changes without directly mutating the desktop task list.",
+        "Separate review queues keep jokes, mistakes, and low-quality suggestions out of the production workflow.",
+      ],
+    },
+    {
+      title: "Reminder Reliability",
+      lines: [
+        "Custom popup windows carry task context and can open the related task directly.",
+        "Backlog processing allows messages created while the laptop is offline to be delivered after the desktop app reconnects.",
+      ],
+    },
+  ],
+  visuals: [
+    {
+      src: desktopPlannerHome,
+      alt: "Desktop Planner main task dashboard",
+      caption:
+        "Main desktop planning view for active tasks, reminders, routines, and workflow review.",
+    },
+    {
+      src: desktopPlannerMiniWindow,
+      alt: "Desktop Planner mini task capture window",
+      caption:
+        "Mini-window capture flow designed for quickly adding or reviewing tasks without leaving the current work context.",
+    },
+  ],
+};
+
 const websiteDetails: ProjectDetails = {
   headerLabel: "Product + Frontend Engineering",
   status: "Actively Maintained",
@@ -924,6 +1028,12 @@ const projects: ProjectCard[] = [
     note: "QLoRA fine-tuned LLaMA pipeline with local FastAPI serving, private web UI, and Discord integration.",
     previewImage: nickAiPreview,
     details: nickAiDetails,
+  },
+  {
+    title: "Desktop Planner",
+    note: "Local-first Electron task manager with recurring routines, custom reminders, Supabase sync, and moderated web collaboration.",
+    previewImage: desktopPlannerHome,
+    details: desktopPlannerDetails,
   },
   {
     title: "Autonomous Coin Sorter",
