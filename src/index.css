@@ -38,8 +38,9 @@
     --radius: 0.9rem;
 
     --font-display: 'Space Mono', monospace;
-    --font-body: 'Inter', sans-serif;
+    --font-body: 'Manrope', sans-serif;
     --font-script: 'Pinyon Script', cursive;
+    --font-serif: 'Fraunces', serif;
 
     --sidebar-background: 44 58% 98%;
     --sidebar-foreground: 26 30% 18%;
@@ -121,6 +122,10 @@
 
   h1, h2, h3, h4, h5, h6 {
     font-family: var(--font-display);
+  }
+
+  .font-serif {
+    font-family: var(--font-serif);
   }
 
   ::selection {
