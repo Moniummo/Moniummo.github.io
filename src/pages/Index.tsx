@@ -81,8 +81,8 @@ const surnameLetters = ["D", "a", "v", "e"];
 const secretLetterOrder = "Absar";
 const secretLetterIds = ["arkan-A", "badge-b", "badge-s", "arkan-a", "arkan-r"];
 const secretOrderYMargin = 90;
-const secretOrderMinXGap = 28;
-const secretOrderMaxXGap = 280;
+const secretOrderMinXGap = 8;
+const secretOrderMaxXGap = 360;
 const featurePanelRotation = (-8 * Math.PI) / 180;
 
 interface Point {
