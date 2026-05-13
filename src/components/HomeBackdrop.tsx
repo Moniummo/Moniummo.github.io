@@ -1,17 +1,54 @@
+import { motion } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface HomeBackdropProps {
   className?: string;
+  featurePanelArmed?: boolean;
+  featurePanelHovered?: boolean;
+  onFeaturePanelClick?: () => void;
 }
 
 // The homepage keeps its richer layered glass backdrop separate from the simpler subpage gradients.
-const HomeBackdrop = ({ className }: HomeBackdropProps) => {
+const HomeBackdrop = ({
+  className,
+  featurePanelArmed = false,
+  featurePanelHovered = false,
+  onFeaturePanelClick,
+}: HomeBackdropProps) => {
   return (
     <div className={cn("pointer-events-none absolute inset-0 overflow-hidden", className)}>
       <div className="absolute inset-0 bg-[linear-gradient(145deg,rgba(255,255,255,0.92),rgba(245,232,199,0.78)_42%,rgba(221,188,113,0.38))] dark:bg-[linear-gradient(145deg,rgba(11,10,20,0.96),rgba(28,24,52,0.92)_40%,rgba(74,46,124,0.82))]" />
       <div className="absolute inset-0 md:hidden bg-[radial-gradient(circle_at_18%_28%,rgba(255,255,255,0.28),transparent_40%),radial-gradient(circle_at_84%_14%,rgba(171,132,46,0.22),transparent_34%)] dark:bg-[radial-gradient(circle_at_18%_28%,rgba(166,124,255,0.2),transparent_40%),radial-gradient(circle_at_84%_14%,rgba(103,71,188,0.26),transparent_34%)]" />
       <div className="absolute -left-[11%] top-[15%] hidden h-[46vh] w-[38vw] rotate-[13deg] rounded-[4.5rem] border border-white/30 bg-white/34 shadow-[0_30px_95px_rgba(181,149,70,0.16)] backdrop-blur-3xl dark:border-white/10 dark:bg-white/[0.05] dark:shadow-[0_28px_120px_rgba(7,5,18,0.55)] md:block" />
-      <div className="absolute left-[24%] top-[10%] hidden h-[65vh] w-[21vw] -rotate-[8deg] rounded-[4.25rem] border border-primary/14 bg-white/26 shadow-[0_28px_90px_rgba(191,156,73,0.10)] backdrop-blur-[30px] dark:border-white/10 dark:bg-white/[0.04] md:block" />
+      <motion.button
+        id="feature-glass-panel"
+        type="button"
+        onClick={onFeaturePanelClick}
+        animate={
+          featurePanelArmed && featurePanelHovered
+            ? {
+                rotate: -8,
+                scale: 1.01,
+                boxShadow:
+                  "0 0 0 1px rgba(255,255,255,0.22), 0 0 38px rgba(170,130,255,0.34), 0 28px 100px rgba(191,156,73,0.18)",
+              }
+            : {
+                rotate: -8,
+                scale: 1,
+                boxShadow: "0 28px 90px rgba(191,156,73,0.10)",
+              }
+        }
+        whileTap={featurePanelArmed ? { scale: 0.995 } : undefined}
+        transition={{ duration: 0.22, ease: "easeOut" }}
+        aria-label="Hidden floating panel"
+        className={cn(
+          "pointer-events-auto absolute left-[24%] top-[10%] hidden h-[65vh] w-[21vw] rounded-[4.25rem] border bg-white/26 backdrop-blur-[30px] transition-all duration-300 md:block",
+          "border-primary/14 shadow-[0_28px_90px_rgba(191,156,73,0.10)] dark:border-white/10 dark:bg-white/[0.04]",
+          featurePanelArmed && featurePanelHovered
+            ? "border-primary/32 bg-white/30 dark:border-primary/28 dark:bg-white/[0.07]"
+            : ""
+        )}
+      />
       <div className="absolute right-[-4%] top-[8%] hidden h-[75vh] w-[31vw] rotate-[7deg] rounded-[5rem] border border-primary/14 bg-primary/14 shadow-[0_26px_88px_rgba(155,119,33,0.12)] backdrop-blur-[26px] dark:border-white/10 dark:bg-primary/12 dark:shadow-[0_28px_96px_rgba(38,22,76,0.35)] md:block" />
       <div className="absolute bottom-[-10%] left-[31%] hidden h-[31vh] w-[43vw] -rotate-[8deg] rounded-[5rem] border border-white/22 bg-white/20 shadow-[0_24px_70px_rgba(191,156,73,0.08)] backdrop-blur-[24px] dark:border-white/10 dark:bg-white/[0.03] md:block" />
       <div className="absolute bottom-[11%] left-[46%] hidden h-[22vh] w-[14vw] rotate-[11deg] rounded-[3rem] border border-primary/12 bg-white/16 backdrop-blur-[22px] dark:border-white/10 dark:bg-primary/[0.06] xl:block" />
