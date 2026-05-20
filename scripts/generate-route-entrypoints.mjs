@@ -8,7 +8,19 @@ const projectRoot = path.resolve(__dirname, "..");
 const distDir = path.join(projectRoot, "dist");
 const indexPath = path.join(distDir, "index.html");
 
-const routeFolders = ["projects", "research", "cv", "about", "resume", "cv/app-development"];
+const routeFolders = [
+  "projects",
+  "research",
+  "cv",
+  "about",
+  "resume",
+  "cv/app-development",
+  "ally",
+  "ally/projects",
+  "ally/research",
+  "ally/cv",
+  "ally/about",
+];
 
 const buildRouteHtml = (rootHtml, route) => {
   const depth = route.split("/").length;

@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, FileText, FlaskConical, FolderKanban, UserRound, X } from "lucide-react";
 import HomeBackdrop from "@/components/HomeBackdrop";
+import { runRadialPageTransition } from "@/lib/radialPageTransition";
 
 const ThemeToggle = lazy(() => import("@/components/ThemeToggle"));
 const RouteTransitionOverlay = lazy(() => import("@/components/RouteTransitionOverlay"));
@@ -77,13 +78,26 @@ const givenNameLetters = [
   { id: "arkan-a", display: "a", secret: "a" },
   { id: "arkan-n", display: "n" },
 ];
-const surnameLetters = ["D", "a", "v", "e"];
-const secretLetterOrder = "Absar";
-const secretLetterIds = ["arkan-A", "badge-b", "badge-s", "arkan-a", "arkan-r"];
+const surnameLetters = [
+  { id: "dave-D", display: "D" },
+  { id: "dave-a", display: "a" },
+  { id: "dave-v", display: "v" },
+  { id: "dave-e", display: "e" },
+];
+const allyLetterOrder = "Aiza";
+const allyLetterIds = ["arkan-A", "bio-i", "copy-z", "arkan-a"];
+const rickrollLetterOrder = "Absar";
+const rickrollLetterIds = ["arkan-A", "badge-b", "badge-s", "arkan-a", "arkan-r"];
 const secretOrderYMargin = 90;
 const secretOrderMinXGap = 8;
-const secretOrderMaxXGap = 360;
+const allyOrderMaxXGaps = [360, 220, 220];
+const rickrollOrderMaxXGaps = [360, 220, 220, 160];
 const featurePanelRotation = (-8 * Math.PI) / 180;
+const vaultDoorOpenDelayMs = 4800;
+const vaultDoorOpenDurationMs = 6200;
+const vaultButtonShineDurationMs = 560;
+const featurePanelOutlineShineDurationMs = 360;
+const allyPassword = "ch3ss.ally.blahblah";
 
 interface Point {
   x: number;
@@ -98,9 +112,14 @@ interface PageTransitionState {
 const Index = () => {
   const navigate = useNavigate();
   const timeoutRef = useRef<number | null>(null);
+  const featurePanelOutlineSweepTimeoutRef = useRef<number | null>(null);
+  const featurePanelVaultOpenTimeoutRef = useRef<number | null>(null);
+  const vaultSweepTimeoutRef = useRef<number | null>(null);
+  const vaultNavigateTimeoutRef = useRef<number | null>(null);
   const dragBoundsRef = useRef<HTMLDivElement | null>(null);
-  const surnameLetterRefs = useRef<Array<HTMLSpanElement | null>>([]);
   const secretLetterRefs = useRef<Record<string, HTMLSpanElement | null>>({});
+  const secretOrderMatchedRef = useRef(false);
+  const rickrollOrderMatchedRef = useRef(false);
   const pointerPositionRef = useRef<{ x: number; y: number } | null>(null);
   const prefersReducedMotion = useReducedMotion();
   const [isMobileViewport, setIsMobileViewport] = useState(
@@ -109,14 +128,36 @@ const Index = () => {
   const [transitionState, setTransitionState] = useState<PageTransitionState | null>(null);
   const [featurePanelArmed, setFeaturePanelArmed] = useState(false);
   const [featurePanelArmedAt, setFeaturePanelArmedAt] = useState<number | null>(null);
-  const [featurePanelHovered, setFeaturePanelHovered] = useState(false);
+  const [featurePanelOutlineSweeping, setFeaturePanelOutlineSweeping] = useState(false);
+  const [featurePanelVaultOpen, setFeaturePanelVaultOpen] = useState(false);
+  const [vaultButtonSweeping, setVaultButtonSweeping] = useState(false);
+  const [passwordPromptOpen, setPasswordPromptOpen] = useState(false);
+  const [passwordValue, setPasswordValue] = useState("");
   const [rickrollOpen, setRickrollOpen] = useState(false);
+  const [secretOrderMatched, setSecretOrderMatched] = useState(false);
+  const [passwordRejectedForCurrentSolve, setPasswordRejectedForCurrentSolve] = useState(false);
   const skipEntranceMotion = prefersReducedMotion || isMobileViewport;
 
   useEffect(() => {
     return () => {
       if (timeoutRef.current) {
         window.clearTimeout(timeoutRef.current);
+      }
+
+      if (featurePanelOutlineSweepTimeoutRef.current) {
+        window.clearTimeout(featurePanelOutlineSweepTimeoutRef.current);
+      }
+
+      if (featurePanelVaultOpenTimeoutRef.current) {
+        window.clearTimeout(featurePanelVaultOpenTimeoutRef.current);
+      }
+
+      if (vaultSweepTimeoutRef.current) {
+        window.clearTimeout(vaultSweepTimeoutRef.current);
+      }
+
+      if (vaultNavigateTimeoutRef.current) {
+        window.clearTimeout(vaultNavigateTimeoutRef.current);
       }
     };
   }, []);
@@ -157,8 +198,8 @@ const Index = () => {
       centerY: panelRect.top + panelRect.height / 2,
       width,
       height,
-      insetX: width * 0.12,
-      insetY: height * 0.1,
+      insetX: width * 0.02,
+      insetY: height * 0.02,
     };
   };
 
@@ -174,6 +215,39 @@ const Index = () => {
       Math.abs(localX) <= metrics.width / 2 - metrics.insetX &&
       Math.abs(localY) <= metrics.height / 2 - metrics.insetY
     );
+  };
+
+  const isPointInsideFeatureSubbox = (
+    point: Point,
+    metrics: NonNullable<ReturnType<typeof getFeaturePanelMetrics>>
+  ) => {
+    const cos = Math.cos(-featurePanelRotation);
+    const sin = Math.sin(-featurePanelRotation);
+    const dx = point.x - metrics.centerX;
+    const dy = point.y - metrics.centerY;
+    const localX = dx * cos - dy * sin;
+    const localY = dx * sin + dy * cos;
+    const subboxCenterY = -metrics.height * 0.08;
+    const subboxHalfWidth = metrics.width * 0.36;
+    const subboxHalfHeight = metrics.height * 0.15;
+
+    return Math.abs(localX) <= subboxHalfWidth && Math.abs(localY - subboxCenterY) <= subboxHalfHeight;
+  };
+
+  const isPointInsideVaultButton = (
+    point: Point,
+    metrics: NonNullable<ReturnType<typeof getFeaturePanelMetrics>>
+  ) => {
+    const cos = Math.cos(-featurePanelRotation);
+    const sin = Math.sin(-featurePanelRotation);
+    const dx = point.x - metrics.centerX;
+    const dy = point.y - metrics.centerY;
+    const localX = dx * cos - dy * sin;
+    const localY = dx * sin + dy * cos;
+    const buttonCenterY = -metrics.height * 0.024;
+    const buttonRadius = Math.min(metrics.width * 0.22, 58);
+
+    return Math.hypot(localX, localY - buttonCenterY) <= buttonRadius;
   };
 
   const getRectCorners = (rect: DOMRect): Point[] => [
@@ -216,58 +290,38 @@ const Index = () => {
     return getFeaturePanelCorners(metrics).some((point) => isPointInsideRect(point, rect));
   };
 
-  const updateFeaturePanelHover = (isArmed = featurePanelArmed) => {
-    const pointerPosition = pointerPositionRef.current;
-    const featurePanelMetrics = getFeaturePanelMetrics();
-
-    if (!isArmed || !pointerPosition || !featurePanelMetrics) {
-      setFeaturePanelHovered(false);
-      return;
-    }
-
-    setFeaturePanelHovered(isPointInsideFeaturePanel(pointerPosition, featurePanelMetrics));
-  };
-
   const updateFeaturePanelArmed = () => {
     const featurePanelMetrics = getFeaturePanelMetrics();
 
     if (!featurePanelMetrics) {
       setFeaturePanelArmed(false);
-      setFeaturePanelHovered(false);
+      setFeaturePanelVaultOpen(false);
       return;
     }
 
-    const allLettersCleared = surnameLetterRefs.current.every((letterRef) => {
-      if (!letterRef) {
-        return false;
-      }
-
-      const letterRect = letterRef.getBoundingClientRect();
-
-      return !doesRectIntersectFeaturePanel(letterRect, featurePanelMetrics);
-    });
+    const puzzleAllowsPanel = secretOrderMatchedRef.current && !passwordRejectedForCurrentSolve;
 
     setFeaturePanelArmed((previouslyArmed) => {
-      if (allLettersCleared && !previouslyArmed) {
+      if (puzzleAllowsPanel && !previouslyArmed) {
         setFeaturePanelArmedAt(Date.now());
       }
 
-      if (!allLettersCleared && previouslyArmed) {
+      if (!puzzleAllowsPanel && previouslyArmed) {
         setFeaturePanelArmedAt(null);
       }
 
-      return allLettersCleared;
+      return puzzleAllowsPanel;
     });
 
-    if (!allLettersCleared) {
+    if (!puzzleAllowsPanel) {
       setFeaturePanelArmedAt(null);
+      setFeaturePanelOutlineSweeping(false);
+      setFeaturePanelVaultOpen(false);
     }
-
-    updateFeaturePanelHover(allLettersCleared);
   };
 
-  const updateSecretLetterOrder = () => {
-    const letterPositions = secretLetterIds
+  const isSecretWordMatched = (letterIds: string[], expectedOrder: string, maxXGaps: number[]) => {
+    const letterPositions = letterIds
       .map((id) => {
         const letterRef = secretLetterRefs.current[id];
 
@@ -290,8 +344,8 @@ const Index = () => {
       })
       .filter((item): item is { letter: string; x: number; y: number } => Boolean(item));
 
-    if (letterPositions.length !== secretLetterIds.length) {
-      return;
+    if (letterPositions.length !== letterIds.length) {
+      return false;
     }
 
     const sortedLetters = [...letterPositions].sort((first, second) => first.x - second.x);
@@ -300,20 +354,42 @@ const Index = () => {
     const xGaps = sortedLetters.slice(1).map((item, index) => item.x - sortedLetters[index].x);
     const lettersAreInALine =
       yRange <= secretOrderYMargin &&
-      xGaps.every((gap) => gap >= secretOrderMinXGap && gap <= secretOrderMaxXGap);
+      xGaps.every(
+        (gap, index) => gap >= secretOrderMinXGap && gap <= (maxXGaps[index] ?? maxXGaps[0])
+      );
 
     const currentOrder = sortedLetters
       .map((item) => item.letter)
       .join("");
-
-    if (lettersAreInALine && currentOrder === secretLetterOrder) {
-      setRickrollOpen(true);
-    }
+    return lettersAreInALine && currentOrder === expectedOrder;
   };
 
-  const updateLetterInteractions = () => {
-    updateFeaturePanelArmed();
-    updateSecretLetterOrder();
+  const updateSecretLetterOrder = () => {
+    const secretOrderMatched = isSecretWordMatched(allyLetterIds, allyLetterOrder, allyOrderMaxXGaps);
+    const rickrollOrderMatched = isSecretWordMatched(rickrollLetterIds, rickrollLetterOrder, rickrollOrderMaxXGaps);
+
+    if (secretOrderMatched && !secretOrderMatchedRef.current) {
+      setPasswordRejectedForCurrentSolve(false);
+      setFeaturePanelArmed(true);
+      setFeaturePanelArmedAt(Date.now());
+    }
+
+    if (!secretOrderMatched && secretOrderMatchedRef.current) {
+      setPasswordPromptOpen(false);
+      setPasswordValue("");
+      setPasswordRejectedForCurrentSolve(false);
+      setFeaturePanelArmed(false);
+      setFeaturePanelArmedAt(null);
+    }
+
+    secretOrderMatchedRef.current = secretOrderMatched;
+    setSecretOrderMatched(secretOrderMatched);
+
+    if (rickrollOrderMatched && !rickrollOrderMatchedRef.current) {
+      setRickrollOpen(true);
+    }
+
+    rickrollOrderMatchedRef.current = rickrollOrderMatched;
   };
 
   useEffect(() => {
@@ -325,26 +401,6 @@ const Index = () => {
       window.cancelAnimationFrame(frame);
     };
   }, [isMobileViewport]);
-
-  useEffect(() => {
-    const updatePointerPosition = (event: PointerEvent) => {
-      pointerPositionRef.current = { x: event.clientX, y: event.clientY };
-      updateFeaturePanelHover();
-    };
-
-    const clearPointerPosition = () => {
-      pointerPositionRef.current = null;
-      setFeaturePanelHovered(false);
-    };
-
-    window.addEventListener("pointermove", updatePointerPosition);
-    window.addEventListener("pointerleave", clearPointerPosition);
-
-    return () => {
-      window.removeEventListener("pointermove", updatePointerPosition);
-      window.removeEventListener("pointerleave", clearPointerPosition);
-    };
-  }, [featurePanelArmed]);
 
   const handleDockNavigation = (event: MouseEvent<HTMLAnchorElement>, to: string) => {
     if (
@@ -378,11 +434,152 @@ const Index = () => {
     }, 680);
   };
 
-  const handleFeaturePanelClick = () => {
-    if (!featurePanelArmed || featurePanelArmedAt === null || Date.now() < featurePanelArmedAt) {
+  const handleFeaturePanelClick = (point = pointerPositionRef.current) => {
+    if (featurePanelVaultOpen || featurePanelOutlineSweeping || passwordPromptOpen) {
       return;
     }
+
+    const featurePanelMetrics = getFeaturePanelMetrics();
+    const clickedFeatureSubbox = Boolean(
+      point && featurePanelMetrics && isPointInsideFeatureSubbox(point, featurePanelMetrics)
+    );
+
+    if (
+      !featurePanelArmed ||
+      !secretOrderMatched ||
+      passwordRejectedForCurrentSolve ||
+      !clickedFeatureSubbox ||
+      featurePanelArmedAt === null ||
+      Date.now() < featurePanelArmedAt
+    ) {
+      return;
+    }
+
+    setPasswordValue("");
+    setPasswordPromptOpen(true);
   };
+
+  const openFeaturePanelVault = () => {
+    if (featurePanelOutlineSweepTimeoutRef.current) {
+      window.clearTimeout(featurePanelOutlineSweepTimeoutRef.current);
+    }
+
+    if (featurePanelVaultOpenTimeoutRef.current) {
+      window.clearTimeout(featurePanelVaultOpenTimeoutRef.current);
+    }
+
+    setFeaturePanelOutlineSweeping(false);
+    window.requestAnimationFrame(() => {
+      setFeaturePanelOutlineSweeping(true);
+    });
+
+    featurePanelOutlineSweepTimeoutRef.current = window.setTimeout(() => {
+      setFeaturePanelOutlineSweeping(false);
+    }, featurePanelOutlineShineDurationMs);
+
+    featurePanelVaultOpenTimeoutRef.current = window.setTimeout(() => {
+      setFeaturePanelVaultOpen(true);
+    }, featurePanelOutlineShineDurationMs);
+  };
+
+  const handlePasswordSubmit = () => {
+    if (passwordValue === allyPassword) {
+      setPasswordPromptOpen(false);
+      setPasswordValue("");
+      openFeaturePanelVault();
+      return;
+    }
+
+    setPasswordPromptOpen(false);
+    setPasswordValue("");
+    setPasswordRejectedForCurrentSolve(true);
+    setFeaturePanelArmed(false);
+    setFeaturePanelArmedAt(null);
+  };
+
+  const handleVaultButtonClick = (event?: MouseEvent<HTMLButtonElement>) => {
+    if (vaultSweepTimeoutRef.current) {
+      window.clearTimeout(vaultSweepTimeoutRef.current);
+    }
+
+    if (vaultNavigateTimeoutRef.current) {
+      window.clearTimeout(vaultNavigateTimeoutRef.current);
+    }
+
+    const buttonRect = event?.currentTarget.getBoundingClientRect();
+    const centerX = buttonRect ? buttonRect.left + buttonRect.width / 2 : pointerPositionRef.current?.x;
+    const centerY = buttonRect ? buttonRect.top + buttonRect.height / 2 : pointerPositionRef.current?.y;
+
+    vaultNavigateTimeoutRef.current = window.setTimeout(() => {
+      runRadialPageTransition({
+        centerX,
+        centerY,
+        glow: "rgba(176, 136, 255, 0.84)",
+        navigate,
+        to: "/ally",
+      });
+    }, 520);
+  };
+
+  useEffect(() => {
+    if (!featurePanelVaultOpen) {
+      setVaultButtonSweeping(false);
+      return;
+    }
+
+    if (vaultSweepTimeoutRef.current) {
+      window.clearTimeout(vaultSweepTimeoutRef.current);
+    }
+
+    vaultSweepTimeoutRef.current = window.setTimeout(() => {
+      setVaultButtonSweeping(false);
+      window.requestAnimationFrame(() => {
+        setVaultButtonSweeping(true);
+      });
+
+      vaultSweepTimeoutRef.current = window.setTimeout(() => {
+        setVaultButtonSweeping(false);
+      }, vaultButtonShineDurationMs);
+    }, vaultDoorOpenDelayMs + vaultDoorOpenDurationMs);
+
+    return () => {
+      if (vaultSweepTimeoutRef.current) {
+        window.clearTimeout(vaultSweepTimeoutRef.current);
+      }
+    };
+  }, [featurePanelVaultOpen]);
+
+  useEffect(() => {
+    const updatePointerPosition = (event: PointerEvent) => {
+      pointerPositionRef.current = { x: event.clientX, y: event.clientY };
+    };
+
+    const handleWindowClick = (event: globalThis.MouseEvent) => {
+      const clickPoint = { x: event.clientX, y: event.clientY };
+      const featurePanelMetrics = getFeaturePanelMetrics();
+
+      if (featurePanelVaultOpen && featurePanelMetrics && isPointInsideVaultButton(clickPoint, featurePanelMetrics)) {
+        handleVaultButtonClick();
+        return;
+      }
+
+      handleFeaturePanelClick(clickPoint);
+    };
+
+    const clearPointerPosition = () => {
+      pointerPositionRef.current = null;
+    };
+
+    window.addEventListener("pointermove", updatePointerPosition);
+    window.addEventListener("click", handleWindowClick);
+    window.addEventListener("pointerleave", clearPointerPosition);
+
+    return () => {
+      window.removeEventListener("pointermove", updatePointerPosition);
+      window.removeEventListener("click", handleWindowClick);
+      window.removeEventListener("pointerleave", clearPointerPosition);
+    };
+  }, [featurePanelArmed, featurePanelArmedAt, featurePanelVaultOpen, navigate]);
 
   return (
     <div
@@ -399,7 +596,7 @@ const Index = () => {
           </Suspense>
         ) : null}
 
-        {rickrollOpen ? (
+        {passwordPromptOpen ? (
           <motion.div
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -411,28 +608,65 @@ const Index = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={skipEntranceMotion ? { opacity: 0 } : { opacity: 0, y: 14, scale: 0.98 }}
               transition={{ duration: 0.28, ease: "easeOut" }}
-              className="relative w-full max-w-[720px] overflow-hidden rounded-[2rem] border border-white/14 bg-[rgba(25,21,43,0.95)] p-4 shadow-[0_32px_110px_rgba(5,2,16,0.58)]"
+              className="relative w-full max-w-[420px] overflow-hidden rounded-[1.25rem] border border-white/14 bg-[rgba(25,21,43,0.95)] p-4 shadow-[0_32px_110px_rgba(5,2,16,0.58)]"
             >
-              <div className="mb-4 flex items-center justify-between gap-4 px-2 pt-1">
-                <p className="font-display text-[10px] uppercase tracking-[0.32em] text-primary/85">
-                  Absar
-                </p>
+              <form
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  handlePasswordSubmit();
+                }}
+              >
+                <input
+                  autoFocus
+                  aria-label="Password"
+                  value={passwordValue}
+                  onChange={(event) => setPasswordValue(event.target.value)}
+                  className="h-12 w-full rounded-none border border-white/18 bg-white text-black outline-none"
+                />
+                <button
+                  type="submit"
+                  aria-label="Submit password"
+                  className="mt-4 h-10 w-full rounded-none border border-white/18 bg-white text-black"
+                />
+              </form>
+            </motion.div>
+          </motion.div>
+        ) : null}
+
+        {rickrollOpen ? (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-[320] flex items-center justify-center bg-[rgba(10,7,22,0.74)] px-5 backdrop-blur-md"
+            onClick={() => setRickrollOpen(false)}
+          >
+            <motion.div
+              initial={skipEntranceMotion ? false : { opacity: 0, y: 24, scale: 0.96 }}
+              animate={{ opacity: 1, y: 0, scale: 1 }}
+              exit={skipEntranceMotion ? { opacity: 0 } : { opacity: 0, y: 14, scale: 0.98 }}
+              transition={{ duration: 0.28, ease: "easeOut" }}
+              className="relative w-full max-w-[780px] overflow-hidden rounded-[1.25rem] border border-white/14 bg-[rgba(25,21,43,0.95)] p-4 shadow-[0_32px_110px_rgba(5,2,16,0.58)]"
+              onClick={(event) => event.stopPropagation()}
+            >
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="font-display text-xs uppercase tracking-[0.32em] text-primary/90">Absar</p>
                 <button
                   type="button"
-                  onClick={() => setRickrollOpen(false)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border border-white/12 bg-white/[0.06] text-foreground transition-colors hover:bg-white/[0.1]"
                   aria-label="Close video"
+                  onClick={() => setRickrollOpen(false)}
+                  className="flex h-8 w-8 items-center justify-center rounded-full border border-white/14 bg-white/8 text-white/82 transition hover:bg-white/14"
                 >
                   <X className="h-4 w-4" />
                 </button>
               </div>
-              <div className="aspect-video overflow-hidden rounded-[1.4rem] border border-white/10 bg-black">
+              <div className="aspect-video overflow-hidden rounded-[0.9rem] bg-black">
                 <iframe
-                  className="h-full w-full"
+                  title="Absar"
                   src="https://www.youtube.com/embed/dQw4w9WgXcQ?autoplay=1&rel=0"
-                  title="Secret video"
                   allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                   allowFullScreen
+                  className="h-full w-full"
                 />
               </div>
             </motion.div>
@@ -442,8 +676,11 @@ const Index = () => {
 
       <HomeBackdrop
         featurePanelArmed={featurePanelArmed}
-        featurePanelHovered={featurePanelHovered}
+        featurePanelOutlineSweeping={featurePanelOutlineSweeping}
+        featurePanelVaultOpen={featurePanelVaultOpen}
+        vaultButtonSweeping={vaultButtonSweeping}
         onFeaturePanelClick={handleFeaturePanelClick}
+        onVaultButtonClick={handleVaultButtonClick}
       />
 
       <main className="relative flex min-h-screen flex-col px-6 py-6 sm:px-10 lg:px-14">
@@ -490,7 +727,26 @@ const Index = () => {
                 >
                   B
                 </motion.span>
-                iomedical engineering, interfaces,{" "}
+                <motion.span
+                  ref={(node) => {
+                    secretLetterRefs.current["bio-i"] = node;
+                  }}
+                  data-secret-letter="i"
+                  drag
+                  dragConstraints={dragBoundsRef}
+                  dragElastic={0.12}
+                  dragMomentum={false}
+                  onDrag={updateSecretLetterOrder}
+                  onDragEnd={updateSecretLetterOrder}
+                  whileDrag={{ scale: 1.16, cursor: "grabbing", zIndex: 999 }}
+                  className="relative z-[90] inline-block cursor-grab select-none active:cursor-grabbing"
+                  title="Drag i"
+                  style={{ touchAction: "none" }}
+                >
+                  i
+                </motion.span>
+                omedical engineering, interfaces,
+                <span aria-hidden="true" className="inline-block w-[0.32em]" />
                 <motion.span
                   ref={(node) => {
                     secretLetterRefs.current["badge-s"] = node;
@@ -552,36 +808,51 @@ const Index = () => {
                     ))}
                   </span>{" "}
                   <span className="relative z-[80] inline-flex items-center">
-                    {surnameLetters.map((letter, index) => (
+                    {surnameLetters.map((letter) => (
                       <motion.span
-                        key={`${letter}-${index}`}
-                        ref={(node) => {
-                          surnameLetterRefs.current[index] = node;
-                        }}
+                        key={letter.id}
                         drag
                         dragConstraints={dragBoundsRef}
                         dragElastic={0.12}
                         dragMomentum={false}
-                        onDrag={updateLetterInteractions}
-                        onDragEnd={updateLetterInteractions}
+                        onDrag={updateSecretLetterOrder}
+                        onDragEnd={updateSecretLetterOrder}
                         whileDrag={{
                           scale: 1.06,
                           cursor: "grabbing",
                           zIndex: 999,
                         }}
                         className="relative z-[90] inline-block cursor-grab select-none px-[0.01em] active:cursor-grabbing"
-                        title={`Drag ${letter}`}
+                        title={`Drag ${letter.display}`}
                         style={{ touchAction: "none" }}
                       >
-                        {letter}
+                        {letter.display}
                       </motion.span>
                     ))}
                   </span>
                 </h1>
-                <p className="mt-6 max-w-[38rem] text-base leading-8 text-foreground/78 sm:text-lg">
+                <p className="mt-6 max-w-[30rem] text-base leading-8 text-foreground/78 sm:text-lg lg:max-w-[34rem]">
                   I’m a biomedical engineering student interested in building technical work that
-                  feels rigorous, usable, and visually clear, from research-heavy experimentation
-                  to projects that need structure, iteration, and strong presentation.
+                  feels rigorous, usable, and visually clear, from research-heavy vi
+                  <motion.span
+                    ref={(node) => {
+                      secretLetterRefs.current["copy-z"] = node;
+                    }}
+                    data-secret-letter="z"
+                    drag
+                    dragConstraints={dragBoundsRef}
+                    dragElastic={0.12}
+                    dragMomentum={false}
+                    onDrag={updateSecretLetterOrder}
+                    onDragEnd={updateSecretLetterOrder}
+                    whileDrag={{ scale: 1.16, cursor: "grabbing", zIndex: 999 }}
+                    className="relative z-[90] inline-block cursor-grab select-none active:cursor-grabbing"
+                    title="Drag z"
+                    style={{ touchAction: "none" }}
+                  >
+                    z
+                  </motion.span>
+                  ualization and experimentation to projects that need structure, iteration, and strong presentation.
                 </p>
               </motion.div>
 

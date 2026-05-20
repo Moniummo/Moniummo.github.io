@@ -156,6 +156,14 @@ html.theme-transition-active::view-transition-new(root) {
   z-index: 2;
 }
 
+html.page-transition-active::view-transition-new(root) {
+  animation:
+    page-reveal 850ms cubic-bezier(0.22, 1, 0.36, 1) both,
+    page-glow 850ms cubic-bezier(0.22, 1, 0.36, 1) both;
+  clip-path: circle(0px at var(--page-transition-x) var(--page-transition-y));
+  z-index: 2;
+}
+
 @keyframes theme-reveal {
   from {
     clip-path: circle(0px at var(--theme-transition-x) var(--theme-transition-y));
@@ -196,6 +204,46 @@ html.theme-transition-active::view-transition-new(root) {
   }
 }
 
+@keyframes page-reveal {
+  from {
+    clip-path: circle(0px at var(--page-transition-x) var(--page-transition-y));
+  }
+
+  to {
+    clip-path: circle(var(--page-transition-radius) at var(--page-transition-x) var(--page-transition-y));
+  }
+}
+
+@keyframes page-glow {
+  0% {
+    filter:
+      brightness(1.06)
+      drop-shadow(0 0 0px var(--page-transition-glow))
+      drop-shadow(0 0 0px var(--page-transition-glow));
+  }
+
+  22% {
+    filter:
+      brightness(1.12)
+      drop-shadow(0 0 22px var(--page-transition-glow))
+      drop-shadow(0 0 54px var(--page-transition-glow));
+  }
+
+  65% {
+    filter:
+      brightness(1.05)
+      drop-shadow(0 0 16px var(--page-transition-glow))
+      drop-shadow(0 0 36px var(--page-transition-glow));
+  }
+
+  100% {
+    filter:
+      brightness(1)
+      drop-shadow(0 0 0px transparent)
+      drop-shadow(0 0 0px transparent);
+  }
+}
+
 @keyframes page-layout-enter {
   from {
     opacity: 0;
@@ -208,6 +256,67 @@ html.theme-transition-active::view-transition-new(root) {
 
 .page-layout-enter {
   animation: page-layout-enter 600ms ease-out both;
+}
+
+.feature-outline-flash {
+  filter:
+    drop-shadow(0 0 8px rgba(255, 255, 255, 0.58))
+    drop-shadow(0 0 18px rgba(255, 255, 255, 0.34))
+    drop-shadow(0 0 34px rgba(180, 142, 255, 0.42));
+}
+
+.feature-outline-flash-path {
+  fill: none;
+  stroke: rgba(255, 255, 255, 0.98);
+  stroke-width: 2.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  stroke-dasharray: 0.14 0.86;
+  stroke-dashoffset: 1;
+  vector-effect: non-scaling-stroke;
+}
+
+.feature-outline-flash-active {
+  animation: feature-outline-flash 200ms linear both;
+}
+
+@keyframes feature-outline-flash {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+.vault-button-sheen {
+  opacity: 0;
+  transform: translateX(0);
+}
+
+.vault-button-sheen-active {
+  animation: vault-button-sheen 560ms ease-out both;
+}
+
+@keyframes vault-button-sheen {
+  0% {
+    opacity: 0;
+    transform: translateX(0);
+  }
+
+  12% {
+    opacity: 1;
+  }
+
+  78% {
+    opacity: 1;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(310%);
+  }
 }
 
 .cv-content-section {
