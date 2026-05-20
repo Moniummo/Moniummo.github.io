@@ -608,9 +608,11 @@ const Index = () => {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={skipEntranceMotion ? { opacity: 0 } : { opacity: 0, y: 14, scale: 0.98 }}
               transition={{ duration: 0.28, ease: "easeOut" }}
-              className="relative w-full max-w-[420px] overflow-hidden rounded-[1.25rem] border border-white/14 bg-[rgba(25,21,43,0.95)] p-4 shadow-[0_32px_110px_rgba(5,2,16,0.58)]"
+              className="relative w-full max-w-[430px] overflow-hidden rounded-[1.35rem] border border-white/18 bg-[linear-gradient(145deg,rgba(34,29,57,0.97),rgba(16,13,31,0.98))] p-5 shadow-[0_32px_110px_rgba(5,2,16,0.62),inset_0_1px_0_rgba(255,255,255,0.12)]"
             >
+              <div className="pointer-events-none absolute inset-0 bg-[radial-gradient(circle_at_18%_0%,rgba(184,144,255,0.22),transparent_42%)]" />
               <form
+                className="relative"
                 onSubmit={(event) => {
                   event.preventDefault();
                   handlePasswordSubmit();
@@ -619,14 +621,15 @@ const Index = () => {
                 <input
                   autoFocus
                   aria-label="Password"
+                  type="password"
                   value={passwordValue}
                   onChange={(event) => setPasswordValue(event.target.value)}
-                  className="h-12 w-full rounded-none border border-white/18 bg-white text-black outline-none"
+                  className="h-14 w-full rounded-[0.9rem] border border-white/18 bg-white/[0.08] px-4 text-center text-lg tracking-[0.42em] text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.10),0_14px_36px_rgba(7,4,18,0.28)] outline-none transition focus:border-primary/70 focus:bg-white/[0.11] focus:shadow-[0_0_0_3px_rgba(176,136,255,0.18),inset_0_1px_0_rgba(255,255,255,0.14)]"
                 />
                 <button
                   type="submit"
                   aria-label="Submit password"
-                  className="mt-4 h-10 w-full rounded-none border border-white/18 bg-white text-black"
+                  className="mt-4 h-11 w-full rounded-[0.85rem] border border-primary/30 bg-primary/88 shadow-[0_14px_34px_rgba(110,72,204,0.28),inset_0_1px_0_rgba(255,255,255,0.24)] transition hover:-translate-y-0.5 hover:bg-primary active:translate-y-0"
                 />
               </form>
             </motion.div>
