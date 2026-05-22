@@ -1,6 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
+import { hasAllySessionAccess } from "@/lib/passwordGate";
 
 const Index = lazy(() => import("./pages/Index.tsx"));
 const Projects = lazy(() => import("./pages/Projects.tsx"));
@@ -16,6 +17,8 @@ const routerBase =
     ? "/dist"
     : "/";
 
+const AllyRoute = () => (hasAllySessionAccess() ? <Truth /> : <Navigate replace to="/" />);
+
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
     <BrowserRouter basename={routerBase}>
@@ -28,8 +31,8 @@ const App = () => (
           <Route path="/research" element={<Research />} />
           <Route path="/about" element={<About />} />
           <Route path="/cv/app-development" element={<AppDevelopment />} />
-          <Route path="/ally" element={<Truth />} />
-          <Route path="/ally/:section" element={<Truth />} />
+          <Route path="/ally" element={<AllyRoute />} />
+          <Route path="/ally/:section" element={<AllyRoute />} />
           <Route path="/truth" element={<Navigate replace to="/ally" />} />
           <Route path="/truth/:section" element={<Navigate replace to="/ally" />} />
           <Route path="*" element={<NotFound />} />

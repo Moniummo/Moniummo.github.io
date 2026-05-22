@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
 import { ArrowRight, FileText, FlaskConical, FolderKanban, UserRound, X } from "lucide-react";
 import HomeBackdrop from "@/components/HomeBackdrop";
+import { grantAllySessionAccess, hashToSha256Hex, splitConfiguredPasswordHashes } from "@/lib/passwordGate";
 import { runRadialPageTransition } from "@/lib/radialPageTransition";
 
 const ThemeToggle = lazy(() => import("@/components/ThemeToggle"));
@@ -97,7 +98,12 @@ const vaultDoorOpenDelayMs = 4800;
 const vaultDoorOpenDurationMs = 6200;
 const vaultButtonShineDurationMs = 560;
 const featurePanelOutlineShineDurationMs = 360;
-const allyPassword = "ch3ss.ally.blahblah";
+const configuredAllyPasswordHashes = Array.from(
+  new Set([
+    ...splitConfiguredPasswordHashes(import.meta.env.VITE_ALLY_PASSWORD_HASHES),
+    ...splitConfiguredPasswordHashes(import.meta.env.VITE_ALLY_PASSWORD_HASH),
+  ]),
+);
 
 interface Point {
   x: number;
@@ -482,12 +488,18 @@ const Index = () => {
     }, featurePanelOutlineShineDurationMs);
   };
 
-  const handlePasswordSubmit = () => {
-    if (passwordValue === allyPassword) {
-      setPasswordPromptOpen(false);
-      setPasswordValue("");
-      openFeaturePanelVault();
-      return;
+  const handlePasswordSubmit = async () => {
+    try {
+      const passwordHash = await hashToSha256Hex(passwordValue);
+
+      if (configuredAllyPasswordHashes.includes(passwordHash)) {
+        setPasswordPromptOpen(false);
+        setPasswordValue("");
+        openFeaturePanelVault();
+        return;
+      }
+    } catch {
+      // Hashing failures use the same rejected flow as incorrect passwords.
     }
 
     setPasswordPromptOpen(false);
@@ -511,6 +523,7 @@ const Index = () => {
     const centerY = buttonRect ? buttonRect.top + buttonRect.height / 2 : pointerPositionRef.current?.y;
 
     vaultNavigateTimeoutRef.current = window.setTimeout(() => {
+      grantAllySessionAccess();
       runRadialPageTransition({
         centerX,
         centerY,

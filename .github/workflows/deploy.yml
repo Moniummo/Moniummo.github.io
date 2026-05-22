@@ -32,11 +32,14 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Prepare emergency password hashes
+      - name: Prepare password hashes
         env:
           EMERGENCY_POPUP_PASSWORDS: ${{ vars.EMERGENCY_POPUP_PASSWORDS || secrets.EMERGENCY_POPUP_PASSWORDS }}
           VITE_EMERGENCY_POPUP_PASSWORD_HASHES: ${{ vars.VITE_EMERGENCY_POPUP_PASSWORD_HASHES || secrets.VITE_EMERGENCY_POPUP_PASSWORD_HASHES }}
           VITE_EMERGENCY_POPUP_PASSWORD_HASH: ${{ vars.VITE_EMERGENCY_POPUP_PASSWORD_HASH || secrets.VITE_EMERGENCY_POPUP_PASSWORD_HASH }}
+          ALLY_PASSWORDS: ${{ vars.ALLY_PASSWORDS || secrets.ALLY_PASSWORDS }}
+          VITE_ALLY_PASSWORD_HASHES: ${{ vars.VITE_ALLY_PASSWORD_HASHES || secrets.VITE_ALLY_PASSWORD_HASHES }}
+          VITE_ALLY_PASSWORD_HASH: ${{ vars.VITE_ALLY_PASSWORD_HASH || secrets.VITE_ALLY_PASSWORD_HASH }}
         run: |
           node --input-type=module <<'NODE'
           import crypto from 'node:crypto';
@@ -51,22 +54,32 @@ jobs:
           const hashPassword = (value) =>
             crypto.createHash('sha256').update(value, 'utf8').digest('hex');
 
-          const configuredHashes = [
-            ...splitValues(process.env.VITE_EMERGENCY_POPUP_PASSWORD_HASHES).map((value) =>
+          const prepareHashes = (hashes, legacyHash, passwords) => [
+            ...splitValues(hashes).map((value) =>
               value.toLowerCase(),
             ),
-            ...splitValues(process.env.VITE_EMERGENCY_POPUP_PASSWORD_HASH).map((value) =>
+            ...splitValues(legacyHash).map((value) =>
               value.toLowerCase(),
             ),
-            ...splitValues(process.env.EMERGENCY_POPUP_PASSWORDS).map((value) =>
+            ...splitValues(passwords).map((value) =>
               hashPassword(value),
             ),
           ];
 
-          const uniqueHashes = [...new Set(configuredHashes)];
+          const emergencyHashes = prepareHashes(
+            process.env.VITE_EMERGENCY_POPUP_PASSWORD_HASHES,
+            process.env.VITE_EMERGENCY_POPUP_PASSWORD_HASH,
+            process.env.EMERGENCY_POPUP_PASSWORDS,
+          );
+          const allyHashes = prepareHashes(
+            process.env.VITE_ALLY_PASSWORD_HASHES,
+            process.env.VITE_ALLY_PASSWORD_HASH,
+            process.env.ALLY_PASSWORDS,
+          );
           fs.appendFileSync(
             process.env.GITHUB_ENV,
-            `VITE_EMERGENCY_POPUP_PASSWORD_HASHES=${uniqueHashes.join(',')}\n`,
+            `VITE_EMERGENCY_POPUP_PASSWORD_HASHES=${[...new Set(emergencyHashes)].join(',')}\n` +
+            `VITE_ALLY_PASSWORD_HASHES=${[...new Set(allyHashes)].join(',')}\n`,
           );
           NODE
 

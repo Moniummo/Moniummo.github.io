@@ -7,6 +7,8 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_PRESENCE_DEVICE_NAME?: string;
   readonly VITE_EMERGENCY_POPUP_PASSWORD_HASHES?: string;
   readonly VITE_EMERGENCY_POPUP_PASSWORD_HASH?: string;
+  readonly VITE_ALLY_PASSWORD_HASHES?: string;
+  readonly VITE_ALLY_PASSWORD_HASH?: string;
 }
 
 interface ImportMeta {

@@ -31,6 +31,7 @@ import {
   type AppPresence,
   type SharedTask,
 } from "@/lib/supabase";
+import { hashToSha256Hex, splitConfiguredPasswordHashes } from "@/lib/passwordGate";
 import { cn } from "@/lib/utils";
 
 const generalReminderValue = "__general__";
@@ -46,16 +47,10 @@ const appPresenceDeviceId =
   import.meta.env.VITE_SUPABASE_PRESENCE_DEVICE_ID?.trim() || "MonTop-Duo";
 const appPresenceDeviceName =
   import.meta.env.VITE_SUPABASE_PRESENCE_DEVICE_NAME?.trim() || "My Laptop";
-const splitConfiguredValues = (value?: string) =>
-  value
-    ?.split(/\r?\n|,|;/)
-    .map((entry) => entry.trim().toLowerCase())
-    .filter(Boolean) ?? [];
-
 const configuredEmergencyPasswordHashes = Array.from(
   new Set([
-    ...splitConfiguredValues(import.meta.env.VITE_EMERGENCY_POPUP_PASSWORD_HASHES),
-    ...splitConfiguredValues(import.meta.env.VITE_EMERGENCY_POPUP_PASSWORD_HASH),
+    ...splitConfiguredPasswordHashes(import.meta.env.VITE_EMERGENCY_POPUP_PASSWORD_HASHES),
+    ...splitConfiguredPasswordHashes(import.meta.env.VITE_EMERGENCY_POPUP_PASSWORD_HASH),
   ]),
 );
 const hasConfiguredEmergencyPasswords = configuredEmergencyPasswordHashes.length > 0;
@@ -169,18 +164,6 @@ const createToggleCardClassName = (isEnabled: boolean) =>
       ? "border-primary/30 bg-primary/[0.08]"
       : "border-white/22 bg-white/24",
   );
-
-const hashToSha256Hex = async (value: string) => {
-  if (!window.crypto?.subtle) {
-    throw new Error("This browser does not support secure password hashing.");
-  }
-
-  const encodedValue = new TextEncoder().encode(value);
-  const digest = await window.crypto.subtle.digest("SHA-256", encodedValue);
-  return Array.from(new Uint8Array(digest))
-    .map((byte) => byte.toString(16).padStart(2, "0"))
-    .join("");
-};
 
 const AppDevelopment = () => {
   const [tasks, setTasks] = useState<SharedTask[]>([]);

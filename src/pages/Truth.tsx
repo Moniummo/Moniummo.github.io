@@ -18,16 +18,46 @@ interface FillAction {
 
 type PaintAction = { stroke: Stroke; type: "stroke" } | { fill: FillAction; type: "fill" };
 type Tool = "select" | "brush" | "eraser" | "fill";
+interface SavedPaintState {
+  canvasFillColor: string;
+  canvasSize: typeof defaultCanvasSize;
+  paintActions: PaintAction[];
+}
 
 const colors = ["#111111", "#ffffff", "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#a855f7"];
+const defaultCanvasSize = { height: 760, width: 1200 };
 const minCanvasSize = { height: 420, width: 640 };
 const maxCanvasSize = { height: 1400, width: 2200 };
+interface ArtworkFrame {
+  height: number;
+  href: string;
+  preserveAspectRatio: string;
+  width: number;
+  x: number;
+  y: number;
+}
+
 const starterArtwork = [
   { href: "/arkan.svg", height: 200, preserveAspectRatio: "xMidYMid meet", width: 430, x: 0, y: 34 },
   { href: "/Dave.svg", height: 200, preserveAspectRatio: "xMidYMid meet", width: 290, x: 340, y: 25 },
   { href: "/navbox.svg", height: 700, preserveAspectRatio: "xMidYMid meet", width: 760, x: 450, y: 100 },
-  { href: "/failure.svg", height: 200, preserveAspectRatio: "xMinYMid meet", width: 760, x: -120, y: 200 },
-] as const;
+  { href: "/failure.svg", height: 200, preserveAspectRatio: "xMinYMid meet", width: 640, x: 0, y: 200 },
+] satisfies ArtworkFrame[];
+
+const sectionArtwork: Record<string, ArtworkFrame[]> = {
+  projects: [
+    { href: "/projects.svg", height: defaultCanvasSize.height, preserveAspectRatio: "none", width: defaultCanvasSize.width, x: 0, y: 0 },
+  ],
+  research: [
+    { href: "/research.svg", height: defaultCanvasSize.height, preserveAspectRatio: "none", width: defaultCanvasSize.width, x: 0, y: 0 },
+  ],
+  cv: [
+    { href: "/cv.svg", height: defaultCanvasSize.height, preserveAspectRatio: "none", width: defaultCanvasSize.width, x: 0, y: 0 },
+  ],
+  about: [
+    { href: "/aboutme.svg", height: defaultCanvasSize.height, preserveAspectRatio: "none", width: defaultCanvasSize.width, x: 0, y: 0 },
+  ],
+};
 
 const navBoxFrame = starterArtwork.find((artwork) => artwork.href === "/navbox.svg") ?? starterArtwork[2];
 const navBoxViewBox = { height: 793.70081, width: 1122.5197 };
@@ -66,8 +96,13 @@ const loadImage = (src: string) =>
 const drawImageContained = (
   context: CanvasRenderingContext2D,
   image: HTMLImageElement,
-  frame: (typeof starterArtwork)[number],
+  frame: ArtworkFrame,
 ) => {
+  if (frame.preserveAspectRatio === "none") {
+    context.drawImage(image, frame.x, frame.y, frame.width, frame.height);
+    return;
+  }
+
   const imageRatio = image.naturalWidth / image.naturalHeight;
   const frameRatio = frame.width / frame.height;
   const fitByWidth = imageRatio > frameRatio;
@@ -80,7 +115,7 @@ const drawImageContained = (
   context.drawImage(image, x, y, drawnWidth, drawnHeight);
 };
 
-const getContainedFrame = (frame: (typeof starterArtwork)[number], source: { height: number; width: number }) => {
+const getContainedFrame = (frame: ArtworkFrame, source: { height: number; width: number }) => {
   const sourceRatio = source.width / source.height;
   const frameRatio = frame.width / frame.height;
   const fitByWidth = sourceRatio > frameRatio;
@@ -151,37 +186,11 @@ const distanceToSegment = (
   return Math.hypot(point.x - projectionX, point.y - projectionY);
 };
 
-const TruthSection = ({ section }: { section: string }) => {
-  const sectionLabels: Record<string, string> = {
-    about: "About me",
-    cv: "CV",
-    projects: "Projects",
-    research: "Research",
-  };
-  const label = sectionLabels[section] ?? section;
-
-  return (
-    <main className="min-h-screen bg-[#d7d7d7] text-[#111111]" aria-label={`${label} secret paint page`}>
-      <div className="flex min-h-screen flex-col">
-        <header className="border-b border-[#9a9a9a] bg-[#f4f4f4] shadow-[inset_0_-1px_0_#ffffff]">
-          <div className="flex h-9 items-center justify-between px-3">
-            <p className="font-sans text-sm">{label} - Secret Paint</p>
-            <Link
-              to="/ally"
-              className="border border-[#9b9b9b] bg-[#eeeeee] px-3 py-1 text-xs shadow-[inset_1px_1px_0_#ffffff] hover:bg-white"
-            >
-              Back
-            </Link>
-          </div>
-        </header>
-        <section className="min-h-0 flex-1 overflow-auto bg-[#bfc3ca] p-5">
-          <div className="grid h-[620px] w-[960px] place-items-center bg-white shadow-[0_0_0_1px_#7f7f7f,6px_6px_0_rgba(0,0,0,0.18)]">
-            <h1 className="font-serif text-7xl text-black">{label}</h1>
-          </div>
-        </section>
-      </div>
-    </main>
-  );
+const sectionLabels: Record<string, string> = {
+  about: "About me",
+  cv: "CV",
+  projects: "Projects",
+  research: "Research",
 };
 
 const Truth = () => {
@@ -189,16 +198,49 @@ const Truth = () => {
   const { section } = useParams();
   const boardRef = useRef<SVGSVGElement | null>(null);
   const resizeStateRef = useRef<{ height: number; pointerX: number; pointerY: number; width: number } | null>(null);
+  const paintStateByPageRef = useRef<Record<string, SavedPaintState>>({});
+  const currentPaintPageRef = useRef("main");
+  const latestPaintStateRef = useRef<SavedPaintState>({
+    canvasFillColor: "#ffffff",
+    canvasSize: defaultCanvasSize,
+    paintActions: [],
+  });
   const navButtonFrame = getContainedFrame(navBoxFrame, navBoxViewBox);
   const [tool, setTool] = useState<Tool>("brush");
   const [activeColor, setActiveColor] = useState(colors[0]);
   const [brushSize, setBrushSize] = useState(5);
   const [canvasFillColor, setCanvasFillColor] = useState("#ffffff");
-  const [canvasSize, setCanvasSize] = useState({ height: 760, width: 1200 });
+  const [canvasSize, setCanvasSize] = useState(defaultCanvasSize);
   const [isHoveringClickableNav, setIsHoveringClickableNav] = useState(false);
   const [navButtonPaths, setNavButtonPaths] = useState<Record<string, string>>({});
   const [paintActions, setPaintActions] = useState<PaintAction[]>([]);
   const [activeStroke, setActiveStroke] = useState<Stroke | null>(null);
+  const paintPageKey = section ?? "main";
+  const artwork = section ? sectionArtwork[section] ?? starterArtwork : starterArtwork;
+
+  useEffect(() => {
+    latestPaintStateRef.current = {
+      canvasFillColor,
+      canvasSize,
+      paintActions,
+    };
+  }, [canvasFillColor, canvasSize, paintActions]);
+
+  useEffect(() => {
+    const previousPaintPage = currentPaintPageRef.current;
+
+    paintStateByPageRef.current[previousPaintPage] = latestPaintStateRef.current;
+
+    const savedPaintState = paintStateByPageRef.current[paintPageKey];
+
+    setActiveStroke(null);
+    setPaintActions(savedPaintState?.paintActions ?? []);
+    setCanvasFillColor(savedPaintState?.canvasFillColor ?? "#ffffff");
+    setCanvasSize(savedPaintState?.canvasSize ?? defaultCanvasSize);
+    setTool("brush");
+    setIsHoveringClickableNav(false);
+    currentPaintPageRef.current = paintPageKey;
+  }, [paintPageKey]);
 
   useEffect(() => {
     const loadNavButtonPaths = async () => {
@@ -237,10 +279,10 @@ const Truth = () => {
     context.fillStyle = canvasFillColor;
     context.fillRect(0, 0, canvasSize.width, canvasSize.height);
 
-    const artworkImages = await Promise.all(starterArtwork.map((artwork) => loadImage(artwork.href)));
+    const artworkImages = await Promise.all(artwork.map((artworkItem) => loadImage(artworkItem.href)));
 
-    starterArtwork.forEach((artwork, index) => {
-      drawImageContained(context, artworkImages[index], artwork);
+    artwork.forEach((artworkItem, index) => {
+      drawImageContained(context, artworkImages[index], artworkItem);
     });
 
     for (const action of paintActions) {
@@ -500,21 +542,31 @@ const Truth = () => {
     downloadLink.click();
   };
 
-  if (section) {
-    return <TruthSection section={section} />;
-  }
+  const sectionLabel = section ? sectionLabels[section] ?? section : null;
 
   return (
-    <main className="min-h-screen bg-[#d7d7d7] text-[#111111]" aria-label="Secret paint site canvas">
+    <main
+      className="min-h-screen bg-[#d7d7d7] text-[#111111]"
+      aria-label={sectionLabel ? `${sectionLabel} secret paint canvas` : "Secret paint site canvas"}
+    >
       <div className="flex min-h-screen flex-col">
         <header className="border-b border-[#9a9a9a] bg-[#f4f4f4] shadow-[inset_0_-1px_0_#ffffff]">
           <div className="flex h-9 items-center justify-between px-3">
-            <p className="font-sans text-sm">Untitled - Secret Paint</p>
-            <div className="flex gap-1">
-              <span className="h-3 w-3 border border-[#767676] bg-white" />
-              <span className="h-3 w-3 border border-[#767676] bg-white" />
-              <span className="h-3 w-3 border border-[#767676] bg-white" />
-            </div>
+            <p className="font-sans text-sm">{sectionLabel ? `${sectionLabel} - Secret Paint` : "Untitled - Secret Paint"}</p>
+            {sectionLabel ? (
+              <Link
+                to="/ally"
+                className="border border-[#9b9b9b] bg-[#eeeeee] px-3 py-1 text-xs shadow-[inset_1px_1px_0_#ffffff] hover:bg-white"
+              >
+                Back
+              </Link>
+            ) : (
+              <div className="flex gap-1">
+                <span className="h-3 w-3 border border-[#767676] bg-white" />
+                <span className="h-3 w-3 border border-[#767676] bg-white" />
+                <span className="h-3 w-3 border border-[#767676] bg-white" />
+              </div>
+            )}
           </div>
           <div className="flex flex-wrap items-stretch gap-2 border-t border-[#c8c8c8] px-3 py-2">
             <div className="flex gap-1 border-r border-[#b6b6b6] pr-2">
@@ -666,15 +718,15 @@ const Truth = () => {
               onPointerLeave={finishDrawing}
             >
               <rect x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill={canvasFillColor} />
-              {starterArtwork.map((artwork) => (
+              {artwork.map((artworkItem) => (
                 <image
-                  key={artwork.href}
-                  href={artwork.href}
-                  x={artwork.x}
-                  y={artwork.y}
-                  width={artwork.width}
-                  height={artwork.height}
-                  preserveAspectRatio={artwork.preserveAspectRatio}
+                  key={artworkItem.href}
+                  href={artworkItem.href}
+                  x={artworkItem.x}
+                  y={artworkItem.y}
+                  width={artworkItem.width}
+                  height={artworkItem.height}
+                  preserveAspectRatio={artworkItem.preserveAspectRatio}
                 />
               ))}
               {paintActions.map((action, index) =>
@@ -709,28 +761,30 @@ const Truth = () => {
                   strokeWidth={activeStroke.size}
                 />
               ) : null}
-              <g transform={`translate(${navButtonFrame.x} ${navButtonFrame.y}) scale(${navButtonFrame.scale})`}>
-                {truthNavLinks.map((link) =>
-                  navButtonPaths[link.pathId] ? (
-                    <path
-                      key={link.path}
-                      aria-label={link.label}
-                      d={navButtonPaths[link.pathId]}
-                      fill="transparent"
-                      onPointerDown={(event) => {
-                        event.stopPropagation();
-                        handleTruthNavClick(event, link.path);
-                      }}
-                      onPointerLeave={() => setIsHoveringClickableNav(false)}
-                      onPointerMove={handleTruthNavPointerMove}
-                      pointerEvents={tool === "select" ? "fill" : "none"}
-                      stroke="transparent"
-                      strokeWidth="18"
-                      style={{ cursor: tool === "select" && isHoveringClickableNav ? "pointer" : "default" }}
-                    />
-                  ) : null,
-                )}
-              </g>
+              {!section ? (
+                <g transform={`translate(${navButtonFrame.x} ${navButtonFrame.y}) scale(${navButtonFrame.scale})`}>
+                  {truthNavLinks.map((link) =>
+                    navButtonPaths[link.pathId] ? (
+                      <path
+                        key={link.path}
+                        aria-label={link.label}
+                        d={navButtonPaths[link.pathId]}
+                        fill="transparent"
+                        onPointerDown={(event) => {
+                          event.stopPropagation();
+                          handleTruthNavClick(event, link.path);
+                        }}
+                        onPointerLeave={() => setIsHoveringClickableNav(false)}
+                        onPointerMove={handleTruthNavPointerMove}
+                        pointerEvents={tool === "select" ? "fill" : "none"}
+                        stroke="transparent"
+                        strokeWidth="18"
+                        style={{ cursor: tool === "select" && isHoveringClickableNav ? "pointer" : "default" }}
+                      />
+                    ) : null,
+                  )}
+                </g>
+              ) : null}
             </svg>
             <button
               type="button"
