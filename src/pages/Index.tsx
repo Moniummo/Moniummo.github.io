@@ -73,22 +73,20 @@ const currentWork = [
 ];
 
 const givenNameLetters = [
-  { id: "arkan-A", display: "A", secret: "A" },
-  { id: "arkan-r", display: "r", secret: "r" },
-  { id: "arkan-k", display: "k" },
-  { id: "arkan-a", display: "a", secret: "a" },
-  { id: "arkan-n", display: "n" },
+  { id: "arkan-A", display: "A", tags: ["capital-a"] },
+  { id: "arkan-r", display: "r", tags: ["r"] },
+  { id: "arkan-k", display: "k", tags: ["k"] },
+  { id: "arkan-a", display: "a", tags: ["lower-a"] },
+  { id: "arkan-n", display: "n", tags: ["n"] },
 ];
 const surnameLetters = [
-  { id: "dave-D", display: "D" },
-  { id: "dave-a", display: "a" },
-  { id: "dave-v", display: "v" },
-  { id: "dave-e", display: "e" },
+  { id: "dave-D", display: "D", tags: ["capital-d"] },
+  { id: "dave-a", display: "a", tags: ["lower-a"] },
+  { id: "dave-v", display: "v", tags: ["v"] },
+  { id: "dave-e", display: "e", tags: ["e"] },
 ];
-const allyLetterOrder = "Aiza";
-const allyLetterIds = ["arkan-A", "bio-i", "copy-z", "arkan-a"];
-const rickrollLetterOrder = "Absar";
-const rickrollLetterIds = ["arkan-A", "badge-b", "badge-s", "arkan-a", "arkan-r"];
+const allyLetterSlots = ["capital-a", "i", "z", "lower-a"];
+const rickrollLetterSlots = ["capital-a", "b", "s", "lower-a", "r"];
 const secretOrderYMargin = 90;
 const secretOrderMinXGap = 8;
 const allyOrderMaxXGaps = [360, 220, 220];
@@ -113,6 +111,13 @@ interface Point {
 interface PageTransitionState {
   clipPath: string;
   to: string;
+}
+
+interface SecretLetterCandidate {
+  id: string;
+  slotIndex: number;
+  x: number;
+  y: number;
 }
 
 const Index = () => {
@@ -326,53 +331,92 @@ const Index = () => {
     }
   };
 
-  const isSecretWordMatched = (letterIds: string[], expectedOrder: string, maxXGaps: number[]) => {
-    const letterPositions = letterIds
-      .map((id) => {
-        const letterRef = secretLetterRefs.current[id];
-
+  const getSecretLetterCandidates = (slotTag: string, slotIndex: number) =>
+    Object.entries(secretLetterRefs.current)
+      .map(([id, letterRef]) => {
         if (!letterRef) {
           return null;
         }
 
-        const letterRect = letterRef.getBoundingClientRect();
-        const secretLetter = letterRef.dataset.secretLetter;
+        const letterTags = letterRef.dataset.secretTags?.split(" ") ?? [];
 
-        if (!secretLetter) {
+        if (!letterTags.includes(slotTag)) {
           return null;
         }
 
+        const letterRect = letterRef.getBoundingClientRect();
+
         return {
-          letter: secretLetter,
+          id,
+          slotIndex,
           x: letterRect.left + letterRect.width / 2,
           y: letterRect.top + letterRect.height / 2,
         };
       })
-      .filter((item): item is { letter: string; x: number; y: number } => Boolean(item));
+      .filter((item): item is SecretLetterCandidate => Boolean(item));
 
-    if (letterPositions.length !== letterIds.length) {
+  const areSecretLettersInOrder = (letterPositions: SecretLetterCandidate[], maxXGaps: number[]) => {
+    const sortedLetters = [...letterPositions].sort((first, second) => first.x - second.x);
+    const slotsAreInOrder = sortedLetters.every((item, index) => item.slotIndex === index);
+
+    if (!slotsAreInOrder) {
       return false;
     }
 
-    const sortedLetters = [...letterPositions].sort((first, second) => first.x - second.x);
     const yValues = sortedLetters.map((item) => item.y);
     const yRange = Math.max(...yValues) - Math.min(...yValues);
     const xGaps = sortedLetters.slice(1).map((item, index) => item.x - sortedLetters[index].x);
-    const lettersAreInALine =
+
+    return (
       yRange <= secretOrderYMargin &&
       xGaps.every(
         (gap, index) => gap >= secretOrderMinXGap && gap <= (maxXGaps[index] ?? maxXGaps[0])
-      );
+      )
+    );
+  };
 
-    const currentOrder = sortedLetters
-      .map((item) => item.letter)
-      .join("");
-    return lettersAreInALine && currentOrder === expectedOrder;
+  const canMatchSecretSlots = (
+    candidatesBySlot: SecretLetterCandidate[][],
+    maxXGaps: number[],
+    slotIndex = 0,
+    selectedLetters: SecretLetterCandidate[] = [],
+    usedLetterIds = new Set<string>()
+  ): boolean => {
+    if (slotIndex === candidatesBySlot.length) {
+      return areSecretLettersInOrder(selectedLetters, maxXGaps);
+    }
+
+    return candidatesBySlot[slotIndex].some((candidate) => {
+      if (usedLetterIds.has(candidate.id)) {
+        return false;
+      }
+
+      const nextUsedLetterIds = new Set(usedLetterIds);
+      nextUsedLetterIds.add(candidate.id);
+
+      return canMatchSecretSlots(
+        candidatesBySlot,
+        maxXGaps,
+        slotIndex + 1,
+        [...selectedLetters, candidate],
+        nextUsedLetterIds
+      );
+    });
+  };
+
+  const isSecretWordMatched = (slotTags: string[], maxXGaps: number[]) => {
+    const candidatesBySlot = slotTags.map((slotTag, slotIndex) => getSecretLetterCandidates(slotTag, slotIndex));
+
+    if (candidatesBySlot.some((candidates) => candidates.length === 0)) {
+      return false;
+    }
+
+    return canMatchSecretSlots(candidatesBySlot, maxXGaps);
   };
 
   const updateSecretLetterOrder = () => {
-    const secretOrderMatched = isSecretWordMatched(allyLetterIds, allyLetterOrder, allyOrderMaxXGaps);
-    const rickrollOrderMatched = isSecretWordMatched(rickrollLetterIds, rickrollLetterOrder, rickrollOrderMaxXGaps);
+    const secretOrderMatched = isSecretWordMatched(allyLetterSlots, allyOrderMaxXGaps);
+    const rickrollOrderMatched = isSecretWordMatched(rickrollLetterSlots, rickrollOrderMaxXGaps);
 
     if (secretOrderMatched && !secretOrderMatchedRef.current) {
       setPasswordRejectedForCurrentSolve(false);
@@ -729,7 +773,7 @@ const Index = () => {
                   ref={(node) => {
                     secretLetterRefs.current["badge-b"] = node;
                   }}
-                  data-secret-letter="b"
+                  data-secret-tags="b"
                   drag
                   dragConstraints={dragBoundsRef}
                   dragElastic={0.12}
@@ -747,7 +791,7 @@ const Index = () => {
                   ref={(node) => {
                     secretLetterRefs.current["bio-i"] = node;
                   }}
-                  data-secret-letter="i"
+                  data-secret-tags="i"
                   drag
                   dragConstraints={dragBoundsRef}
                   dragElastic={0.12}
@@ -767,7 +811,7 @@ const Index = () => {
                   ref={(node) => {
                     secretLetterRefs.current["badge-s"] = node;
                   }}
-                  data-secret-letter="s"
+                  data-secret-tags="s"
                   drag
                   dragConstraints={dragBoundsRef}
                   dragElastic={0.12}
@@ -799,11 +843,11 @@ const Index = () => {
                       <motion.span
                         key={letter.id}
                         ref={(node) => {
-                          if (letter.secret) {
+                          if (letter.tags) {
                             secretLetterRefs.current[letter.id] = node;
                           }
                         }}
-                        data-secret-letter={letter.secret}
+                        data-secret-tags={letter.tags?.join(" ")}
                         drag
                         dragConstraints={dragBoundsRef}
                         dragElastic={0.12}
@@ -827,6 +871,12 @@ const Index = () => {
                     {surnameLetters.map((letter) => (
                       <motion.span
                         key={letter.id}
+                        ref={(node) => {
+                          if (letter.tags) {
+                            secretLetterRefs.current[letter.id] = node;
+                          }
+                        }}
+                        data-secret-tags={letter.tags?.join(" ")}
                         drag
                         dragConstraints={dragBoundsRef}
                         dragElastic={0.12}
@@ -854,7 +904,7 @@ const Index = () => {
                     ref={(node) => {
                       secretLetterRefs.current["copy-z"] = node;
                     }}
-                    data-secret-letter="z"
+                    data-secret-tags="z"
                     drag
                     dragConstraints={dragBoundsRef}
                     dragElastic={0.12}

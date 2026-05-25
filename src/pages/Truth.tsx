@@ -1,4 +1,11 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import {
+  useEffect,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent,
+  type PointerEvent as ReactPointerEvent,
+} from "react";
+import confetti from "canvas-confetti";
 import { Eraser, MousePointer2, PaintBucket, Pencil, RotateCcw, Save, Trash2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import { cn } from "@/lib/utils";
@@ -42,6 +49,7 @@ const starterArtwork = [
   { href: "/Dave.svg", height: 200, preserveAspectRatio: "xMidYMid meet", width: 290, x: 340, y: 25 },
   { href: "/navbox.svg", height: 700, preserveAspectRatio: "xMidYMid meet", width: 760, x: 450, y: 100 },
   { href: "/failure.svg", height: 200, preserveAspectRatio: "xMinYMid meet", width: 640, x: 0, y: 200 },
+  { href: "/birthday_button.svg", height: 340, preserveAspectRatio: "xMidYMid meet", width: 500, x: 42, y: 398 },
 ] satisfies ArtworkFrame[];
 
 const sectionArtwork: Record<string, ArtworkFrame[]> = {
@@ -60,7 +68,24 @@ const sectionArtwork: Record<string, ArtworkFrame[]> = {
 };
 
 const navBoxFrame = starterArtwork.find((artwork) => artwork.href === "/navbox.svg") ?? starterArtwork[2];
+const birthdayButtonFrame =
+  starterArtwork.find((artwork) => artwork.href === "/birthday_button.svg") ?? starterArtwork[4];
+const birthdayPresentFrame = {
+  href: "/white_brithday_present_with_turquise_bow.png",
+  height: 390,
+  preserveAspectRatio: "xMidYMid meet",
+  width: 520,
+  x: 26,
+  y: 374,
+} satisfies ArtworkFrame;
+const openBirthdayPresentFrame = {
+  ...birthdayPresentFrame,
+  href: "/open_white_brithday_present_with_turquise_bow.png",
+} satisfies ArtworkFrame;
+const birthdayExeHref = "/To%20Do%20List-1.0.1%20Setup.exe";
+const birthdayPopupMessage = "I meant to finish this and send this yesterday, but it took way longer than I thought it would to get the first version of the app running like how I wanted it to bc I stupid. So here is a a belated birthday gift of the to do app exe. Also I made it light enough that even an old man should be able to make it run without issues if you want to use it.";
 const navBoxViewBox = { height: 793.70081, width: 1122.5197 };
+const birthdayButtonViewBox = { height: 793.70081, width: 1122.5197 };
 const truthNavLinks = [
   { label: "Projects", path: "/ally/projects", pathId: "path2" },
   { label: "Research", path: "/ally/research", pathId: "path3" },
@@ -198,6 +223,8 @@ const Truth = () => {
   const { section } = useParams();
   const boardRef = useRef<SVGSVGElement | null>(null);
   const resizeStateRef = useRef<{ height: number; pointerX: number; pointerY: number; width: number } | null>(null);
+  const birthdaySmokeTimeoutRef = useRef<number | null>(null);
+  const birthdayRevealTimeoutRef = useRef<number | null>(null);
   const paintStateByPageRef = useRef<Record<string, SavedPaintState>>({});
   const currentPaintPageRef = useRef("main");
   const latestPaintStateRef = useRef<SavedPaintState>({
@@ -206,6 +233,7 @@ const Truth = () => {
     paintActions: [],
   });
   const navButtonFrame = getContainedFrame(navBoxFrame, navBoxViewBox);
+  const birthdayButtonHitFrame = getContainedFrame(birthdayButtonFrame, birthdayButtonViewBox);
   const [tool, setTool] = useState<Tool>("brush");
   const [activeColor, setActiveColor] = useState(colors[0]);
   const [brushSize, setBrushSize] = useState(5);
@@ -213,10 +241,32 @@ const Truth = () => {
   const [canvasSize, setCanvasSize] = useState(defaultCanvasSize);
   const [isHoveringClickableNav, setIsHoveringClickableNav] = useState(false);
   const [navButtonPaths, setNavButtonPaths] = useState<Record<string, string>>({});
+  const [birthdayButtonPath, setBirthdayButtonPath] = useState("");
+  const [birthdayPresentRevealed, setBirthdayPresentRevealed] = useState(false);
+  const [birthdayPresentOpen, setBirthdayPresentOpen] = useState(false);
+  const [birthdayPopupOpen, setBirthdayPopupOpen] = useState(false);
+  const [birthdaySmokeActive, setBirthdaySmokeActive] = useState(false);
   const [paintActions, setPaintActions] = useState<PaintAction[]>([]);
   const [activeStroke, setActiveStroke] = useState<Stroke | null>(null);
   const paintPageKey = section ?? "main";
-  const artwork = section ? sectionArtwork[section] ?? starterArtwork : starterArtwork;
+  const artwork = section
+    ? sectionArtwork[section] ?? starterArtwork
+    : [
+        ...starterArtwork.filter((artworkItem) => !birthdayPresentRevealed || artworkItem.href !== "/birthday_button.svg"),
+        ...(birthdayPresentRevealed ? [birthdayPresentOpen ? openBirthdayPresentFrame : birthdayPresentFrame] : []),
+      ];
+
+  useEffect(() => {
+    return () => {
+      if (birthdaySmokeTimeoutRef.current) {
+        window.clearTimeout(birthdaySmokeTimeoutRef.current);
+      }
+
+      if (birthdayRevealTimeoutRef.current) {
+        window.clearTimeout(birthdayRevealTimeoutRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     latestPaintStateRef.current = {
@@ -243,7 +293,7 @@ const Truth = () => {
   }, [paintPageKey]);
 
   useEffect(() => {
-    const loadNavButtonPaths = async () => {
+    const loadButtonPaths = async () => {
       const response = await fetch("/navbox.svg");
       const svgText = await response.text();
       const navDocument = new DOMParser().parseFromString(svgText, "image/svg+xml");
@@ -254,9 +304,14 @@ const Truth = () => {
       );
 
       setNavButtonPaths(nextPaths);
+
+      const birthdayResponse = await fetch("/birthday_button.svg");
+      const birthdaySvgText = await birthdayResponse.text();
+      const birthdayDocument = new DOMParser().parseFromString(birthdaySvgText, "image/svg+xml");
+      setBirthdayButtonPath(birthdayDocument.getElementById("path1")?.getAttribute("d") ?? "");
     };
 
-    void loadNavButtonPaths();
+    void loadButtonPaths();
   }, []);
 
   const getBoardPoint = (clientX: number, clientY: number) => {
@@ -468,6 +523,122 @@ const Truth = () => {
 
     const point = getBoardPoint(event.clientX, event.clientY);
     setIsHoveringClickableNav(!isPointErased(point));
+  };
+
+  const burstBirthdayConfetti = (clientX?: number, clientY?: number) => {
+    const origin = {
+      x: clientX ? clientX / window.innerWidth : 0.5,
+      y: clientY ? clientY / window.innerHeight : 0.5,
+    };
+    const defaults = {
+      colors: ["#19fff3", "#ff4fd8", "#ffd166", "#7c3cff", "#ffffff"],
+      disableForReducedMotion: true,
+      origin,
+      zIndex: 1000,
+    };
+
+    void confetti({
+      ...defaults,
+      particleCount: 180,
+      scalar: 1,
+      spread: 96,
+      startVelocity: 52,
+    });
+
+    [90, 180, 270, 420, 580].forEach((delay, index) => {
+      window.setTimeout(() => {
+        void confetti({
+          ...defaults,
+          angle: 62,
+          decay: 0.9,
+          drift: -0.4,
+          particleCount: index < 3 ? 80 : 52,
+          scalar: index < 3 ? 0.88 : 0.68,
+          spread: 66,
+          startVelocity: index < 3 ? 43 : 30,
+        });
+        void confetti({
+          ...defaults,
+          angle: 118,
+          decay: 0.9,
+          drift: 0.4,
+          particleCount: index < 3 ? 80 : 52,
+          scalar: index < 3 ? 0.88 : 0.68,
+          spread: 66,
+          startVelocity: index < 3 ? 43 : 30,
+        });
+      }, delay);
+    });
+
+    window.setTimeout(() => {
+      void confetti({
+        ...defaults,
+        gravity: 0.72,
+        particleCount: 220,
+        scalar: 0.62,
+        spread: 150,
+        startVelocity: 24,
+      });
+    }, 760);
+  };
+
+  const revealBirthdayPresent = (clientX?: number, clientY?: number) => {
+    if (birthdayPresentRevealed) {
+      return;
+    }
+
+    if (birthdaySmokeTimeoutRef.current) {
+      window.clearTimeout(birthdaySmokeTimeoutRef.current);
+    }
+
+    if (birthdayRevealTimeoutRef.current) {
+      window.clearTimeout(birthdayRevealTimeoutRef.current);
+    }
+
+    setBirthdaySmokeActive(false);
+    window.requestAnimationFrame(() => {
+      setBirthdaySmokeActive(true);
+    });
+    burstBirthdayConfetti(clientX, clientY);
+
+    birthdayRevealTimeoutRef.current = window.setTimeout(() => {
+      setBirthdayPresentRevealed(true);
+    }, 640);
+
+    birthdaySmokeTimeoutRef.current = window.setTimeout(() => {
+      setBirthdaySmokeActive(false);
+    }, 1150);
+  };
+
+  const handleBirthdayButtonPointerDown = (event: ReactPointerEvent<SVGPathElement>) => {
+    event.stopPropagation();
+    revealBirthdayPresent(event.clientX, event.clientY);
+  };
+
+  const handleBirthdayButtonKeyDown = (event: ReactKeyboardEvent<SVGPathElement>) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    const buttonRect = event.currentTarget.getBoundingClientRect();
+    revealBirthdayPresent(buttonRect.left + buttonRect.width / 2, buttonRect.top + buttonRect.height / 2);
+  };
+
+  const openBirthdayPresent = () => {
+    setBirthdayPresentOpen(true);
+    setBirthdayPopupOpen(true);
+  };
+
+  const handleBirthdayPresentKeyDown = (event: ReactKeyboardEvent<SVGRectElement>) => {
+    if (event.key !== "Enter" && event.key !== " ") {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+    openBirthdayPresent();
   };
 
   const setCanvasWidth = (width: number) => {
@@ -698,6 +869,41 @@ const Truth = () => {
           </div>
         </header>
 
+        {birthdayPopupOpen ? (
+          <div className="fixed inset-0 z-[400] flex items-center justify-center bg-black/28 px-4">
+            <div className="w-full max-w-md border border-[#6f6f6f] bg-[#f4f4f4] p-3 text-[#111111] shadow-[8px_8px_0_rgba(0,0,0,0.24),inset_1px_1px_0_#ffffff]">
+              <div className="mb-3 flex h-8 items-center justify-between border-b border-[#b6b6b6] pb-2">
+                <p className="font-sans text-sm">Birthday Message</p>
+                <button
+                  type="button"
+                  aria-label="Close birthday message"
+                  onClick={() => setBirthdayPopupOpen(false)}
+                  className="flex h-7 w-7 items-center justify-center border border-[#8d8d8d] bg-[#eeeeee] text-sm shadow-[inset_1px_1px_0_#ffffff] hover:bg-white"
+                >
+                  x
+                </button>
+              </div>
+              <p className="whitespace-pre-line px-2 pb-2 pt-1 font-sans text-base leading-7">{birthdayPopupMessage}</p>
+              <div className="mt-4 flex flex-wrap justify-end gap-2">
+                <a
+                  href={birthdayExeHref}
+                  download
+                  className="border border-[#8d8d8d] bg-[#dcecff] px-4 py-1.5 text-sm shadow-[inset_1px_1px_0_#ffffff] hover:bg-white"
+                >
+                  Download
+                </a>
+                <button
+                  type="button"
+                  onClick={() => setBirthdayPopupOpen(false)}
+                  className="border border-[#8d8d8d] bg-[#eeeeee] px-4 py-1.5 text-sm shadow-[inset_1px_1px_0_#ffffff] hover:bg-white"
+                >
+                  OK
+                </button>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
         <section className="min-h-0 flex-1 overflow-auto bg-[#bfc3ca] p-5">
           <div className="relative inline-block min-w-[640px]">
             <svg
@@ -761,6 +967,39 @@ const Truth = () => {
                   strokeWidth={activeStroke.size}
                 />
               ) : null}
+              {!section && birthdaySmokeActive ? (
+                <g
+                  aria-hidden="true"
+                  className="birthday-smoke-cloud"
+                  transform={`translate(${birthdayButtonFrame.x + birthdayButtonFrame.width / 2} ${
+                    birthdayButtonFrame.y + birthdayButtonFrame.height * 0.98
+                  })`}
+                >
+                  {[
+                    { cx: -230, cy: 38, r: 62 },
+                    { cx: -178, cy: 16, r: 82 },
+                    { cx: -118, cy: -42, r: 104 },
+                    { cx: -42, cy: -88, r: 118 },
+                    { cx: 42, cy: -92, r: 122 },
+                    { cx: 124, cy: -46, r: 106 },
+                    { cx: 190, cy: 12, r: 84 },
+                    { cx: 236, cy: 42, r: 64 },
+                    { cx: -136, cy: 72, r: 96 },
+                    { cx: -24, cy: 70, r: 118 },
+                    { cx: 96, cy: 72, r: 106 },
+                    { cx: 4, cy: 6, r: 146 },
+                  ].map((puff, index) => (
+                    <circle
+                      key={`${puff.cx}-${puff.cy}`}
+                      className="birthday-smoke-puff"
+                      cx={puff.cx}
+                      cy={puff.cy}
+                      r={puff.r}
+                      style={{ animationDelay: `${index * 28}ms` }}
+                    />
+                  ))}
+                </g>
+              ) : null}
               {!section ? (
                 <g transform={`translate(${navButtonFrame.x} ${navButtonFrame.y}) scale(${navButtonFrame.scale})`}>
                   {truthNavLinks.map((link) =>
@@ -784,6 +1023,44 @@ const Truth = () => {
                     ) : null,
                   )}
                 </g>
+              ) : null}
+              {!section && birthdayButtonPath && !birthdayPresentRevealed ? (
+                <g
+                  transform={`translate(${birthdayButtonHitFrame.x} ${birthdayButtonHitFrame.y}) scale(${birthdayButtonHitFrame.scale})`}
+                >
+                  <path
+                    aria-label="Birthday surprise"
+                    d={birthdayButtonPath}
+                    fill="transparent"
+                    onKeyDown={handleBirthdayButtonKeyDown}
+                    onPointerDown={handleBirthdayButtonPointerDown}
+                    pointerEvents="fill"
+                    role="button"
+                    stroke="transparent"
+                    strokeWidth="18"
+                    style={{ cursor: "pointer", outline: "none" }}
+                    tabIndex={0}
+                  />
+                </g>
+              ) : null}
+              {!section && birthdayPresentRevealed && !birthdayPresentOpen ? (
+                <rect
+                  aria-label="Open birthday present"
+                  fill="transparent"
+                  height={birthdayPresentFrame.height}
+                  onKeyDown={handleBirthdayPresentKeyDown}
+                  onPointerDown={(event) => {
+                    event.stopPropagation();
+                    openBirthdayPresent();
+                  }}
+                  pointerEvents="fill"
+                  role="button"
+                  style={{ cursor: "pointer", outline: "none" }}
+                  tabIndex={0}
+                  width={birthdayPresentFrame.width}
+                  x={birthdayPresentFrame.x}
+                  y={birthdayPresentFrame.y}
+                />
               ) : null}
             </svg>
             <button
