@@ -129,6 +129,58 @@ const isPendingTask = (task: SharedTask) => {
 
 const isEditableSharedTask = (task: SharedTask) => task.kind.toLowerCase() === "task";
 
+const getTaskIdentityKey = (task: SharedTask) => {
+  const normalizedKind = task.kind.trim().toLowerCase() || "task";
+  const normalizedSourceId = task.source_id?.trim() ?? "";
+
+  return `${normalizedKind}:${normalizedSourceId || task.task_id}`;
+};
+
+const getTaskSortTimestamp = (task: SharedTask) => {
+  const candidateValue = task.due_at ?? task.scheduled_date ?? task.updated_at;
+  const timestamp = new Date(candidateValue).getTime();
+
+  return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
+};
+
+const pickRepresentativeSharedTask = (currentTask: SharedTask, nextTask: SharedTask) => {
+  const currentTimestamp = getTaskSortTimestamp(currentTask);
+  const nextTimestamp = getTaskSortTimestamp(nextTask);
+
+  if (nextTimestamp !== currentTimestamp) {
+    return nextTimestamp < currentTimestamp ? nextTask : currentTask;
+  }
+
+  return new Date(nextTask.updated_at).getTime() > new Date(currentTask.updated_at).getTime()
+    ? nextTask
+    : currentTask;
+};
+
+const getUniqueSharedTasks = (tasks: SharedTask[]) => {
+  const tasksByIdentity = new Map<string, SharedTask>();
+
+  tasks.forEach((task) => {
+    const identityKey = getTaskIdentityKey(task);
+    const existingTask = tasksByIdentity.get(identityKey);
+
+    tasksByIdentity.set(
+      identityKey,
+      existingTask ? pickRepresentativeSharedTask(existingTask, task) : task,
+    );
+  });
+
+  return [...tasksByIdentity.values()].sort((firstTask, secondTask) => {
+    const firstTimestamp = getTaskSortTimestamp(firstTask);
+    const secondTimestamp = getTaskSortTimestamp(secondTask);
+
+    if (firstTimestamp !== secondTimestamp) {
+      return firstTimestamp - secondTimestamp;
+    }
+
+    return new Date(secondTask.updated_at).getTime() - new Date(firstTask.updated_at).getTime();
+  });
+};
+
 const getStatusTone = (status: string) => {
   const normalizedStatus = status.toLowerCase();
 
@@ -319,7 +371,9 @@ const AppDevelopment = () => {
   }, []);
 
   useEffect(() => {
-    const nextEditableTasks = tasks.filter((task) => isPendingTask(task) && isEditableSharedTask(task));
+    const nextEditableTasks = getUniqueSharedTasks(
+      tasks.filter((task) => isPendingTask(task) && isEditableSharedTask(task)),
+    );
 
     if (nextEditableTasks.length === 0) {
       setEditSuggestionTaskId("");
@@ -333,7 +387,7 @@ const AppDevelopment = () => {
     );
   }, [tasks]);
 
-  const visibleTasks = tasks.filter(isPendingTask);
+  const visibleTasks = getUniqueSharedTasks(tasks.filter(isPendingTask));
   const editableTasks = visibleTasks.filter(isEditableSharedTask);
   const selectedEditableTask =
     editableTasks.find((task) => task.task_id === editSuggestionTaskId) ?? null;
@@ -561,7 +615,7 @@ const AppDevelopment = () => {
       await createWebsiteTaskEditSuggestion({
         senderName: editSuggestionSenderName,
         sharedTaskId: selectedEditableTask.task_id,
-        localTaskId: selectedEditableTask.source_id,
+        localTaskId: selectedEditableTask.source_id ?? selectedEditableTask.task_id,
         taskTitleSnapshot: selectedEditableTask.title,
         changeTitle,
         suggestedTitle,
@@ -904,7 +958,7 @@ const AppDevelopment = () => {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div className="min-w-0">
                       <p className="font-display text-[10px] uppercase tracking-[0.24em] text-primary/78">
-                        {formatTaskKind(task.kind)} | {task.source_id}
+                        {formatTaskKind(task.kind)} | {task.source_id ?? task.task_id}
                       </p>
                       <h3 className="mt-2 text-lg leading-snug text-foreground">{task.title}</h3>
                     </div>

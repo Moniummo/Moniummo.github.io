@@ -3,7 +3,7 @@ import { createClient } from "@supabase/supabase-js";
 export interface SharedTask {
   task_id: string;
   kind: string;
-  source_id: string;
+  source_id: string | null;
   title: string;
   status: string;
   due_at: string | null;
@@ -12,6 +12,8 @@ export interface SharedTask {
   priority: string | null;
   rule_summary: string | null;
   updated_at: string;
+  owner_account_id: string | null;
+  visibility: string | null;
 }
 
 export interface AppPresence {
@@ -55,6 +57,9 @@ interface WebsiteTaskEditSuggestionInsert {
 
 const supabaseUrl = import.meta.env.VITE_SUPABASE_URL?.trim();
 const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.trim();
+const sharedTasksOwnerAccountId =
+  import.meta.env.VITE_SHARED_TASKS_OWNER_ACCOUNT_ID?.trim() ||
+  "608bf029-35f4-4107-a90d-5971e4591bdc";
 
 export const supabaseConfigError =
   !supabaseUrl || !supabasePublishableKey
@@ -81,8 +86,9 @@ export const fetchSharedTasks = async () => {
   const { data, error } = await supabase
     .from("shared_tasks")
     .select(
-      "task_id, kind, source_id, title, status, due_at, reminder_at, scheduled_date, priority, rule_summary, updated_at"
+      "task_id, kind, source_id, title, status, due_at, reminder_at, scheduled_date, priority, rule_summary, updated_at, owner_account_id, visibility"
     )
+    .eq("owner_account_id", sharedTasksOwnerAccountId)
     .order("updated_at", { ascending: false });
 
   if (error) {
