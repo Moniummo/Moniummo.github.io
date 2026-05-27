@@ -6,6 +6,7 @@ import {
   Clock3,
   LoaderCircle,
   MessageSquareText,
+  Search,
 } from "lucide-react";
 import { type FormEvent, type KeyboardEvent, useEffect, useState } from "react";
 import PageLayout from "@/components/PageLayout";
@@ -189,6 +190,7 @@ const AppDevelopment = () => {
   const [senderName, setSenderName] = useState("");
   const [message, setMessage] = useState("");
   const [selectedTaskId, setSelectedTaskId] = useState(generalReminderValue);
+  const [targetTaskSearch, setTargetTaskSearch] = useState("");
   const [isEmergencyReminder, setIsEmergencyReminder] = useState(false);
   const [emergencyPassword, setEmergencyPassword] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -414,7 +416,7 @@ const AppDevelopment = () => {
   useEffect(() => {
     if (
       selectedTaskId !== generalReminderValue &&
-      !tasks.some((task) => isPendingTask(task) && task.task_id === selectedTaskId)
+      !tasks.some((task) => task.task_id === selectedTaskId)
     ) {
       setSelectedTaskId(generalReminderValue);
     }
@@ -422,6 +424,25 @@ const AppDevelopment = () => {
 
   const visibleTasks = sortSharedTasks(tasks.filter(isPendingTask), "asc");
   const completedTasks = sortSharedTasks(tasks.filter(isCompletedTask), "desc");
+  const reminderTargetTasks = [...visibleTasks, ...completedTasks];
+  const selectedReminderTargetTask =
+    reminderTargetTasks.find((task) => task.task_id === selectedTaskId) ?? null;
+  const normalizedTargetTaskSearch = targetTaskSearch.trim().toLowerCase();
+  const filteredReminderTargetTasks = normalizedTargetTaskSearch
+    ? reminderTargetTasks.filter((task) =>
+        [
+          task.title,
+          task.kind,
+          task.status,
+          task.source_id ?? "",
+          task.task_id,
+          task.rule_summary ?? "",
+        ]
+          .join(" ")
+          .toLowerCase()
+          .includes(normalizedTargetTaskSearch),
+      )
+    : reminderTargetTasks;
   const editableTasks = visibleTasks.filter(isEditableSharedTask);
   const selectedEditableTask =
     editableTasks.find((task) => task.task_id === editSuggestionTaskId) ?? null;
@@ -534,6 +555,7 @@ const AppDevelopment = () => {
       setSenderName("");
       setMessage("");
       setSelectedTaskId(generalReminderValue);
+      setTargetTaskSearch("");
       setIsEmergencyReminder(false);
       setEmergencyPassword("");
       setSubmitLockUntil(Date.now() + submitCooldownMs);
@@ -1166,9 +1188,9 @@ const AppDevelopment = () => {
             </div>
 
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              Leave the task selector on the general option for a standalone popup, link the
-              message to one of the shared tasks below, or toggle emergency mode to turn it into a
-              full-screen alert.
+              Leave the task selector on the general option for a standalone popup, search active
+              or completed tasks to link the message to one of them, or toggle emergency mode to
+              turn it into a full-screen alert.
             </p>
 
             <div className="mt-4 rounded-[1.8rem] border border-white/22 bg-white/24 p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.03]">
@@ -1190,26 +1212,89 @@ const AppDevelopment = () => {
                 >
                   Target
                 </label>
-                <Select
-                  value={isEmergencyReminder ? generalReminderValue : selectedTaskId}
-                  onValueChange={setSelectedTaskId}
-                  disabled={isEmergencyReminder}
-                >
-                  <SelectTrigger
-                    id="target-task"
-                    className="h-12 rounded-[1.4rem] border-white/24 bg-white/32 text-left text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.04]"
+                <div className="space-y-3">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedTaskId(generalReminderValue);
+                      setTargetTaskSearch("");
+                    }}
+                    disabled={isEmergencyReminder}
+                    className={cn(
+                      "w-full rounded-[1.4rem] border px-4 py-3 text-left text-sm transition",
+                      "border-white/24 bg-white/28 text-foreground shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:border-white/10 dark:bg-white/[0.04]",
+                      selectedTaskId === generalReminderValue
+                        ? "border-primary/45 bg-primary/10"
+                        : "hover:border-primary/30 hover:bg-white/36",
+                      isEmergencyReminder && "cursor-not-allowed opacity-60",
+                    )}
                   >
-                    <SelectValue placeholder="Choose where the popup should go" />
-                  </SelectTrigger>
-                  <SelectContent className="rounded-[1.2rem] border-white/20 bg-white/95 backdrop-blur-xl dark:border-white/10 dark:bg-[#151126]/95">
-                    <SelectItem value={generalReminderValue}>General reminder</SelectItem>
-                    {visibleTasks.map((task) => (
-                      <SelectItem key={task.task_id} value={task.task_id}>
-                        {task.title} ({formatTaskKind(task.kind)})
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                    <span className="font-display text-[10px] uppercase tracking-[0.2em] text-primary/78">
+                      General reminder
+                    </span>
+                    <span className="mt-1 block text-muted-foreground">
+                      Send a popup without linking it to a task.
+                    </span>
+                  </button>
+
+                  <div className="relative">
+                    <Search className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+                    <Input
+                      id="target-task"
+                      value={targetTaskSearch}
+                      onChange={(event) => setTargetTaskSearch(event.target.value)}
+                      disabled={isEmergencyReminder}
+                      placeholder="Type to search active or completed tasks"
+                      className="h-12 rounded-[1.4rem] border-white/24 bg-white/32 pl-11 text-sm shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] placeholder:text-muted-foreground/80 dark:border-white/10 dark:bg-white/[0.04]"
+                    />
+                  </div>
+
+                  {selectedReminderTargetTask ? (
+                    <div className="rounded-[1.25rem] border border-primary/30 bg-primary/10 px-4 py-3 text-sm text-foreground">
+                      <span className="font-display text-[10px] uppercase tracking-[0.2em] text-primary/78">
+                        Selected {selectedReminderTargetTask.status}
+                      </span>
+                      <span className="mt-1 block truncate">
+                        {selectedReminderTargetTask.title}
+                      </span>
+                    </div>
+                  ) : null}
+
+                  <div className="max-h-64 overflow-y-auto rounded-[1.4rem] border border-white/24 bg-white/18 p-2 shadow-[inset_0_1px_0_rgba(255,255,255,0.14)] dark:border-white/10 dark:bg-white/[0.025]">
+                    {isEmergencyReminder ? (
+                      <p className="px-3 py-4 text-sm text-muted-foreground">
+                        Emergency alerts use the general reminder target.
+                      </p>
+                    ) : filteredReminderTargetTasks.length ? (
+                      filteredReminderTargetTasks.map((task) => (
+                        <button
+                          key={task.task_id}
+                          type="button"
+                          onClick={() => {
+                            setSelectedTaskId(task.task_id);
+                            setTargetTaskSearch(task.title);
+                          }}
+                          className={cn(
+                            "w-full rounded-[1.1rem] px-3 py-3 text-left transition",
+                            selectedTaskId === task.task_id
+                              ? "bg-primary/14 text-foreground"
+                              : "text-foreground hover:bg-white/24 dark:hover:bg-white/[0.05]",
+                          )}
+                        >
+                          <span className="block truncate text-sm">{task.title}</span>
+                          <span className="mt-1 flex flex-wrap gap-2 font-display text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                            <span>{formatTaskKind(task.kind)}</span>
+                            <span>{task.status === "completed" ? "Completed" : "Active"}</span>
+                          </span>
+                        </button>
+                      ))
+                    ) : (
+                      <p className="px-3 py-4 text-sm text-muted-foreground">
+                        No matching active or completed tasks.
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
 
               <div className="space-y-2">
