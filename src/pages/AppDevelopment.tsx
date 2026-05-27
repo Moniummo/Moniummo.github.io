@@ -27,6 +27,7 @@ import {
   fetchAppPresence,
   fetchSharedTasks,
   isSupabaseConfigured,
+  subscribeToSharedTaskChanges,
   supabaseConfigError,
   type AppPresence,
   type SharedTask,
@@ -114,72 +115,31 @@ const formatTaskKind = (value: string) =>
     .replace(/[_-]+/g, " ")
     .replace(/\b\w/g, (character) => character.toUpperCase());
 
-const isPendingTask = (task: SharedTask) => {
-  const normalizedStatus = task.status.toLowerCase();
-
-  return ![
-    "done",
-    "complete",
-    "completed",
-    "cancelled",
-    "canceled",
-    "archived",
-  ].some((keyword) => normalizedStatus.includes(keyword));
-};
+const isPendingTask = (task: SharedTask) => task.status.toLowerCase() === "pending";
+const isCompletedTask = (task: SharedTask) => task.status.toLowerCase() === "completed";
 
 const isEditableSharedTask = (task: SharedTask) => task.kind.toLowerCase() === "task";
 
-const getTaskIdentityKey = (task: SharedTask) => {
-  const normalizedKind = task.kind.trim().toLowerCase() || "task";
-  const normalizedSourceId = task.source_id?.trim() ?? "";
-
-  return `${normalizedKind}:${normalizedSourceId || task.task_id}`;
-};
-
 const getTaskSortTimestamp = (task: SharedTask) => {
-  const candidateValue = task.due_at ?? task.scheduled_date ?? task.updated_at;
+  const candidateValue = task.completed_at ?? task.due_at ?? task.scheduled_date ?? task.updated_at;
   const timestamp = new Date(candidateValue).getTime();
 
   return Number.isNaN(timestamp) ? Number.MAX_SAFE_INTEGER : timestamp;
 };
 
-const pickRepresentativeSharedTask = (currentTask: SharedTask, nextTask: SharedTask) => {
-  const currentTimestamp = getTaskSortTimestamp(currentTask);
-  const nextTimestamp = getTaskSortTimestamp(nextTask);
-
-  if (nextTimestamp !== currentTimestamp) {
-    return nextTimestamp < currentTimestamp ? nextTask : currentTask;
-  }
-
-  return new Date(nextTask.updated_at).getTime() > new Date(currentTask.updated_at).getTime()
-    ? nextTask
-    : currentTask;
-};
-
-const getUniqueSharedTasks = (tasks: SharedTask[]) => {
-  const tasksByIdentity = new Map<string, SharedTask>();
-
-  tasks.forEach((task) => {
-    const identityKey = getTaskIdentityKey(task);
-    const existingTask = tasksByIdentity.get(identityKey);
-
-    tasksByIdentity.set(
-      identityKey,
-      existingTask ? pickRepresentativeSharedTask(existingTask, task) : task,
-    );
-  });
-
-  return [...tasksByIdentity.values()].sort((firstTask, secondTask) => {
+const sortSharedTasks = (tasks: SharedTask[], direction: "asc" | "desc" = "asc") =>
+  [...tasks].sort((firstTask, secondTask) => {
     const firstTimestamp = getTaskSortTimestamp(firstTask);
     const secondTimestamp = getTaskSortTimestamp(secondTask);
 
     if (firstTimestamp !== secondTimestamp) {
-      return firstTimestamp - secondTimestamp;
+      return direction === "asc"
+        ? firstTimestamp - secondTimestamp
+        : secondTimestamp - firstTimestamp;
     }
 
     return new Date(secondTask.updated_at).getTime() - new Date(firstTask.updated_at).getTime();
   });
-};
 
 const getStatusTone = (status: string) => {
   const normalizedStatus = status.toLowerCase();
@@ -311,69 +271,133 @@ const AppDevelopment = () => {
 
     let isActive = true;
 
-    const loadPageData = async (showSpinner: boolean) => {
+    const loadTasks = async (showSpinner: boolean) => {
       if (showSpinner) {
         setIsLoadingTasks(true);
+      }
+
+      try {
+        const nextTasks = await fetchSharedTasks();
+
+        if (!isActive) {
+          return;
+        }
+
+        setTasks(nextTasks);
+        setTasksError(null);
+        setLastSyncedAt(new Date().toISOString());
+      } catch (tasksLoadError) {
+        if (!isActive) {
+          return;
+        }
+
+        setTasks([]);
+        setTasksError(
+          tasksLoadError instanceof Error
+            ? tasksLoadError.message
+            : "Unable to load shared tasks.",
+        );
+      } finally {
+        if (showSpinner && isActive) {
+          setIsLoadingTasks(false);
+        }
+      }
+    };
+
+    const loadPresence = async (showSpinner: boolean) => {
+      if (showSpinner) {
         setIsLoadingPresence(true);
       }
 
-      const [tasksResult, presenceResult] = await Promise.allSettled([
-        fetchSharedTasks(),
-        fetchAppPresence(appPresenceDeviceId),
-      ]);
+      try {
+        const nextPresence = await fetchAppPresence(appPresenceDeviceId);
 
-      if (!isActive) {
-        return;
-      }
+        if (!isActive) {
+          return;
+        }
 
-      if (tasksResult.status === "fulfilled") {
-        setTasks(tasksResult.value);
-        setTasksError(null);
-      } else {
-        setTasksError(
-          tasksResult.reason instanceof Error
-            ? tasksResult.reason.message
-            : "Unable to load shared tasks.",
-        );
-      }
-
-      if (presenceResult.status === "fulfilled") {
-        setPresence(presenceResult.value);
+        setPresence(nextPresence);
         setPresenceError(null);
-      } else {
+        setLastSyncedAt(new Date().toISOString());
+      } catch (presenceLoadError) {
+        if (!isActive) {
+          return;
+        }
+
         setPresenceError(
-          presenceResult.reason instanceof Error
-            ? presenceResult.reason.message
+          presenceLoadError instanceof Error
+            ? presenceLoadError.message
             : "Unable to load laptop presence.",
         );
+      } finally {
+        if (showSpinner && isActive) {
+          setIsLoadingPresence(false);
+        }
       }
+    };
 
-      if (tasksResult.status === "fulfilled" || presenceResult.status === "fulfilled") {
-        setLastSyncedAt(new Date().toISOString());
-      }
-
-      if (showSpinner) {
-        setIsLoadingTasks(false);
-        setIsLoadingPresence(false);
-      }
+    const loadPageData = async (showSpinner: boolean) => {
+      await Promise.all([loadTasks(showSpinner), loadPresence(showSpinner)]);
     };
 
     void loadPageData(true);
 
+    let isTaskRefreshRunning = false;
+    let isTaskRefreshQueued = false;
+    let taskRefreshTimeout: number | null = null;
+
+    const refreshTasksFromSupabase = async () => {
+      if (isTaskRefreshRunning) {
+        isTaskRefreshQueued = true;
+        return;
+      }
+
+      isTaskRefreshRunning = true;
+
+      try {
+        do {
+          isTaskRefreshQueued = false;
+          await loadTasks(false);
+        } while (isActive && isTaskRefreshQueued);
+      } finally {
+        isTaskRefreshRunning = false;
+      }
+    };
+
+    const scheduleTaskRefresh = () => {
+      if (taskRefreshTimeout) {
+        window.clearTimeout(taskRefreshTimeout);
+      }
+
+      taskRefreshTimeout = window.setTimeout(() => {
+        taskRefreshTimeout = null;
+        void refreshTasksFromSupabase();
+      }, 120);
+    };
+
     const refreshInterval = window.setInterval(() => {
       void loadPageData(false);
     }, dataRefreshIntervalMs);
+    const unsubscribeFromSharedTasks = subscribeToSharedTaskChanges((eventType, taskId) => {
+      if (eventType === "DELETE" && taskId) {
+        setTasks((currentTasks) => currentTasks.filter((task) => task.task_id !== taskId));
+      }
+
+      scheduleTaskRefresh();
+    });
 
     return () => {
       isActive = false;
       window.clearInterval(refreshInterval);
+      if (taskRefreshTimeout) {
+        window.clearTimeout(taskRefreshTimeout);
+      }
+      unsubscribeFromSharedTasks();
     };
   }, []);
 
   useEffect(() => {
-    const nextEditableTasks = getUniqueSharedTasks(
-      tasks.filter((task) => isPendingTask(task) && isEditableSharedTask(task)),
-    );
+    const nextEditableTasks = tasks.filter((task) => isPendingTask(task) && isEditableSharedTask(task));
 
     if (nextEditableTasks.length === 0) {
       setEditSuggestionTaskId("");
@@ -387,7 +411,17 @@ const AppDevelopment = () => {
     );
   }, [tasks]);
 
-  const visibleTasks = getUniqueSharedTasks(tasks.filter(isPendingTask));
+  useEffect(() => {
+    if (
+      selectedTaskId !== generalReminderValue &&
+      !tasks.some((task) => isPendingTask(task) && task.task_id === selectedTaskId)
+    ) {
+      setSelectedTaskId(generalReminderValue);
+    }
+  }, [selectedTaskId, tasks]);
+
+  const visibleTasks = sortSharedTasks(tasks.filter(isPendingTask), "asc");
+  const completedTasks = sortSharedTasks(tasks.filter(isCompletedTask), "desc");
   const editableTasks = visibleTasks.filter(isEditableSharedTask);
   const selectedEditableTask =
     editableTasks.find((task) => task.task_id === editSuggestionTaskId) ?? null;
@@ -914,9 +948,15 @@ const AppDevelopment = () => {
 
               <div className="rounded-[1.4rem] border border-white/24 bg-white/28 px-4 py-3 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.04]">
                 <p className="font-display text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
-                  Pending Items
+                  Active Items
                 </p>
                 <p className="mt-1 text-sm text-foreground">{visibleTasks.length}</p>
+              </div>
+              <div className="rounded-[1.4rem] border border-white/24 bg-white/28 px-4 py-3 text-right shadow-[inset_0_1px_0_rgba(255,255,255,0.2)] dark:border-white/10 dark:bg-white/[0.04]">
+                <p className="font-display text-[10px] uppercase tracking-[0.22em] text-muted-foreground">
+                  Completed Today
+                </p>
+                <p className="mt-1 text-sm text-foreground">{completedTasks.length}</p>
               </div>
             </div>
 
@@ -1023,6 +1063,85 @@ const AppDevelopment = () => {
                   </p>
                 </article>
               ))}
+
+              {!isLoadingTasks && !tasksError ? (
+                <div className="pt-2">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="font-display text-[10px] uppercase tracking-[0.24em] text-primary/78">
+                        Completed Today
+                      </p>
+                      <h3 className="mt-1 text-lg text-foreground">Finished task feed</h3>
+                    </div>
+                    <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.18em] text-emerald-700 dark:text-emerald-300">
+                      {completedTasks.length}
+                    </span>
+                  </div>
+
+                  {completedTasks.length ? (
+                    <div className="mt-4 space-y-3">
+                      {completedTasks.map((task) => (
+                        <article
+                          key={task.task_id}
+                          className="rounded-[1.8rem] border border-emerald-500/20 bg-emerald-500/[0.08] p-4 shadow-[inset_0_1px_0_rgba(255,255,255,0.18)] dark:bg-emerald-500/[0.06]"
+                        >
+                          <div className="flex flex-wrap items-start justify-between gap-3">
+                            <div className="min-w-0">
+                              <p className="font-display text-[10px] uppercase tracking-[0.22em] text-emerald-700/80 dark:text-emerald-300/80">
+                                {formatTaskKind(task.kind)} | {task.source_id ?? task.task_id}
+                              </p>
+                              <h4 className="mt-2 text-base leading-snug text-foreground">
+                                {task.title}
+                              </h4>
+                            </div>
+                            <span
+                              className={cn(
+                                "rounded-full border px-3 py-1.5 font-display text-[10px] uppercase tracking-[0.18em]",
+                                getStatusTone(task.status),
+                              )}
+                            >
+                              {task.status}
+                            </span>
+                          </div>
+
+                          <div className="mt-3 grid gap-3 sm:grid-cols-3">
+                            <div className="rounded-[1.2rem] border border-emerald-500/20 bg-white/24 px-3 py-2.5 dark:bg-white/[0.04]">
+                              <p className="font-display text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                                Completed
+                              </p>
+                              <p className="mt-1 text-sm leading-relaxed text-foreground">
+                                {formatTimestamp(task.completed_at)}
+                              </p>
+                            </div>
+                            <div className="rounded-[1.2rem] border border-emerald-500/20 bg-white/24 px-3 py-2.5 dark:bg-white/[0.04]">
+                              <p className="font-display text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                                Due
+                              </p>
+                              <p className="mt-1 text-sm leading-relaxed text-foreground">
+                                {formatTimestamp(task.due_at)}
+                              </p>
+                            </div>
+                            <div className="rounded-[1.2rem] border border-emerald-500/20 bg-white/24 px-3 py-2.5 dark:bg-white/[0.04]">
+                              <p className="font-display text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                                Updated
+                              </p>
+                              <p className="mt-1 text-sm leading-relaxed text-foreground">
+                                {formatTimestamp(task.updated_at)}
+                              </p>
+                            </div>
+                          </div>
+                        </article>
+                      ))}
+                    </div>
+                  ) : (
+                    <div className="mt-4 rounded-[1.8rem] border border-white/24 bg-white/20 p-5 shadow-[inset_0_1px_0_rgba(255,255,255,0.16)] dark:border-white/10 dark:bg-white/[0.03]">
+                      <p className="text-sm leading-relaxed text-muted-foreground">
+                        No completed rows are currently being returned by Supabase.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              ) : null}
             </div>
           </motion.section>
         </div>

@@ -1,6 +1,7 @@
 import { createClient } from "@supabase/supabase-js";
 
 export interface SharedTask {
+  owner_account_id: string | null;
   task_id: string;
   kind: string;
   source_id: string | null;
@@ -8,12 +9,12 @@ export interface SharedTask {
   status: string;
   due_at: string | null;
   reminder_at: string | null;
+  completed_at: string | null;
   scheduled_date: string | null;
   priority: string | null;
   rule_summary: string | null;
-  updated_at: string;
-  owner_account_id: string | null;
   visibility: string | null;
+  updated_at: string;
 }
 
 export interface AppPresence {
@@ -60,6 +61,10 @@ const supabasePublishableKey = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY?.tr
 const sharedTasksOwnerAccountId =
   import.meta.env.VITE_SHARED_TASKS_OWNER_ACCOUNT_ID?.trim() ||
   "608bf029-35f4-4107-a90d-5971e4591bdc";
+const sharedTasksViewerAccountId =
+  import.meta.env.VITE_SHARED_TASKS_VIEWER_ACCOUNT_ID?.trim() || sharedTasksOwnerAccountId;
+const sharedTasksViewerPasswordHash =
+  import.meta.env.VITE_SHARED_TASKS_VIEWER_PASSWORD_HASH?.trim();
 
 export const supabaseConfigError =
   !supabaseUrl || !supabasePublishableKey
@@ -77,25 +82,73 @@ const supabase =
     : null;
 
 export const isSupabaseConfigured = Boolean(supabase);
+export const sharedTasksAccountId = sharedTasksOwnerAccountId;
+
+export const sharedTasksConfigError = !sharedTasksViewerPasswordHash
+  ? "Shared tasks are not configured. Add VITE_SHARED_TASKS_VIEWER_PASSWORD_HASH so the website can load the live account feed."
+  : null;
 
 export const fetchSharedTasks = async () => {
   if (!supabase) {
     throw new Error(supabaseConfigError ?? "Supabase is unavailable.");
   }
 
-  const { data, error } = await supabase
-    .from("shared_tasks")
-    .select(
-      "task_id, kind, source_id, title, status, due_at, reminder_at, scheduled_date, priority, rule_summary, updated_at, owner_account_id, visibility"
-    )
-    .eq("owner_account_id", sharedTasksOwnerAccountId)
-    .order("updated_at", { ascending: false });
+  if (!sharedTasksViewerPasswordHash) {
+    throw new Error(sharedTasksConfigError ?? "Shared tasks are unavailable.");
+  }
+
+  const { data, error } = await supabase.rpc("list_shared_tasks_for_viewer", {
+    p_owner_account_id: sharedTasksOwnerAccountId,
+    p_password_hash: sharedTasksViewerPasswordHash,
+    p_viewer_account_id: sharedTasksViewerAccountId,
+  });
 
   if (error) {
     throw new Error(error.message);
   }
 
   return (data ?? []) as SharedTask[];
+};
+
+export const subscribeToSharedTaskChanges = (onChange: (event: string, taskId?: string) => void) => {
+  if (!supabase) {
+    return () => undefined;
+  }
+
+  const channel = supabase
+    .channel(`shared-tasks-${sharedTasksOwnerAccountId}`)
+    .on(
+      "postgres_changes",
+      {
+        event: "*",
+        schema: "public",
+        table: "shared_tasks",
+        filter: `owner_account_id=eq.${sharedTasksOwnerAccountId}`,
+      },
+      (payload) => {
+        const newTaskId =
+          payload.new &&
+          typeof payload.new === "object" &&
+          "task_id" in payload.new &&
+          typeof payload.new.task_id === "string"
+            ? payload.new.task_id
+            : undefined;
+        const oldTaskId =
+          payload.old &&
+          typeof payload.old === "object" &&
+          "task_id" in payload.old &&
+          typeof payload.old.task_id === "string"
+            ? payload.old.task_id
+            : undefined;
+
+        onChange(payload.eventType, newTaskId ?? oldTaskId);
+      },
+    )
+    .subscribe();
+
+  return () => {
+    void supabase.removeChannel(channel);
+  };
 };
 
 export const fetchAppPresence = async (deviceId: string) => {
