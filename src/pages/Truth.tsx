@@ -48,7 +48,7 @@ const starterArtwork = [
   { href: "/arkan.svg", height: 200, preserveAspectRatio: "xMidYMid meet", width: 430, x: 0, y: 34 },
   { href: "/Dave.svg", height: 200, preserveAspectRatio: "xMidYMid meet", width: 290, x: 340, y: 25 },
   { href: "/navbox.svg", height: 700, preserveAspectRatio: "xMidYMid meet", width: 760, x: 450, y: 100 },
-  { href: "/failure.svg", height: 97, preserveAspectRatio: "none", width: 229, x: 9, y: 210 },
+  { href: "/failure.svg", height: 97, preserveAspectRatio: "none", width: 229, x: 100, y: 210 },
   { href: "/birthday_button.svg", height: 340, preserveAspectRatio: "xMidYMid meet", width: 500, x: 42, y: 398 },
 ] satisfies ArtworkFrame[];
 
@@ -234,7 +234,7 @@ const Truth = () => {
   });
   const navButtonFrame = getContainedFrame(navBoxFrame, navBoxViewBox);
   const birthdayButtonHitFrame = getContainedFrame(birthdayButtonFrame, birthdayButtonViewBox);
-  const [tool, setTool] = useState<Tool>("brush");
+  const [tool, setTool] = useState<Tool>("select");
   const [activeColor, setActiveColor] = useState(colors[0]);
   const [brushSize, setBrushSize] = useState(5);
   const [canvasFillColor, setCanvasFillColor] = useState("#ffffff");
