@@ -333,18 +333,18 @@ const Truth = () => {
       return;
     }
 
-    const fallbackPaintState = {
-      canvasFillColor: "#ffffff",
-      canvasSize: defaultCanvasSize,
-      paintActions: [],
-    };
-
-    return subscribeToAllyDrawing(paintPageKey, fallbackPaintState, (remotePaintState) => {
-      skipNextPaintSaveRef.current = true;
-      paintStateByPageRef.current[paintPageKey] = remotePaintState as SavedPaintState;
-      setPaintActions(remotePaintState.paintActions as PaintAction[]);
-      setCanvasFillColor(remotePaintState.canvasFillColor);
-      setCanvasSize(remotePaintState.canvasSize);
+    return subscribeToAllyDrawing(paintPageKey, () => {
+      void fetchAllyDrawing(paintPageKey, latestPaintStateRef.current)
+        .then((remotePaintState) => {
+          skipNextPaintSaveRef.current = true;
+          paintStateByPageRef.current[paintPageKey] = remotePaintState as SavedPaintState;
+          setPaintActions(remotePaintState.paintActions as PaintAction[]);
+          setCanvasFillColor(remotePaintState.canvasFillColor);
+          setCanvasSize(remotePaintState.canvasSize);
+        })
+        .catch((error) => {
+          console.warn("Unable to refresh Ally drawing", error);
+        });
     });
   }, [isPaintLoaded, paintPageKey]);
 
@@ -408,7 +408,9 @@ const Truth = () => {
     point.x = clientX;
     point.y = clientY;
 
-    return point.matrixTransform(board.getScreenCTM()?.inverse());
+    const transformedPoint = point.matrixTransform(board.getScreenCTM()?.inverse());
+
+    return { x: transformedPoint.x, y: transformedPoint.y };
   };
 
   const getPoint = (event: ReactPointerEvent<SVGSVGElement>) => getBoardPoint(event.clientX, event.clientY);

@@ -70,8 +70,7 @@ export const saveAllyDrawing = async (pageKey: string, state: AllyDrawingState) 
 
 export const subscribeToAllyDrawing = (
   pageKey: string,
-  fallback: AllyDrawingState,
-  onChange: (state: AllyDrawingState) => void,
+  onChange: () => void,
 ) => {
   const channel = allySupabase
     .channel(`ally-drawing-${pageKey}`)
@@ -83,14 +82,7 @@ export const subscribeToAllyDrawing = (
         schema: "public",
         table: "ally_drawings",
       },
-      (payload) => {
-        if (payload.eventType === "DELETE") {
-          onChange(fallback);
-          return;
-        }
-
-        onChange(normalizeDrawingState(payload.new as AllyDrawingRow, fallback));
-      },
+      () => onChange(),
     )
     .subscribe();
 
