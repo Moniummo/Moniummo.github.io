@@ -8,6 +8,7 @@ import {
 import confetti from "canvas-confetti";
 import { Eraser, MousePointer2, PaintBucket, Pencil, RotateCcw, Save, Trash2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
+import { fetchAllyDrawing, saveAllyDrawing, subscribeToAllyDrawing } from "@/lib/allyDrawings";
 import { cn } from "@/lib/utils";
 
 interface Stroke {
@@ -225,8 +226,10 @@ const Truth = () => {
   const resizeStateRef = useRef<{ height: number; pointerX: number; pointerY: number; width: number } | null>(null);
   const birthdaySmokeTimeoutRef = useRef<number | null>(null);
   const birthdayRevealTimeoutRef = useRef<number | null>(null);
+  const paintSaveTimeoutRef = useRef<number | null>(null);
   const paintStateByPageRef = useRef<Record<string, SavedPaintState>>({});
   const currentPaintPageRef = useRef("main");
+  const skipNextPaintSaveRef = useRef(false);
   const latestPaintStateRef = useRef<SavedPaintState>({
     canvasFillColor: "#ffffff",
     canvasSize: defaultCanvasSize,
@@ -248,6 +251,7 @@ const Truth = () => {
   const [birthdaySmokeActive, setBirthdaySmokeActive] = useState(false);
   const [paintActions, setPaintActions] = useState<PaintAction[]>([]);
   const [activeStroke, setActiveStroke] = useState<Stroke | null>(null);
+  const [isPaintLoaded, setIsPaintLoaded] = useState(false);
   const paintPageKey = section ?? "main";
   const artwork = section
     ? sectionArtwork[section] ?? starterArtwork
@@ -264,6 +268,10 @@ const Truth = () => {
 
       if (birthdayRevealTimeoutRef.current) {
         window.clearTimeout(birthdayRevealTimeoutRef.current);
+      }
+
+      if (paintSaveTimeoutRef.current) {
+        window.clearTimeout(paintSaveTimeoutRef.current);
       }
     };
   }, []);
@@ -282,15 +290,90 @@ const Truth = () => {
     paintStateByPageRef.current[previousPaintPage] = latestPaintStateRef.current;
 
     const savedPaintState = paintStateByPageRef.current[paintPageKey];
+    const fallbackPaintState = savedPaintState ?? {
+      canvasFillColor: "#ffffff",
+      canvasSize: defaultCanvasSize,
+      paintActions: [],
+    };
+    let isActivePage = true;
 
     setActiveStroke(null);
-    setPaintActions(savedPaintState?.paintActions ?? []);
-    setCanvasFillColor(savedPaintState?.canvasFillColor ?? "#ffffff");
-    setCanvasSize(savedPaintState?.canvasSize ?? defaultCanvasSize);
-    setTool("brush");
+    setIsPaintLoaded(false);
+    setPaintActions(fallbackPaintState.paintActions);
+    setCanvasFillColor(fallbackPaintState.canvasFillColor);
+    setCanvasSize(fallbackPaintState.canvasSize);
+    setTool("select");
     setIsHoveringClickableNav(false);
     currentPaintPageRef.current = paintPageKey;
+
+    void fetchAllyDrawing(paintPageKey, fallbackPaintState)
+      .then((remotePaintState) => {
+        if (!isActivePage) {
+          return;
+        }
+
+        skipNextPaintSaveRef.current = true;
+        paintStateByPageRef.current[paintPageKey] = remotePaintState as SavedPaintState;
+        setPaintActions(remotePaintState.paintActions as PaintAction[]);
+        setCanvasFillColor(remotePaintState.canvasFillColor);
+        setCanvasSize(remotePaintState.canvasSize);
+        setIsPaintLoaded(true);
+      })
+      .catch((error) => {
+        console.warn("Unable to load Ally drawing", error);
+      });
+
+    return () => {
+      isActivePage = false;
+    };
   }, [paintPageKey]);
+
+  useEffect(() => {
+    if (!isPaintLoaded) {
+      return;
+    }
+
+    const fallbackPaintState = {
+      canvasFillColor: "#ffffff",
+      canvasSize: defaultCanvasSize,
+      paintActions: [],
+    };
+
+    return subscribeToAllyDrawing(paintPageKey, fallbackPaintState, (remotePaintState) => {
+      skipNextPaintSaveRef.current = true;
+      paintStateByPageRef.current[paintPageKey] = remotePaintState as SavedPaintState;
+      setPaintActions(remotePaintState.paintActions as PaintAction[]);
+      setCanvasFillColor(remotePaintState.canvasFillColor);
+      setCanvasSize(remotePaintState.canvasSize);
+    });
+  }, [isPaintLoaded, paintPageKey]);
+
+  useEffect(() => {
+    if (!isPaintLoaded) {
+      return;
+    }
+
+    if (skipNextPaintSaveRef.current) {
+      skipNextPaintSaveRef.current = false;
+      return;
+    }
+
+    if (paintSaveTimeoutRef.current) {
+      window.clearTimeout(paintSaveTimeoutRef.current);
+    }
+
+    const stateToSave = {
+      canvasFillColor,
+      canvasSize,
+      paintActions,
+    };
+
+    paintSaveTimeoutRef.current = window.setTimeout(() => {
+      void saveAllyDrawing(paintPageKey, stateToSave).catch((error) => {
+        console.warn("Unable to save Ally drawing", error);
+      });
+    }, 500);
+  }, [canvasFillColor, canvasSize, isPaintLoaded, paintActions, paintPageKey]);
 
   useEffect(() => {
     const loadButtonPaths = async () => {
