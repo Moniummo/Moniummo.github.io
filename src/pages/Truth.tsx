@@ -1,5 +1,6 @@
 import {
   useEffect,
+  useLayoutEffect,
   useRef,
   useState,
   type KeyboardEvent as ReactKeyboardEvent,
@@ -219,6 +220,12 @@ const sectionLabels: Record<string, string> = {
   research: "Research",
 };
 
+const defaultPaintState: SavedPaintState = {
+  canvasFillColor: "#ffffff",
+  canvasSize: defaultCanvasSize,
+  paintActions: [],
+};
+
 const Truth = () => {
   const navigate = useNavigate();
   const { section } = useParams();
@@ -229,12 +236,9 @@ const Truth = () => {
   const paintSaveTimeoutRef = useRef<number | null>(null);
   const paintStateByPageRef = useRef<Record<string, SavedPaintState>>({});
   const currentPaintPageRef = useRef("main");
+  const latestPaintPageKeyRef = useRef("main");
   const skipNextPaintSaveRef = useRef(false);
-  const latestPaintStateRef = useRef<SavedPaintState>({
-    canvasFillColor: "#ffffff",
-    canvasSize: defaultCanvasSize,
-    paintActions: [],
-  });
+  const latestPaintStateRef = useRef<SavedPaintState>(defaultPaintState);
   const navButtonFrame = getContainedFrame(navBoxFrame, navBoxViewBox);
   const birthdayButtonHitFrame = getContainedFrame(birthdayButtonFrame, birthdayButtonViewBox);
   const [tool, setTool] = useState<Tool>("select");
@@ -251,6 +255,7 @@ const Truth = () => {
   const [birthdaySmokeActive, setBirthdaySmokeActive] = useState(false);
   const [paintActions, setPaintActions] = useState<PaintAction[]>([]);
   const [activeStroke, setActiveStroke] = useState<Stroke | null>(null);
+  const [displayedPaintPageKey, setDisplayedPaintPageKey] = useState("main");
   const [loadedPaintPageKey, setLoadedPaintPageKey] = useState<string | null>(null);
   const paintPageKey = section ?? "main";
   const artwork = section
@@ -276,37 +281,46 @@ const Truth = () => {
     };
   }, []);
 
+  const applyPaintState = (pageKey: string, paintState: SavedPaintState) => {
+    latestPaintPageKeyRef.current = pageKey;
+    latestPaintStateRef.current = paintState;
+    paintStateByPageRef.current[pageKey] = paintState;
+    setDisplayedPaintPageKey(pageKey);
+    setPaintActions(paintState.paintActions);
+    setCanvasFillColor(paintState.canvasFillColor);
+    setCanvasSize(paintState.canvasSize);
+  };
+
   useEffect(() => {
-    latestPaintStateRef.current = {
+    const nextPaintState = {
       canvasFillColor,
       canvasSize,
       paintActions,
     };
-  }, [canvasFillColor, canvasSize, paintActions]);
 
-  useEffect(() => {
+    latestPaintPageKeyRef.current = displayedPaintPageKey;
+    latestPaintStateRef.current = nextPaintState;
+    paintStateByPageRef.current[displayedPaintPageKey] = nextPaintState;
+  }, [canvasFillColor, canvasSize, displayedPaintPageKey, paintActions]);
+
+  useLayoutEffect(() => {
     const previousPaintPage = currentPaintPageRef.current;
 
-    paintStateByPageRef.current[previousPaintPage] = latestPaintStateRef.current;
+    if (latestPaintPageKeyRef.current === previousPaintPage) {
+      paintStateByPageRef.current[previousPaintPage] = latestPaintStateRef.current;
+    }
 
     if (paintSaveTimeoutRef.current) {
       window.clearTimeout(paintSaveTimeoutRef.current);
       paintSaveTimeoutRef.current = null;
     }
 
-    const savedPaintState = paintStateByPageRef.current[paintPageKey];
-    const fallbackPaintState = savedPaintState ?? {
-      canvasFillColor: "#ffffff",
-      canvasSize: defaultCanvasSize,
-      paintActions: [],
-    };
+    const fallbackPaintState = paintStateByPageRef.current[paintPageKey] ?? defaultPaintState;
     let isActivePage = true;
 
     setActiveStroke(null);
     setLoadedPaintPageKey(null);
-    setPaintActions(fallbackPaintState.paintActions);
-    setCanvasFillColor(fallbackPaintState.canvasFillColor);
-    setCanvasSize(fallbackPaintState.canvasSize);
+    applyPaintState(paintPageKey, fallbackPaintState);
     setTool("select");
     setIsHoveringClickableNav(false);
     currentPaintPageRef.current = paintPageKey;
@@ -318,10 +332,7 @@ const Truth = () => {
         }
 
         skipNextPaintSaveRef.current = true;
-        paintStateByPageRef.current[paintPageKey] = remotePaintState as SavedPaintState;
-        setPaintActions(remotePaintState.paintActions as PaintAction[]);
-        setCanvasFillColor(remotePaintState.canvasFillColor);
-        setCanvasSize(remotePaintState.canvasSize);
+        applyPaintState(paintPageKey, remotePaintState as SavedPaintState);
         setLoadedPaintPageKey(paintPageKey);
       })
       .catch((error) => {
@@ -334,7 +345,7 @@ const Truth = () => {
   }, [paintPageKey]);
 
   useEffect(() => {
-    if (loadedPaintPageKey !== paintPageKey) {
+    if (loadedPaintPageKey !== paintPageKey || displayedPaintPageKey !== paintPageKey) {
       return;
     }
 
@@ -345,24 +356,21 @@ const Truth = () => {
 
       void fetchAllyDrawing(paintPageKey, latestPaintStateRef.current)
         .then((remotePaintState) => {
-          if (currentPaintPageRef.current !== paintPageKey) {
+          if (currentPaintPageRef.current !== paintPageKey || displayedPaintPageKey !== paintPageKey) {
             return;
           }
 
           skipNextPaintSaveRef.current = true;
-          paintStateByPageRef.current[paintPageKey] = remotePaintState as SavedPaintState;
-          setPaintActions(remotePaintState.paintActions as PaintAction[]);
-          setCanvasFillColor(remotePaintState.canvasFillColor);
-          setCanvasSize(remotePaintState.canvasSize);
+          applyPaintState(paintPageKey, remotePaintState as SavedPaintState);
         })
         .catch((error) => {
           console.warn("Unable to refresh Ally drawing", error);
         });
     });
-  }, [loadedPaintPageKey, paintPageKey]);
+  }, [displayedPaintPageKey, loadedPaintPageKey, paintPageKey]);
 
   useEffect(() => {
-    if (loadedPaintPageKey !== paintPageKey) {
+    if (loadedPaintPageKey !== paintPageKey || displayedPaintPageKey !== paintPageKey) {
       return;
     }
 
@@ -382,7 +390,7 @@ const Truth = () => {
     };
 
     paintSaveTimeoutRef.current = window.setTimeout(() => {
-      if (currentPaintPageRef.current !== paintPageKey) {
+      if (currentPaintPageRef.current !== paintPageKey || latestPaintPageKeyRef.current !== paintPageKey) {
         return;
       }
 
@@ -390,7 +398,7 @@ const Truth = () => {
         console.warn("Unable to save Ally drawing", error);
       });
     }, 500);
-  }, [canvasFillColor, canvasSize, loadedPaintPageKey, paintActions, paintPageKey]);
+  }, [canvasFillColor, canvasSize, displayedPaintPageKey, loadedPaintPageKey, paintActions, paintPageKey]);
 
   useEffect(() => {
     const loadButtonPaths = async () => {
