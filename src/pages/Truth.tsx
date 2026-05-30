@@ -251,7 +251,7 @@ const Truth = () => {
   const [birthdaySmokeActive, setBirthdaySmokeActive] = useState(false);
   const [paintActions, setPaintActions] = useState<PaintAction[]>([]);
   const [activeStroke, setActiveStroke] = useState<Stroke | null>(null);
-  const [isPaintLoaded, setIsPaintLoaded] = useState(false);
+  const [loadedPaintPageKey, setLoadedPaintPageKey] = useState<string | null>(null);
   const paintPageKey = section ?? "main";
   const artwork = section
     ? sectionArtwork[section] ?? starterArtwork
@@ -289,6 +289,11 @@ const Truth = () => {
 
     paintStateByPageRef.current[previousPaintPage] = latestPaintStateRef.current;
 
+    if (paintSaveTimeoutRef.current) {
+      window.clearTimeout(paintSaveTimeoutRef.current);
+      paintSaveTimeoutRef.current = null;
+    }
+
     const savedPaintState = paintStateByPageRef.current[paintPageKey];
     const fallbackPaintState = savedPaintState ?? {
       canvasFillColor: "#ffffff",
@@ -298,7 +303,7 @@ const Truth = () => {
     let isActivePage = true;
 
     setActiveStroke(null);
-    setIsPaintLoaded(false);
+    setLoadedPaintPageKey(null);
     setPaintActions(fallbackPaintState.paintActions);
     setCanvasFillColor(fallbackPaintState.canvasFillColor);
     setCanvasSize(fallbackPaintState.canvasSize);
@@ -317,7 +322,7 @@ const Truth = () => {
         setPaintActions(remotePaintState.paintActions as PaintAction[]);
         setCanvasFillColor(remotePaintState.canvasFillColor);
         setCanvasSize(remotePaintState.canvasSize);
-        setIsPaintLoaded(true);
+        setLoadedPaintPageKey(paintPageKey);
       })
       .catch((error) => {
         console.warn("Unable to load Ally drawing", error);
@@ -329,13 +334,21 @@ const Truth = () => {
   }, [paintPageKey]);
 
   useEffect(() => {
-    if (!isPaintLoaded) {
+    if (loadedPaintPageKey !== paintPageKey) {
       return;
     }
 
     return subscribeToAllyDrawing(paintPageKey, () => {
+      if (currentPaintPageRef.current !== paintPageKey) {
+        return;
+      }
+
       void fetchAllyDrawing(paintPageKey, latestPaintStateRef.current)
         .then((remotePaintState) => {
+          if (currentPaintPageRef.current !== paintPageKey) {
+            return;
+          }
+
           skipNextPaintSaveRef.current = true;
           paintStateByPageRef.current[paintPageKey] = remotePaintState as SavedPaintState;
           setPaintActions(remotePaintState.paintActions as PaintAction[]);
@@ -346,10 +359,10 @@ const Truth = () => {
           console.warn("Unable to refresh Ally drawing", error);
         });
     });
-  }, [isPaintLoaded, paintPageKey]);
+  }, [loadedPaintPageKey, paintPageKey]);
 
   useEffect(() => {
-    if (!isPaintLoaded) {
+    if (loadedPaintPageKey !== paintPageKey) {
       return;
     }
 
@@ -369,11 +382,15 @@ const Truth = () => {
     };
 
     paintSaveTimeoutRef.current = window.setTimeout(() => {
+      if (currentPaintPageRef.current !== paintPageKey) {
+        return;
+      }
+
       void saveAllyDrawing(paintPageKey, stateToSave).catch((error) => {
         console.warn("Unable to save Ally drawing", error);
       });
     }, 500);
-  }, [canvasFillColor, canvasSize, isPaintLoaded, paintActions, paintPageKey]);
+  }, [canvasFillColor, canvasSize, loadedPaintPageKey, paintActions, paintPageKey]);
 
   useEffect(() => {
     const loadButtonPaths = async () => {
