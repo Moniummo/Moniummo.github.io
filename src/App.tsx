@@ -1,4 +1,4 @@
-import { BrowserRouter, Navigate, Route, Routes } from "react-router-dom";
+import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { Suspense, lazy } from "react";
 import { ThemeProvider } from "@/components/theme-provider";
 import { hasAllySessionAccess } from "@/lib/passwordGate";
@@ -17,7 +17,11 @@ const routerBase =
     ? "/dist"
     : "/";
 
-const AllyRoute = () => (hasAllySessionAccess() ? <Truth /> : <Navigate replace to="/" />);
+const AllyRoute = () => {
+  const location = useLocation();
+
+  return hasAllySessionAccess() ? <Truth key={location.pathname} /> : <Navigate replace to="/" />;
+};
 
 const App = () => (
   <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>

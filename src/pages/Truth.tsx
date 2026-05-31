@@ -39,6 +39,11 @@ interface SavedPaintState {
   paintActions: PaintAction[];
 }
 
+interface PendingPaintSave {
+  pageKey: AllyDrawingPageKey;
+  state: SavedPaintState;
+}
+
 const colors = ["#111111", "#ffffff", "#ef4444", "#f97316", "#eab308", "#22c55e", "#3b82f6", "#a855f7"];
 const defaultCanvasSize = { height: 760, width: 1200 };
 const minCanvasSize = { height: 420, width: 640 };
@@ -259,6 +264,12 @@ const defaultPaintState: SavedPaintState = {
   paintActions: [],
 };
 
+const createDefaultPaintState = (): SavedPaintState => ({
+  canvasFillColor: "#ffffff",
+  canvasSize: { ...defaultCanvasSize },
+  paintActions: [],
+});
+
 const Truth = () => {
   const navigate = useNavigate();
   const { section } = useParams();
@@ -267,6 +278,7 @@ const Truth = () => {
   const birthdaySmokeTimeoutRef = useRef<number | null>(null);
   const birthdayRevealTimeoutRef = useRef<number | null>(null);
   const paintSaveTimeoutRef = useRef<number | null>(null);
+  const pendingPaintSaveRef = useRef<PendingPaintSave | null>(null);
   const activeStrokeRef = useRef<Stroke | null>(null);
   const activeStrokeAnimationRef = useRef<number | null>(null);
   const queuedStrokePointsRef = useRef<Stroke["points"]>([]);
@@ -315,6 +327,15 @@ const Truth = () => {
         window.clearTimeout(paintSaveTimeoutRef.current);
       }
 
+      const pendingPaintSave = pendingPaintSaveRef.current;
+
+      if (pendingPaintSave) {
+        pendingPaintSaveRef.current = null;
+        void saveAllyDrawing(pendingPaintSave.pageKey, pendingPaintSave.state).catch((error) => {
+          console.warn("Unable to save Ally drawing", error);
+        });
+      }
+
       if (activeStrokeAnimationRef.current) {
         window.cancelAnimationFrame(activeStrokeAnimationRef.current);
       }
@@ -355,7 +376,7 @@ const Truth = () => {
       paintSaveTimeoutRef.current = null;
     }
 
-    const fallbackPaintState = paintStateByPageRef.current[paintPageKey] ?? defaultPaintState;
+    const fallbackPaintState = paintStateByPageRef.current[paintPageKey] ?? createDefaultPaintState();
     let isActivePage = true;
 
     queuedStrokePointsRef.current = [];
@@ -385,6 +406,13 @@ const Truth = () => {
       })
       .catch((error) => {
         console.warn("Unable to load Ally drawing", error);
+        if (!isActivePage) {
+          return;
+        }
+
+        skipNextPaintSaveRef.current = true;
+        applyPaintState(paintPageKey, fallbackPaintState);
+        setLoadedPaintPageKey(paintPageKey);
       });
 
     return () => {
@@ -436,12 +464,17 @@ const Truth = () => {
       canvasSize,
       paintActions,
     };
+    pendingPaintSaveRef.current = {
+      pageKey: paintPageKey,
+      state: stateToSave,
+    };
 
     paintSaveTimeoutRef.current = window.setTimeout(() => {
       if (currentPaintPageRef.current !== paintPageKey || latestPaintPageKeyRef.current !== paintPageKey) {
         return;
       }
 
+      pendingPaintSaveRef.current = null;
       void saveAllyDrawing(paintPageKey, stateToSave).catch((error) => {
         console.warn("Unable to save Ally drawing", error);
       });
@@ -946,6 +979,7 @@ const Truth = () => {
   };
 
   const sectionLabel = section ? sectionLabels[section] ?? section : null;
+  const isPaintReady = loadedPaintPageKey === paintPageKey && displayedPaintPageKey === paintPageKey;
 
   return (
     <main
@@ -971,7 +1005,13 @@ const Truth = () => {
               </div>
             )}
           </div>
-          <div className="flex flex-wrap items-stretch gap-2 border-t border-[#c8c8c8] px-3 py-2">
+          <fieldset
+            disabled={!isPaintReady}
+            className={cn(
+              "m-0 flex flex-wrap items-stretch gap-2 border-0 border-t border-[#c8c8c8] px-3 py-2",
+              !isPaintReady ? "opacity-60" : "",
+            )}
+          >
             <div className="flex gap-1 border-r border-[#b6b6b6] pr-2">
               {toolButtons.map(({ icon: Icon, label, tool: nextTool }) => (
                 <button
@@ -1098,7 +1138,7 @@ const Truth = () => {
                 <Save className="h-5 w-5" />
               </button>
             </div>
-          </div>
+          </fieldset>
         </header>
 
         {birthdayPopupOpen ? (
@@ -1138,23 +1178,24 @@ const Truth = () => {
 
         <section className="min-h-0 flex-1 overflow-auto bg-[#bfc3ca] p-5">
           <div className="relative inline-block min-w-[640px]">
-            <svg
-              ref={boardRef}
-              viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
-              className={cn(
-                "bg-white shadow-[0_0_0_1px_#7f7f7f,6px_6px_0_rgba(0,0,0,0.18)]",
-                tool === "select" ? "cursor-default" : "cursor-crosshair",
-              )}
-              style={{
-                height: `${canvasSize.height}px`,
-                width: `${canvasSize.width}px`,
-              }}
-              onPointerDown={startDrawing}
-              onPointerMove={continueDrawing}
-              onPointerUp={finishDrawing}
-              onPointerCancel={finishDrawing}
-              onPointerLeave={finishDrawing}
-            >
+            {isPaintReady ? (
+              <svg
+                ref={boardRef}
+                viewBox={`0 0 ${canvasSize.width} ${canvasSize.height}`}
+                className={cn(
+                  "bg-white shadow-[0_0_0_1px_#7f7f7f,6px_6px_0_rgba(0,0,0,0.18)]",
+                  tool === "select" ? "cursor-default" : "cursor-crosshair",
+                )}
+                style={{
+                  height: `${canvasSize.height}px`,
+                  width: `${canvasSize.width}px`,
+                }}
+                onPointerDown={startDrawing}
+                onPointerMove={continueDrawing}
+                onPointerUp={finishDrawing}
+                onPointerCancel={finishDrawing}
+                onPointerLeave={finishDrawing}
+              >
               <rect x="0" y="0" width={canvasSize.width} height={canvasSize.height} fill={canvasFillColor} />
               {artwork.map((artworkItem) => (
                 <image
@@ -1294,16 +1335,30 @@ const Truth = () => {
                   y={birthdayPresentFrame.y}
                 />
               ) : null}
-            </svg>
-            <button
-              type="button"
-              aria-label="Resize canvas"
-              title="Resize canvas"
-              onPointerDown={startResizing}
-              className="absolute bottom-[-13px] right-[-13px] h-7 w-7 cursor-nwse-resize border border-[#6f6f6f] bg-[#eeeeee] shadow-[inset_1px_1px_0_#ffffff]"
-            >
-              <span className="absolute bottom-1 right-1 h-3 w-3 border-b-2 border-r-2 border-[#606060]" />
-            </button>
+              </svg>
+            ) : (
+              <div
+                aria-label="Loading saved paint canvas"
+                className="flex items-center justify-center bg-white font-sans text-sm text-[#555555] shadow-[0_0_0_1px_#7f7f7f,6px_6px_0_rgba(0,0,0,0.18)]"
+                style={{
+                  height: `${defaultCanvasSize.height}px`,
+                  width: `${defaultCanvasSize.width}px`,
+                }}
+              >
+                Loading...
+              </div>
+            )}
+            {isPaintReady ? (
+              <button
+                type="button"
+                aria-label="Resize canvas"
+                title="Resize canvas"
+                onPointerDown={startResizing}
+                className="absolute bottom-[-13px] right-[-13px] h-7 w-7 cursor-nwse-resize border border-[#6f6f6f] bg-[#eeeeee] shadow-[inset_1px_1px_0_#ffffff]"
+              >
+                <span className="absolute bottom-1 right-1 h-3 w-3 border-b-2 border-r-2 border-[#606060]" />
+              </button>
+            ) : null}
           </div>
         </section>
       </div>
