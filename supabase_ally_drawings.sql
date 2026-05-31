@@ -23,6 +23,65 @@ create table if not exists public.ally_drawings (
     check (jsonb_typeof(paint_actions) = 'array')
 );
 
+-- Defensive migration for older copies of this table that may have been
+-- created before page_key was the permanent per-page identity.
+delete from public.ally_drawings
+where page_key not in ('main', 'projects', 'research', 'cv', 'about');
+
+with ranked_drawings as (
+  select
+    ctid,
+    row_number() over (
+      partition by page_key
+      order by updated_at desc nulls last, ctid desc
+    ) as row_number
+  from public.ally_drawings
+)
+delete from public.ally_drawings
+using ranked_drawings
+where public.ally_drawings.ctid = ranked_drawings.ctid
+  and ranked_drawings.row_number > 1;
+
+alter table public.ally_drawings
+  alter column page_key set not null,
+  alter column canvas_fill_color set default '#ffffff',
+  alter column canvas_fill_color set not null,
+  alter column canvas_size set default '{"width":1200,"height":760}'::jsonb,
+  alter column canvas_size set not null,
+  alter column paint_actions set default '[]'::jsonb,
+  alter column paint_actions set not null,
+  alter column updated_at set default now(),
+  alter column updated_at set not null;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.ally_drawings'::regclass
+      and contype = 'p'
+  ) then
+    alter table public.ally_drawings
+      add constraint ally_drawings_pkey primary key (page_key);
+  end if;
+end;
+$$;
+
+do $$
+begin
+  if not exists (
+    select 1
+    from pg_constraint
+    where conrelid = 'public.ally_drawings'::regclass
+      and conname = 'ally_drawings_page_key_check'
+  ) then
+    alter table public.ally_drawings
+      add constraint ally_drawings_page_key_check
+      check (page_key in ('main', 'projects', 'research', 'cv', 'about'));
+  end if;
+end;
+$$;
+
 alter table public.ally_drawings enable row level security;
 alter table public.ally_drawings replica identity full;
 

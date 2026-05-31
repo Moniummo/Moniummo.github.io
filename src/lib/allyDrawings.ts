@@ -9,6 +9,9 @@ export interface AllyDrawingState {
   paintActions: unknown[];
 }
 
+export const allyDrawingPageKeys = ["main", "projects", "research", "cv", "about"] as const;
+export type AllyDrawingPageKey = (typeof allyDrawingPageKeys)[number];
+
 interface AllyDrawingRow {
   canvas_fill_color: string | null;
   canvas_size: AllyDrawingState["canvasSize"] | null;
@@ -40,7 +43,10 @@ const normalizeDrawingState = (row: AllyDrawingRow, fallback: AllyDrawingState):
   paintActions: Array.isArray(row.paint_actions) ? row.paint_actions : fallback.paintActions,
 });
 
-export const fetchAllyDrawing = async (pageKey: string, fallback: AllyDrawingState) => {
+export const isAllyDrawingPageKey = (pageKey: string): pageKey is AllyDrawingPageKey =>
+  allyDrawingPageKeys.includes(pageKey as AllyDrawingPageKey);
+
+export const fetchAllyDrawing = async (pageKey: AllyDrawingPageKey, fallback: AllyDrawingState) => {
   const { data, error } = await allySupabase
     .from("ally_drawings")
     .select("page_key, canvas_fill_color, canvas_size, paint_actions")
@@ -54,14 +60,17 @@ export const fetchAllyDrawing = async (pageKey: string, fallback: AllyDrawingSta
   return data ? normalizeDrawingState(data, fallback) : fallback;
 };
 
-export const saveAllyDrawing = async (pageKey: string, state: AllyDrawingState) => {
-  const { error } = await allySupabase.from("ally_drawings").upsert({
-    canvas_fill_color: state.canvasFillColor,
-    canvas_size: state.canvasSize,
-    page_key: pageKey,
-    paint_actions: state.paintActions,
-    updated_by: "ally-website",
-  });
+export const saveAllyDrawing = async (pageKey: AllyDrawingPageKey, state: AllyDrawingState) => {
+  const { error } = await allySupabase.from("ally_drawings").upsert(
+    {
+      canvas_fill_color: state.canvasFillColor,
+      canvas_size: state.canvasSize,
+      page_key: pageKey,
+      paint_actions: state.paintActions,
+      updated_by: "ally-website",
+    },
+    { onConflict: "page_key" },
+  );
 
   if (error) {
     throw new Error(error.message);
@@ -69,8 +78,8 @@ export const saveAllyDrawing = async (pageKey: string, state: AllyDrawingState) 
 };
 
 export const subscribeToAllyDrawing = (
-  pageKey: string,
-  onChange: () => void,
+  pageKey: AllyDrawingPageKey,
+  onChange: (changedPageKey: AllyDrawingPageKey) => void,
 ) => {
   const channel = allySupabase
     .channel(`ally-drawing-${pageKey}`)
@@ -82,7 +91,17 @@ export const subscribeToAllyDrawing = (
         schema: "public",
         table: "ally_drawings",
       },
-      () => onChange(),
+      (payload) => {
+        const changedPageKey = String(
+          ((payload.new as Partial<AllyDrawingRow> | null)?.page_key ??
+            (payload.old as Partial<AllyDrawingRow> | null)?.page_key ??
+            ""),
+        );
+
+        if (changedPageKey === pageKey && isAllyDrawingPageKey(changedPageKey)) {
+          onChange(changedPageKey);
+        }
+      },
     )
     .subscribe();
 

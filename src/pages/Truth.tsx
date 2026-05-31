@@ -9,7 +9,13 @@ import {
 import confetti from "canvas-confetti";
 import { Eraser, MousePointer2, PaintBucket, Pencil, RotateCcw, Save, Trash2 } from "lucide-react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { fetchAllyDrawing, saveAllyDrawing, subscribeToAllyDrawing } from "@/lib/allyDrawings";
+import {
+  fetchAllyDrawing,
+  isAllyDrawingPageKey,
+  saveAllyDrawing,
+  subscribeToAllyDrawing,
+  type AllyDrawingPageKey,
+} from "@/lib/allyDrawings";
 import { cn } from "@/lib/utils";
 
 interface Stroke {
@@ -107,7 +113,31 @@ const buildPath = (points: Stroke["points"]) => {
     return "";
   }
 
-  return points.reduce((path, point, index) => `${path}${index === 0 ? "M" : " L"} ${point.x} ${point.y}`, "");
+  if (points.length === 1) {
+    return `M ${points[0].x} ${points[0].y}`;
+  }
+
+  if (points.length === 2) {
+    return `M ${points[0].x} ${points[0].y} L ${points[1].x} ${points[1].y}`;
+  }
+
+  let path = `M ${points[0].x} ${points[0].y}`;
+
+  for (let index = 1; index < points.length - 1; index += 1) {
+    const currentPoint = points[index];
+    const nextPoint = points[index + 1];
+    const midPoint = {
+      x: (currentPoint.x + nextPoint.x) / 2,
+      y: (currentPoint.y + nextPoint.y) / 2,
+    };
+
+    path += ` Q ${currentPoint.x} ${currentPoint.y} ${midPoint.x} ${midPoint.y}`;
+  }
+
+  const lastPoint = points[points.length - 1];
+  path += ` L ${lastPoint.x} ${lastPoint.y}`;
+
+  return path;
 };
 
 const clamp = (value: number, min: number, max: number) => Math.min(Math.max(value, min), max);
@@ -213,6 +243,9 @@ const distanceToSegment = (
   return Math.hypot(point.x - projectionX, point.y - projectionY);
 };
 
+const distanceBetweenPoints = (first: { x: number; y: number }, second: { x: number; y: number }) =>
+  Math.hypot(first.x - second.x, first.y - second.y);
+
 const sectionLabels: Record<string, string> = {
   about: "About me",
   cv: "CV",
@@ -234,9 +267,12 @@ const Truth = () => {
   const birthdaySmokeTimeoutRef = useRef<number | null>(null);
   const birthdayRevealTimeoutRef = useRef<number | null>(null);
   const paintSaveTimeoutRef = useRef<number | null>(null);
-  const paintStateByPageRef = useRef<Record<string, SavedPaintState>>({});
-  const currentPaintPageRef = useRef("main");
-  const latestPaintPageKeyRef = useRef("main");
+  const activeStrokeRef = useRef<Stroke | null>(null);
+  const activeStrokeAnimationRef = useRef<number | null>(null);
+  const queuedStrokePointsRef = useRef<Stroke["points"]>([]);
+  const paintStateByPageRef = useRef<Partial<Record<AllyDrawingPageKey, SavedPaintState>>>({});
+  const currentPaintPageRef = useRef<AllyDrawingPageKey>("main");
+  const latestPaintPageKeyRef = useRef<AllyDrawingPageKey>("main");
   const skipNextPaintSaveRef = useRef(false);
   const latestPaintStateRef = useRef<SavedPaintState>(defaultPaintState);
   const navButtonFrame = getContainedFrame(navBoxFrame, navBoxViewBox);
@@ -257,7 +293,7 @@ const Truth = () => {
   const [activeStroke, setActiveStroke] = useState<Stroke | null>(null);
   const [displayedPaintPageKey, setDisplayedPaintPageKey] = useState("main");
   const [loadedPaintPageKey, setLoadedPaintPageKey] = useState<string | null>(null);
-  const paintPageKey = section ?? "main";
+  const paintPageKey = section && isAllyDrawingPageKey(section) ? section : "main";
   const artwork = section
     ? sectionArtwork[section] ?? starterArtwork
     : [
@@ -278,10 +314,14 @@ const Truth = () => {
       if (paintSaveTimeoutRef.current) {
         window.clearTimeout(paintSaveTimeoutRef.current);
       }
+
+      if (activeStrokeAnimationRef.current) {
+        window.cancelAnimationFrame(activeStrokeAnimationRef.current);
+      }
     };
   }, []);
 
-  const applyPaintState = (pageKey: string, paintState: SavedPaintState) => {
+  const applyPaintState = (pageKey: AllyDrawingPageKey, paintState: SavedPaintState) => {
     latestPaintPageKeyRef.current = pageKey;
     latestPaintStateRef.current = paintState;
     paintStateByPageRef.current[pageKey] = paintState;
@@ -318,6 +358,14 @@ const Truth = () => {
     const fallbackPaintState = paintStateByPageRef.current[paintPageKey] ?? defaultPaintState;
     let isActivePage = true;
 
+    queuedStrokePointsRef.current = [];
+    activeStrokeRef.current = null;
+
+    if (activeStrokeAnimationRef.current) {
+      window.cancelAnimationFrame(activeStrokeAnimationRef.current);
+      activeStrokeAnimationRef.current = null;
+    }
+
     setActiveStroke(null);
     setLoadedPaintPageKey(null);
     applyPaintState(paintPageKey, fallbackPaintState);
@@ -349,8 +397,8 @@ const Truth = () => {
       return;
     }
 
-    return subscribeToAllyDrawing(paintPageKey, () => {
-      if (currentPaintPageRef.current !== paintPageKey) {
+    return subscribeToAllyDrawing(paintPageKey, (changedPageKey) => {
+      if (changedPageKey !== paintPageKey || currentPaintPageRef.current !== paintPageKey) {
         return;
       }
 
@@ -439,6 +487,42 @@ const Truth = () => {
   };
 
   const getPoint = (event: ReactPointerEvent<SVGSVGElement>) => getBoardPoint(event.clientX, event.clientY);
+
+  const consumeQueuedStrokePoints = (stroke: Stroke) => {
+    const queuedPoints = queuedStrokePointsRef.current;
+    queuedStrokePointsRef.current = [];
+
+    if (queuedPoints.length === 0) {
+      return stroke;
+    }
+
+    const nextPoints = [...stroke.points];
+
+    queuedPoints.forEach((point) => {
+      const lastPoint = nextPoints[nextPoints.length - 1];
+
+      if (!lastPoint || distanceBetweenPoints(lastPoint, point) >= 0.75) {
+        nextPoints.push(point);
+      }
+    });
+
+    return { ...stroke, points: nextPoints };
+  };
+
+  const flushQueuedStrokePoints = () => {
+    activeStrokeAnimationRef.current = null;
+
+    const currentStroke = activeStrokeRef.current;
+
+    if (!currentStroke) {
+      queuedStrokePointsRef.current = [];
+      return;
+    }
+
+    const nextStroke = consumeQueuedStrokePoints(currentStroke);
+    activeStrokeRef.current = nextStroke;
+    setActiveStroke(nextStroke);
+  };
 
   const drawCurrentBoard = async (context: CanvasRenderingContext2D) => {
     context.fillStyle = canvasFillColor;
@@ -565,32 +649,56 @@ const Truth = () => {
 
     event.currentTarget.setPointerCapture(event.pointerId);
 
-    setActiveStroke({
+    queuedStrokePointsRef.current = [];
+
+    const nextStroke = {
       color: tool === "eraser" ? canvasFillColor : activeColor,
       points: [point],
       size: tool === "eraser" ? brushSize * 2.5 : brushSize,
       tool,
-    });
+    };
+
+    activeStrokeRef.current = nextStroke;
+    setActiveStroke(nextStroke);
   };
 
   const continueDrawing = (event: ReactPointerEvent<SVGSVGElement>) => {
-    if (!activeStroke) {
+    if (!activeStrokeRef.current) {
       return;
     }
 
-    const point = getPoint(event);
-    setActiveStroke((currentStroke) =>
-      currentStroke ? { ...currentStroke, points: [...currentStroke.points, point] } : currentStroke,
+    const nativeEvent = event.nativeEvent as PointerEvent & {
+      getCoalescedEvents?: () => PointerEvent[];
+    };
+    const pointerEvents =
+      typeof nativeEvent.getCoalescedEvents === "function" ? nativeEvent.getCoalescedEvents() : [nativeEvent];
+
+    queuedStrokePointsRef.current.push(
+      ...pointerEvents.map((pointerEvent) => getBoardPoint(pointerEvent.clientX, pointerEvent.clientY)),
     );
+
+    if (!activeStrokeAnimationRef.current) {
+      activeStrokeAnimationRef.current = window.requestAnimationFrame(flushQueuedStrokePoints);
+    }
   };
 
   const finishDrawing = () => {
-    if (!activeStroke) {
+    const currentStroke = activeStrokeRef.current;
+
+    if (!currentStroke) {
       return;
     }
 
-    if (activeStroke.points.length > 1) {
-      setPaintActions((currentActions) => [...currentActions, { stroke: activeStroke, type: "stroke" }]);
+    if (activeStrokeAnimationRef.current) {
+      window.cancelAnimationFrame(activeStrokeAnimationRef.current);
+      activeStrokeAnimationRef.current = null;
+    }
+
+    const finishedStroke = consumeQueuedStrokePoints(currentStroke);
+    activeStrokeRef.current = null;
+
+    if (finishedStroke.points.length > 1) {
+      setPaintActions((currentActions) => [...currentActions, { stroke: finishedStroke, type: "stroke" }]);
     }
 
     setActiveStroke(null);
@@ -598,6 +706,20 @@ const Truth = () => {
 
   const undoStroke = () => {
     setPaintActions((currentActions) => currentActions.slice(0, -1));
+  };
+
+  const clearCanvas = () => {
+    queuedStrokePointsRef.current = [];
+    activeStrokeRef.current = null;
+
+    if (activeStrokeAnimationRef.current) {
+      window.cancelAnimationFrame(activeStrokeAnimationRef.current);
+      activeStrokeAnimationRef.current = null;
+    }
+
+    setActiveStroke(null);
+    setPaintActions([]);
+    setCanvasSize(defaultCanvasSize);
   };
 
   const isPointErased = (point: { x: number; y: number }) =>
@@ -959,7 +1081,7 @@ const Truth = () => {
                 type="button"
                 title="Clear"
                 aria-label="Clear"
-                onClick={() => setPaintActions([])}
+                onClick={clearCanvas}
                 className="flex h-10 w-10 items-center justify-center border border-[#9b9b9b] bg-[#eeeeee] shadow-[inset_1px_1px_0_#ffffff] hover:bg-white"
               >
                 <Trash2 className="h-5 w-5" />
